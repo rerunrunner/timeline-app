@@ -1,0 +1,962 @@
+.app {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9fafb;
+  overflow: hidden;
+}
+
+.timeline-viewer {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  z-index: 1;
+  position: relative;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Ensure horizontal scrolling works properly */
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.timeline {
+  position: relative;
+  margin-bottom: 40px;
+  position: relative;
+  display: flex;
+  gap: 0; /* No gap between segments */
+  align-items: center;
+  min-height: 40px;
+  padding: 20px 0;
+  z-index: 1;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.timeline-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.timeline-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.timeline-start-label {
+  position: absolute;
+  left: 0;
+  top: -20px;
+  transform: none;
+  font-size: 0.75rem;
+  color: #6b7280;
+  z-index: 2;
+  background-color: #f9fafb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.timeline-end-label {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  transform: none;
+  font-size: 0.75rem;
+  color: #6b7280;
+  z-index: 2;
+  background-color: #f9fafb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.event-container {
+  position: absolute;
+  cursor: pointer;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.event-container:hover {
+  z-index: 100;
+}
+
+.event-container:hover .event-marker {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-container:hover .event-label,
+.event-label:hover {
+  background-color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+  z-index: 100;
+}
+
+.event-marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #3b82f6;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.event-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  z-index: 3;
+  min-width: 120px;
+}
+
+.event-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.event-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.timeline-subsegment {
+  background-color: #3b82f6;
+  height: 100%;
+  position: relative;
+  display: inline-block;
+  top: 0;
+  vertical-align: top;
+  transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out;
+  z-index: 1;
+}
+
+.timeline-subsegment:not([data-children-visible="true"]) {
+  background-color: transparent;
+}
+
+.timeline-subsegment.leftmost {
+  border-left: 2px solid #1d4ed8;
+}
+
+.timeline-subsegment.rightmost {
+  border-right: 2px solid #1d4ed8;
+}
+
+.timeline-subsegment.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.timeline-subsegment.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.event-container.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-out;
+  transform: translateY(-50%) scale(1);
+}
+
+.event-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in;
+  transform: translateY(-50%) scale(0.95);
+}
+
+.timeline.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-out;
+  transform: translateY(0);
+}
+
+.timeline.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-in;
+  transform: translateY(10px);
+}
+
+.reveal-container {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 1;
+  min-width: 120px;
+  text-align: center;
+}
+
+.reveal {
+  position: relative;
+  background-color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-out, box-shadow 0.3s ease;
+  margin-bottom: 4px;
+  transform: scale(1) translateY(0);
+}
+
+.reveal:last-child {
+  margin-bottom: 0;
+}
+
+.reveal.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.reveal.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.95) translateY(-5px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.reveal-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.reveal-description {
+  font-size: 0.75rem;
+  color: #374151;
+  margin-bottom: 2px;
+  white-space: normal;
+  max-width: 200px;
+}
+
+.reveal-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.timeline:not([data-children-visible="true"]) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-in;
+  transform: translateY(10px);
+}
+
+.timeline-subsegment:not([data-children-visible="true"]) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.event-container:not([data-children-visible="true"]) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in;
+  transform: translateY(-50%) scale(0.95);
+}
+
+.timeline[data-children-visible="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-out;
+  transform: translateY(0);
+}
+
+.timeline-subsegment[data-children-visible="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.event-container[data-children-visible="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-out;
+  transform: translateY(-50%) scale(1);
+}
+
+.reveal-viewer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 2rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.data-selector-container {
+  display: flex;
+  align-items: center;
+}
+
+.data-selector select {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.data-selector select:hover {
+  border-color: #9ca3af;
+}
+
+.data-selector select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.data-selector select option {
+  padding: 0.5rem;
+}
+
+.footer {
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.segment-timespan {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+  z-index: 1;
+  background-color: #f9fafb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.timeline-mode-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.timeline-mode-toggle button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline-mode-toggle button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Event aura styling */
+.event-container.aura-locked .event-marker {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 3px #dc2626, 0 2px 8px rgba(220, 38, 38, 0.3);
+  border-color: #ffffff;
+  animation: pulse-locked 2s infinite;
+}
+
+.event-container.aura-locked:hover .event-marker {
+  background-color: #b91c1c;
+  box-shadow: 0 0 0 4px #b91c1c, 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.event-container.aura-active .event-marker {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 3px #2563eb, 0 2px 8px rgba(37, 99, 235, 0.3);
+  border-color: #ffffff;
+  animation: pulse-active 2s infinite;
+}
+
+.event-container.aura-active:hover .event-marker {
+  background-color: #1d4ed8;
+  box-shadow: 0 0 0 4px #1d4ed8, 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* Increase z-index for subsegments and segments containing active events */
+.timeline-subsegment:has(.event-container.aura-active) {
+  z-index: 10;
+}
+
+/* Also increase z-index for subsegments and segments containing locked events */
+.timeline-subsegment:has(.event-container.aura-locked) {
+  z-index: 10;
+}
+
+/* Alternative approach for browsers that don't support :has() */
+.timeline-subsegment.active-subsegment {
+  z-index: 10;
+}
+
+@keyframes pulse-locked {
+  0% {
+    box-shadow: 0 0 0 3px #dc2626, 0 2px 8px rgba(220, 38, 38, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 3px #dc2626, 0 2px 8px rgba(220, 38, 38, 0.3);
+  }
+}
+
+@keyframes pulse-active {
+  0% {
+    box-shadow: 0 0 0 3px #2563eb, 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px #2563eb, 0 4px 12px rgba(37, 99, 235, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 3px #2563eb, 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+}
+
+/* Timeline Container Layout */
+.timeline-container {
+  display: flex;
+  height: 100%;
+  gap: 0;
+  flex: 1;
+  flex-direction: row;
+  padding: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Resize handle positioned between timeline and event viewer */
+.resize-handle-between {
+  position: relative;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.resize-handle-between:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.resize-handle-between.resizing {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.resize-handle-between .resize-handle-line {
+  width: 2px;
+  height: 40px;
+  background-color: #d1d5db;
+  border-radius: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle-between:hover .resize-handle-line {
+  background-color: #3b82f6;
+}
+
+.resize-handle-between.resizing .resize-handle-line {
+  background-color: #3b82f6;
+}
+
+/* Resizable Event Viewer */
+.resizable-event-viewer {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  border-left: 1px solid #e5e7eb;
+}
+
+.resize-handle {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.resize-handle.resizing {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.resize-handle-line {
+  width: 2px;
+  height: 40px;
+  background-color: #d1d5db;
+  border-radius: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover .resize-handle-line {
+  background-color: #3b82f6;
+}
+
+.resize-handle.resizing .resize-handle-line {
+  background-color: #3b82f6;
+}
+
+.event-viewer-content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.event-viewer {
+  width: 100%;
+  border-left: none;
+  flex-shrink: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  position: relative;
+}
+
+/* Narrative status styling */
+.timeline-subsegment {
+  transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out;
+}
+
+.timeline-subsegment.canonical {
+  opacity: 1;
+  filter: none;
+}
+
+.timeline-subsegment.erased {
+  background-color: #e5e7eb;
+}
+
+.timeline-subsegment.not-reached {
+  display: none;
+}
+
+/* Timeline narrative status styling */
+.timeline.canonical {
+  opacity: 1;
+  filter: none;
+}
+
+.timeline.erased {
+  background-color: #e5e7eb;
+}
+
+.timeline.not-reached {
+  display: none;
+}
+
+/* Event Group Styles */
+.event-group-container {
+  position: absolute;
+  cursor: pointer;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
+}
+
+.event-group-container:hover {
+  z-index: 1001;
+}
+
+.event-group-container:hover .event-group-marker {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-group-container:hover .event-group-title {
+  background-color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+  z-index: 1000;
+}
+
+.event-group-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #3b82f6;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.event-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.event-group-title {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease, color 0.3s ease, content 0.3s ease, opacity 0.2s ease;
+  z-index: 3;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add a fade effect for text changes */
+.event-group-title.changing {
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.event-group-expanded {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  width: 200px;
+  max-width: 300px;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: all 0.2s ease, width 0.3s ease;
+}
+
+.event-group-container:hover .event-group-expanded {
+  width: 300px;
+}
+
+.expanded-header {
+  background-color: #f9fafb;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Color the header when there are canonical events in the group */
+.event-group-container:has(.expanded-event.canonical) .expanded-header {
+  background-color: #dbeafe;
+  border-bottom-color: #3b82f6;
+}
+
+.expanded-header .date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expanded-header .event-count {
+  font-size: 0.625rem;
+  color: #6b7280;
+  background-color: #e5e7eb;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expanded-events {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.expanded-event {
+  padding: 0.375rem 1rem 0.375rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-left-color 0.15s ease;
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Always show the first event */
+.expanded-event:first-child {
+  border-bottom: none;
+  display: flex !important;
+}
+
+/* Show all events on hover */
+.event-group-container:hover .expanded-event {
+  display: flex;
+}
+
+.expanded-event:hover {
+  background-color: #f9fafb;
+}
+
+.expanded-event .event-title {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expanded-event .event-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.expanded-event .locked-indicator {
+  font-size: 0.875rem;
+  color: #3b82f6;
+}
+
+/* Aura states for event groups */
+.event-group-container.aura-locked .marker-dot {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 2px #ef4444;
+  animation: pulse-locked 2s infinite;
+}
+
+.event-group-container.aura-locked:hover .marker-dot {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 2px #dc2626;
+}
+
+.event-group-container.aura-active .marker-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px #10b981;
+  animation: pulse-active 2s infinite;
+}
+
+.event-group-container.aura-active:hover .marker-dot {
+  background-color: #059669;
+  box-shadow: 0 0 0 2px #059669;
+}
+
+/* Aura states for expanded events */
+.expanded-event.aura-locked {
+  background-color: #fef2f2;
+  border-left: 3px solid #ef4444;
+}
+
+.expanded-event.aura-active {
+  background-color: #f0fdf4;
+  border-left: 3px solid #10b981;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .event-group-expanded {
+    min-width: 200px;
+    max-width: 280px;
+  }
+  
+  .expanded-event {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .expanded-header {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* When an event group is hovered, bring its parent timeline to the front */
+.timeline:has(.event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* When an event group is hovered, bring its parent subsegment to the front */
+.timeline-subsegment:has(.event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* When an event group is hovered, bring its parent segment to the front */
+.timeline-subsegment:has(.event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* Style event markers and text in erased subsegments */
+.timeline-subsegment.erased .event-container .event-marker {
+  background-color: #9ca3af;
+  box-shadow: 0 0 0 2px #9ca3af;
+}
+
+.timeline-subsegment.erased .event-container .event-label {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.timeline-subsegment.erased .event-container .event-title {
+  color: #6b7280;
+}
+
+.timeline-subsegment.erased .event-container .event-date {
+  color: #9ca3af;
+}
+
+/* Style event groups in erased subsegments */
+.timeline-subsegment.erased .event-group-container .marker-dot {
+  background-color: #9ca3af;
+  box-shadow: 0 0 0 2px #9ca3af;
+}
+
+.timeline-subsegment.erased .event-group-container .event-group-title {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+/* Style text in erased event cards */
+.timeline-subsegment.erased .expanded-event .event-title {
+  color: #9ca3af;
+}
+
+.timeline-subsegment.erased .expanded-event .event-time {
+  color: #d1d5db;
+}
+
+.timeline-subsegment.erased .expanded-header .date {
+  color: #9ca3af;
+}
+
+.timeline-subsegment.erased .expanded-header .event-count {
+  color: #d1d5db;
+  background-color: #f3f4f6;
+}
+
+/* Show all events when any event is locked */
+.event-group-container.aura-locked .expanded-event,
+.event-group-container.aura-active .expanded-event {
+  display: flex;
+}
+
+/* Canonical event group containers get higher z-index */
+.event-group-container.canonical {
+  z-index: 10;
+}
+
+/* Erased event group containers get lower z-index */
+.event-group-container.erased,
+.event-group-container.not-reached {
+  z-index: 1;
+}
+
+/* Increase z-index for erased event groups on hover */
+.event-group-container.erased:hover,
+.event-group-container.not-reached:hover {
+  z-index: 1000;
+}
+
+/* Increase z-index for canonical event groups on hover */
+.event-group-container.canonical:hover {
+  z-index: 1000;
+}
+

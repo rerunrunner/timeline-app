@@ -1,0 +1,251 @@
+/* Controller Components Styles */
+
+/* Episode Time Selector */
+.episode-time-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.episode-time-selector-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-time-selector-container:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.episode-time-selector-container:focus-within {
+  box-shadow: 0 0 0 2px #3b82f6;
+  border-color: #3b82f6;
+}
+
+.episode-select {
+  border: none;
+  background: transparent;
+  padding-right: 0.5rem;
+  outline: none;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-select:hover {
+  color: #2563eb;
+}
+
+.episode-select:focus {
+  outline: none;
+}
+
+.episode-time-divider {
+  width: 1px;
+  height: 1rem;
+  background-color: #d1d5db;
+  margin: 0 0.5rem;
+}
+
+.episode-time-input {
+  border: none;
+  background: transparent;
+  width: 72px;
+  outline: none;
+  color: #374151;
+  font-family: monospace;
+  text-align: right;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-time-input::placeholder {
+  color: #9ca3af;
+}
+
+.episode-time-input:focus {
+  outline: none;
+}
+
+/* Playbar */
+.playbar-container {
+  flex: 1;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-markers-container {
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-marker {
+  position: absolute;
+  top: 0;
+  font-size: 0.75rem;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-marker:hover {
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.episode-marker.shifted {
+  transform: translateX(-50%);
+}
+
+.episode-marker-label {
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-marker-badge {
+  background-color: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2563eb;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.episode-marker-line {
+  width: 1px;
+  height: 0.5rem;
+  background-color: #d1d5db;
+  margin: 0.25rem auto 0;
+}
+
+.end-marker {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.75rem;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.end-marker:hover {
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.end-marker-label {
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.end-marker-badge {
+  background-color: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2563eb;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.end-marker-line {
+  width: 1px;
+  height: 0.5rem;
+  background-color: #d1d5db;
+  margin: 0.25rem auto 0;
+}
+
+.playbar-track {
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+  margin: 0 0.5rem;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  top: 0.5rem;
+}
+
+.playbar-progress {
+  position: absolute;
+  top: 0;
+  height: 0.5rem;
+  background-color: #60a5fa;
+  border-radius: 0.25rem;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.playbar-playhead {
+  position: absolute;
+  top: 0;
+  height: 0.5rem;
+  width: 0.25rem;
+  background-color: #3b82f6;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.playbar-playhead.dragging {
+  transform: scale(1.25);
+} 

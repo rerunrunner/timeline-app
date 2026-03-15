@@ -1,0 +1,701 @@
+/* Immutable Timeline System Styles */
+
+/* Timeline Content - Dynamic width based on slider */
+.timeline-content {
+  position: relative;
+  /* Width is set dynamically via inline styles from the component */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Smooth scrolling for the timeline viewport */
+.timeline-viewer {
+  scroll-behavior: smooth;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Highlight newly revealed events */
+.event-group-container.newly-revealed {
+  animation: highlight-new-event 2s ease-out;
+}
+
+@keyframes highlight-new-event {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* Ensure event groups are scrollable targets */
+.event-group-container {
+  scroll-margin: 20px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Timeline Viewport Container */
+.timeline-viewport-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* Timeline Controls - Fixed position outside scrollable area */
+.timeline-controls {
+  flex-shrink: 0;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.timeline-width-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.auto-scroll-control {
+  display: flex;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.width-control-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  min-width: 120px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.width-control-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.width-control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.width-control-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.width-control-slider:hover::-webkit-slider-thumb {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+.width-control-slider:hover::-moz-range-thumb {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+/* Auto-scroll checkbox styling */
+.auto-scroll-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.auto-scroll-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+/* Subsegment styling */
+.i-timeline-subsegment {
+  background-color: #3b82f6;
+  height: 100%;
+  position: relative;
+  display: inline-block;
+  top: 0;
+  vertical-align: top;
+  transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out;
+  z-index: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.i-timeline-subsegment.canonical {
+  opacity: 1;
+  filter: none;
+  background-color: #3b82f6;
+  z-index: 20;
+}
+
+.i-timeline-subsegment.erased {
+  background-color: #e5e7eb;
+  z-index: 10;
+}
+
+.i-timeline-subsegment.not-reached {
+  opacity: 0;
+  pointer-events: none;
+  background-color: transparent;
+  z-index: 1;
+}
+
+/* Segment styling */
+.i-timeline-segment {
+  position: relative;
+  height: 2px;
+  z-index: 0;
+  box-sizing: border-box;
+  border: 0rem solid transparent;
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-out;
+  transform: scaleX(1);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.i-timeline-segment.canonical {
+  opacity: 1;
+  filter: none;
+  z-index: 20;
+}
+
+.i-timeline-segment.erased {
+  background-color: #e5e7eb;
+  z-index: 10;
+}
+
+.i-timeline-segment.not-reached {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Disable transitions for apparent timeline segments */
+.i-timeline-segment.apparent-timeline {
+  transition: none !important;
+}
+
+/* Timeline styling */
+.i-timeline {
+  position: relative;
+  margin-bottom: 80px;
+  display: flex;
+  gap: 1rem; /* 1rem gap between segments */
+  align-items: center;
+  min-height: 40px;
+  padding: 20px 0;
+  z-index: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.i-timeline.canonical {
+  opacity: 1;
+  filter: none;
+  z-index: 20;
+}
+
+.i-timeline.erased {
+  background-color: #e5e7eb;
+  z-index: 10;
+}
+
+.i-timeline.not-reached {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Event Group styling */
+.i-event-group-container {
+  position: absolute;
+  cursor: pointer;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.i-event-group-container:hover {
+  z-index: 1001;
+}
+
+.i-event-group-container.not-reached {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Event Group Marker */
+.i-event-group-container .event-group-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.i-event-group-container .marker-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #3b82f6;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.i-event-group-container:hover .marker-dot {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Event Group Title */
+.i-event-group-container .event-group-title {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease, color 0.3s ease, content 0.3s ease, opacity 0.2s ease;
+  z-index: 3;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Event Group Expanded */
+.i-event-group-container .event-group-expanded {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  width: 200px;
+  max-width: 300px;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: all 0.2s ease, width 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.i-event-group-container:hover .event-group-expanded {
+  width: 300px;
+}
+
+.i-event-group-container .expanded-header {
+  background-color: #f9fafb;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Canonical event groups get blue header */
+.i-event-group-container.canonical .expanded-header {
+  background-color: #dbeafe;
+  border-bottom-color: #3b82f6;
+}
+  
+
+.i-event-group-container .expanded-header .date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.i-event-group-container .expanded-header .event-count {
+  font-size: 0.625rem;
+  color: #6b7280;
+  background-color: #e5e7eb;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.i-event-group-container .expanded-events {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.i-event-group-container .expanded-event {
+  padding: 0.375rem 1rem 0.375rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-left-color 0.15s ease;
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.i-event-group-container .expanded-event:first-child {
+  border-bottom: none;
+  display: flex !important;
+}
+
+.i-event-group-container:hover .expanded-event {
+  display: flex;
+}
+
+.i-event-group-container .expanded-event:hover {
+  background-color: #f9fafb;
+}
+
+.i-event-group-container .expanded-event .event-title {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.i-event-group-container .expanded-event .event-time {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.i-event-group-container .expanded-event .locked-indicator {
+  font-size: 0.875rem;
+  color: #3b82f6;
+}
+
+/* Aura states for event groups */
+.i-event-group-container.aura-locked .marker-dot {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 2px #ef4444;
+  animation: pulse-locked 2s infinite;
+}
+
+.i-event-group-container.aura-locked:hover .marker-dot {
+  background-color: #dc2626;
+  box-shadow: 0 0 0 2px #dc2626;
+}
+
+.i-event-group-container.aura-active .marker-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 0 2px #10b981;
+  animation: pulse-active 2s infinite;
+  z-index: 2000;
+}
+
+.i-event-group-container.aura-active:hover .marker-dot {
+  background-color: #059669;
+  box-shadow: 0 0 0 2px #059669;
+  z-index: 2000;
+}
+
+/* Aura states for expanded events */
+.i-event-group-container .expanded-event.aura-locked {
+  background-color: #fef2f2;
+  border-left: 3px solid #ef4444;
+}
+
+.i-event-group-container .expanded-event.aura-active {
+  background-color: #f0fdf4;
+  border-left: 3px solid #10b981;
+  z-index: 2000;
+}
+
+/* Show all events when any event is locked */
+.i-event-group-container.aura-locked .expanded-event,
+.i-event-group-container.aura-active .expanded-event {
+  display: flex;
+}
+
+/* Boost z-index for aura-active event groups */
+.i-event-group-container.aura-active {
+  z-index: 2000;
+}
+
+/* Canonical event group containers get higher z-index */
+.i-event-group-container.canonical {
+  z-index: 20;
+}
+
+/* Erased event group containers get lower z-index */
+.i-event-group-container.erased,
+.i-event-group-container.not-reached {
+  z-index: 5;
+}
+
+/* Increase z-index for erased event groups on hover */
+.i-event-group-container.erased:hover,
+.i-event-group-container.not-reached:hover {
+  z-index: 1000;
+}
+
+/* Increase z-index for canonical event groups on hover */
+.i-event-group-container.canonical:hover {
+  z-index: 1000;
+}
+
+/* When an event group is hovered, bring its parent timeline to the front */
+.i-timeline:has(.i-event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* When an event group is hovered, bring its parent subsegment to the front */
+.i-timeline-subsegment:has(.i-event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* When an event group is hovered, bring its parent segment to the front */
+.i-timeline-segment:has(.i-event-group-container:hover) {
+  z-index: 1000;
+}
+
+/* Boost z-index for aura-active event groups */
+.i-event-group-container.aura-active {
+  z-index: 9999;
+}
+
+/* Style event groups in erased subsegments */
+.i-timeline-subsegment.erased .i-event-group-container .marker-dot {
+  background-color: #9ca3af;
+  box-shadow: 0 0 0 2px #9ca3af;
+}
+
+.i-timeline-subsegment.erased .i-event-group-container .event-group-title {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+/* Style text in erased event cards */
+.i-timeline-subsegment.erased .i-event-group-container .expanded-event .event-title {
+  color: #9ca3af;
+}
+
+.i-timeline-subsegment.erased .i-event-group-container .expanded-event .event-time {
+  color: #d1d5db;
+}
+
+.i-timeline-subsegment.erased .i-event-group-container .expanded-header .date {
+  color: #9ca3af;
+}
+
+.i-timeline-subsegment.erased .i-event-group-container .expanded-header .event-count {
+  color: #d1d5db;
+  background-color: #f3f4f6;
+}
+
+@keyframes pulse-locked {
+  0%, 100% {
+    box-shadow: 0 0 0 2px #ef4444;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+  }
+}
+
+@keyframes pulse-active {
+  0%, 100% {
+    box-shadow: 0 0 0 2px #10b981;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* Time Ruler */
+.i-time-ruler {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 9999;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  gap: 1rem; /* Match timeline gap for alignment */
+  align-items: center;
+}
+
+/* Ruler segments styling */
+.i-time-ruler .i-timeline-segment {
+  height: 100%;
+  display: flex;
+  opacity: 0.5;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+  border-bottom: 2px transparent;
+}
+
+.i-time-ruler .i-timeline-segment.with-markers {
+  border-bottom: 2px solid #64748b;
+}
+
+
+
+.i-time-ruler-container {
+  position: relative;
+  width: 100%;
+  height: 60px;
+}
+
+
+.i-ruler-marker.start-marker {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  padding-left: 4px;
+  text-align: left;
+  align-self: flex-end;
+}
+
+.i-ruler-marker.end-marker {
+  position: relative !important;
+  right: 0;
+  top: auto !important;
+  right: auto !important;
+  text-align: right;
+  align-self: flex-end;
+}
+
+.i-date-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.i-date-label .year {
+  font-weight: 600;
+  font-size: 12px;
+  color: #1e293b;
+}
+
+.i-date-label .month-day {
+  font-size: 10px;
+  color: #64748b;
+}
+
+
+
+/* Time Ruler */
+
+/* Timeline segment styling - works for both timeline and ruler segments */
+.i-timeline-segment {
+  height: 2px;
+  z-index: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+
+
+/* Ruler segments use flexbox layout with horizontal flow */
+.i-time-ruler .i-timeline-segment {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
