@@ -27,6 +27,10 @@ When you’re working on data, the viewer in dev fetches from the editor’s exp
 - **Endpoint:** `GET /api/export/dataset` — full dataset JSON (metadata, episodes, events, reveals, timelines, soundtracks, etc.).
 - With the editor running on port 5001, the viewer uses `http://localhost:5001/api/export/dataset` by default. Optional: set `VITE_EDITOR_API_URL` in `viewer/.env` to point at another URL.
 
+## Deep-linking the viewer
+
+Open the viewer with **`?t=<seconds>`** (e.g. `/timeline/viewer.html?t=2780`) to start at that playhead time. Values are clamped to the dataset duration. The URL updates (debounced) as you scrub so you can copy a shareable link. In the event panel, the **share** button (tooltip: copy link to this moment) copies a URL with **`t`** set to that event’s reveal playtime (the reveal you’re seeing at the current playhead, or the event’s first reveal if it isn’t reached yet)—not the raw playhead if you’ve moved on in the episode.
+
 ## Running
 
 - **Editor:** `cd editor && ./start-app.sh` (optionally set `TIMELINE_DATA_DIR`). The script runs `npm install` in the editor frontend automatically. Backend runs on port 5001.

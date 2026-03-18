@@ -26,7 +26,6 @@ import './ITimeline.css';
 interface ITimelineContainerProps {
   timelines: ITimeline[];
   currentTime: number;
-  onTimeChange: (time: number) => void;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   dataSelector?: React.ReactNode;
 }
@@ -34,7 +33,6 @@ interface ITimelineContainerProps {
 const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   timelines,
   currentTime,
-  onTimeChange,
   episodes = [],
   dataSelector
 }) => {
@@ -146,6 +144,11 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
 
   // Determine which event to show in the viewer (lockedEvent takes priority over activeEvent)
   const eventToShow = lockedEvent || activeEvent;
+  const handleViewerLockToggle = () => {
+    if (eventToShow) {
+      handleEventClick(eventToShow);
+    }
+  };
 
   return (
     <div className="timeline-container">
@@ -173,7 +176,8 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         currentTime={currentTime}
         episodes={episodes}
         isLocked={!!lockedEvent}
-        initialWidthPercent={15}
+        onToggleLock={handleViewerLockToggle}
+        initialWidthPercent={22}
         minWidthPercent={10}
         maxWidthPercent={50}
       />

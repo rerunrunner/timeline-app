@@ -8,6 +8,16 @@ import Controller from './components/Controller'
 import DataSelector, { type DataFile } from './components/DataSelector'
 import './App.css'
 
+/** Parse `?t=<seconds>` for deep-linking (non-negative number). */
+function readTimeFromUrl(): number | null {
+  if (typeof window === 'undefined') return null
+  const raw = new URLSearchParams(window.location.search).get('t')
+  if (raw == null || raw === '') return null
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return null
+  return n
+}
+
 function getEditorBaseUrl(): string | null {
   const url = import.meta.env.VITE_EDITOR_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5001/api/export/dataset' : null)
   if (!url) return null
@@ -27,6 +37,8 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const prevSelectedDataFileRef = useRef<string | null>(null)
+  const urlTimeAppliedRef = useRef(false)
+  const urlSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const loadDataFiles = async () => {
     try {
@@ -162,6 +174,39 @@ function App() {
     }
   }, [selectedDataFile, dataFiles])
 
+  // Deep-link: ?t=<seconds> on first load after data is ready
+  useEffect(() => {
+    if (itimelines.length === 0 || totalDuration <= 0) return
+    if (urlTimeAppliedRef.current) return
+    urlTimeAppliedRef.current = true
+    const sec = readTimeFromUrl()
+    if (sec != null) {
+      setCurrentTime(Math.min(Math.max(0, sec), totalDuration))
+    }
+  }, [itimelines.length, totalDuration])
+
+  // Keep URL in sync (debounced) so users can copy a shareable link
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (urlSyncTimerRef.current) clearTimeout(urlSyncTimerRef.current)
+    urlSyncTimerRef.current = setTimeout(() => {
+      urlSyncTimerRef.current = null
+      const params = new URLSearchParams(window.location.search)
+      const rounded = Math.round(currentTime)
+      if (rounded <= 0) params.delete('t')
+      else params.set('t', String(rounded))
+      const q = params.toString()
+      const path = window.location.pathname + window.location.hash
+      const next = q ? `${path}?${q}` : path
+      if (next !== window.location.pathname + window.location.search + window.location.hash) {
+        window.history.replaceState(null, '', next)
+      }
+    }, 350)
+    return () => {
+      if (urlSyncTimerRef.current) clearTimeout(urlSyncTimerRef.current)
+    }
+  }, [currentTime])
+
   const handleDataFileChange = (dataFileId: string) => {
     setSelectedDataFile(dataFileId)
   }
@@ -193,7 +238,6 @@ function App() {
       <ITimelineContainer
         timelines={itimelines}
         currentTime={currentTime}
-        onTimeChange={handleTimeChange}
         episodes={currentDataFile?.data.episodes}
         dataSelector={dataSelector}
       />

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -123,4 +125,12 @@ button:focus-visible {
 .timeline-viewer, .reveal-viewer {
   width: 100%;
   grid-row: span 1;
+}
+
+.event-viewer {
+  font-family: 'Lato', sans-serif;
+}
+
+.event-viewer-title {
+  font-family: 'Lato', sans-serif;
 }

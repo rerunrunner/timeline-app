@@ -7,6 +7,7 @@ interface ResizableEventViewerProps {
   currentTime?: number;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   isLocked?: boolean;
+  onToggleLock?: () => void;
   initialWidthPercent?: number;
   minWidthPercent?: number;
   maxWidthPercent?: number;
@@ -17,6 +18,7 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
   currentTime = 0,
   episodes = [],
   isLocked = false,
+  onToggleLock,
   initialWidthPercent = 25,
   minWidthPercent = 10,
   maxWidthPercent = 50
@@ -101,6 +103,7 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
             currentTime={currentTime}
             episodes={episodes}
             isLocked={isLocked}
+            onToggleLock={onToggleLock}
           />
         </div>
       </div>
