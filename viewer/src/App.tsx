@@ -3,8 +3,6 @@ import SockJS from 'sockjs-client'
 import { Stomp } from '@stomp/stompjs'
 import { hydrate } from './utils/hydrate/index'
 import type { ITimeline } from './types/interfaces'
-import Header from './components/Header'
-import Footer from './components/Footer'
 import { ITimelineContainer } from './components/ITimeline/Container'
 import Controller from './components/Controller'
 import DataSelector, { type DataFile } from './components/DataSelector'
@@ -175,32 +173,29 @@ function App() {
   // Get current data file for episodes
   const currentDataFile = dataFiles.find(df => df.id === selectedDataFile)
 
+  const dataSelector =
+    isLoading ? (
+      <div className="text-sm text-gray-500">Loading data files...</div>
+    ) : dataFiles.length === 0 ? (
+      <div className="text-sm text-amber-600">
+        No dataset. Start the editor or set VITE_EDITOR_API_URL to the export endpoint.
+      </div>
+    ) : (
+      <DataSelector
+        dataFiles={dataFiles}
+        selectedDataFile={selectedDataFile}
+        onDataFileChange={handleDataFileChange}
+      />
+    )
+
   return (
     <div className="app">
-      <Header 
-        title={currentDataFile?.data.metadata?.name || 'Timeline Viewer'}
-        dataSelector={
-          isLoading ? (
-            <div className="text-sm text-gray-500">Loading data files...</div>
-          ) : dataFiles.length === 0 ? (
-            <div className="text-sm text-amber-600">
-              No dataset. Start the editor or set VITE_EDITOR_API_URL to the export endpoint.
-            </div>
-          ) : (
-            <DataSelector 
-              dataFiles={dataFiles}
-              selectedDataFile={selectedDataFile}
-              onDataFileChange={handleDataFileChange}
-            />
-          )
-        }
-      />
-      {/* Immutable Timeline System */}
       <ITimelineContainer
         timelines={itimelines}
         currentTime={currentTime}
         onTimeChange={handleTimeChange}
         episodes={currentDataFile?.data.episodes}
+        dataSelector={dataSelector}
       />
       
       <Controller 
@@ -210,7 +205,6 @@ function App() {
         episodes={currentDataFile?.data.episodes}
         episodeLabel="Ep"
       />
-      <Footer />
     </div>
   )
 }

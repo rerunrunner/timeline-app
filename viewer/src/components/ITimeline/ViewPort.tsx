@@ -24,6 +24,8 @@ interface ViewPortProps {
   onEventHoverEnd: () => void;
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
+  /** Dataset picker (loading / empty / select) — shown next to timeline width */
+  dataSelector?: React.ReactNode;
 }
 
 export default function ViewPort({
@@ -35,7 +37,8 @@ export default function ViewPort({
   onEventHover,
   onEventHoverEnd,
   lockedEvent,
-  activeEvent
+  activeEvent,
+  dataSelector
 }: ViewPortProps) {
   const [timelineWidth, setTimelineWidth] = useState(100); // Default to 200%
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false); // Default to enabled
@@ -45,6 +48,9 @@ export default function ViewPort({
       {/* Timeline Controls - Fixed position outside scrollable area */}
       <div className="timeline-controls">
         <div className="timeline-width-control">
+          {dataSelector != null ? (
+            <div className="timeline-data-selector">{dataSelector}</div>
+          ) : null}
           <label htmlFor="timeline-width-slider" className="width-control-label">
             Timeline Width: {timelineWidth}%
           </label>

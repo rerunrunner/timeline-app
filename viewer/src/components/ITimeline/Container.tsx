@@ -28,13 +28,15 @@ interface ITimelineContainerProps {
   currentTime: number;
   onTimeChange: (time: number) => void;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
+  dataSelector?: React.ReactNode;
 }
 
 const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   timelines,
   currentTime,
   onTimeChange,
-  episodes = []
+  episodes = [],
+  dataSelector
 }) => {
   // State for managing timeline interactions
   const [lockedEvent, setLockedEvent] = useState<IEvent | null>(null);
@@ -163,6 +165,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         onEventHoverEnd={handleEventHoverEnd}
         lockedEvent={lockedEvent}
         activeEvent={activeEvent}
+        dataSelector={dataSelector}
       />
       
       <ResizableEventViewer
