@@ -116,114 +116,58 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
     setScrubbingLocation(newLocation);
   };
 
-  if (isMobile) {
-    return (
-      <div className="player-controls player-controls--mobile">
-        <div className="player-controls-mobile-cols">
-          <div className="player-controls-mobile-left">
-            <div className="player-controls-scrub">
-              <Playbar
-                currentTime={currentTime}
-                totalDuration={totalDuration}
-                onTimeChange={onTimeChange}
-                updateScrubbingLocation={updateScrubbingLocation}
-                isScrubbing={isScrubbing}
-                episodes={episodes}
-                episodeLabel={episodeLabel}
-              />
-            </div>
-            <div className="player-controls-mobile-buttons">
-              <button
-                className="player-controls-play"
-                onClick={handlePlayPause}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? '⏸' : '▶'}
-              </button>
-              <div className="player-controls-speeds">
-                {speeds.map((speed) => (
-                  <label key={speed} className="player-controls-speed-label">
-                    <input
-                      type="radio"
-                      name="playbackSpeed"
-                      value={speed}
-                      checked={playbackSpeed === speed}
-                      onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                      className="sr-only"
-                    />
-                    <span className={`player-controls-speed-btn ${playbackSpeed === speed ? 'player-controls-speed-btn--active' : ''}`}>
-                      {speed}x
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="player-controls-mobile-right">
-            <EpisodeTimeSelector
+  // Same two-column layout for all: left = scrub bar + play + speeds, right = ep/time. Episode markers hidden only on mobile via CSS.
+  return (
+    <div className={`player-controls ${isMobile ? 'player-controls--mobile' : ''}`}>
+      <div className="player-controls-mobile-cols">
+        <div className="player-controls-mobile-left">
+          <div className="player-controls-scrub">
+            <Playbar
               currentTime={currentTime}
+              totalDuration={totalDuration}
               onTimeChange={onTimeChange}
-              episodes={episodes}
               updateScrubbingLocation={updateScrubbingLocation}
-              compact
+              isScrubbing={isScrubbing}
+              episodes={episodes}
+              episodeLabel={episodeLabel}
             />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="player-controls">
-      <div className="player-controls-inner flex flex-wrap items-center gap-4">
-        <div className="flex flex-col gap-1">
-          <div className="speed-row flex flex-col gap-1">
-            {speeds.map((speed) => (
-              <label key={speed} className="cursor-pointer">
-                <input
-                  type="radio"
-                  name="playbackSpeed"
-                  value={speed}
-                  checked={playbackSpeed === speed}
-                  onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                  className="sr-only"
-                />
-                <span className={`block px-2 py-1 text-xs rounded transition-colors text-center ${
-                  playbackSpeed === speed 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}>
-                  {speed}x
-                </span>
-              </label>
-            ))}
+          <div className="player-controls-mobile-buttons">
+            <button
+              className="player-controls-play"
+              onClick={handlePlayPause}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+            <div className="player-controls-speeds">
+              {speeds.map((speed) => (
+                <label key={speed} className="player-controls-speed-label">
+                  <input
+                    type="radio"
+                    name="playbackSpeed"
+                    value={speed}
+                    checked={playbackSpeed === speed}
+                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                    className="sr-only"
+                  />
+                  <span className={`player-controls-speed-btn ${playbackSpeed === speed ? 'player-controls-speed-btn--active' : ''}`}>
+                    {speed}x
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
-
-        <button 
-          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors text-lg w-10 h-8 flex items-center justify-center"
-          onClick={handlePlayPause}
-        >
-          {isPlaying ? '⏸' : '▶'}
-        </button>
-
-        <div className="min-w-0 flex-1 basis-[18rem]">
-          <Playbar 
+        <div className="player-controls-mobile-right">
+          <EpisodeTimeSelector
             currentTime={currentTime}
-            totalDuration={totalDuration}
             onTimeChange={onTimeChange}
-            updateScrubbingLocation={updateScrubbingLocation}
-            isScrubbing={isScrubbing}
             episodes={episodes}
-            episodeLabel={episodeLabel}
+            updateScrubbingLocation={updateScrubbingLocation}
+            compact
           />
         </div>
-        <EpisodeTimeSelector 
-          currentTime={currentTime}
-          onTimeChange={onTimeChange}
-          episodes={episodes}
-          updateScrubbingLocation={updateScrubbingLocation}
-        />
       </div>
     </div>
   )
