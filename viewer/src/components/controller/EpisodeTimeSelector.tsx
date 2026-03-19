@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import type { MutableRefObject } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import './controller.css';
 
 interface EpisodeTimeSelectorProps {
@@ -24,6 +24,8 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Calculate which episode we're currently in and time within that episode
   const getCurrentEpisodeAndTime = () => {
@@ -159,40 +161,122 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
     setIsEditing(true);
   };
 
-  const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newEpisodeId = e.target.value;
+  const selectEpisodeById = (newEpisodeId: string) => {
     onEpisodeChange?.(newEpisodeId);
-    
-    // Calculate the start time of the selected episode
     let cumulativeTime = 0;
     for (const episode of episodes) {
       if (episode.id === newEpisodeId) {
-        // Jump to the beginning of this episode
-        const newTime = cumulativeTime;
-        
-        // Set scrubbing location for smooth animation
-        updateScrubbingLocation(newTime);
-        
+        updateScrubbingLocation(cumulativeTime);
         break;
       }
       cumulativeTime += episode.duration;
     }
   };
 
+  const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    selectEpisodeById(e.target.value);
+  };
+
+  // Close dropdown when clicking outside (compact mode)
+  useEffect(() => {
+    if (!compact || !dropdownOpen) return;
+    const close = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      const portal = document.getElementById('episode-dropdown-portal');
+      if (portal?.contains(target)) return;
+      setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('touchstart', close, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('touchstart', close);
+    };
+  }, [compact, dropdownOpen]);
+
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!compact || !dropdownOpen || !triggerRef.current) {
+      setDropdownPosition(null);
+      return;
+    }
+    const el = triggerRef.current;
+    const rect = el.getBoundingClientRect();
+    setDropdownPosition({
+      left: rect.left,
+      top: rect.bottom + 4,
+      width: rect.width,
+    });
+  }, [compact, dropdownOpen]);
+
+  const dropdownPortal = compact && dropdownOpen && dropdownPosition && typeof document !== 'undefined' && (
+    createPortal(
+      <div
+        id="episode-dropdown-portal"
+        className="episode-dropdown-portal"
+        style={{
+          position: 'fixed',
+          left: dropdownPosition.left,
+          top: dropdownPosition.top,
+          zIndex: 10000,
+          minWidth: dropdownPosition.width,
+        }}
+      >
+        <ul className="episode-dropdown-list" role="listbox">
+          {episodes.map((episode) => (
+            <li
+              key={episode.id}
+              role="option"
+              aria-selected={episode.id === episodeId}
+              className={`episode-dropdown-option ${episode.id === episodeId ? 'episode-dropdown-option--selected' : ''}`}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                selectEpisodeById(episode.id);
+                setDropdownOpen(false);
+              }}
+            >
+              Ep {episode.episodeNumber}
+            </li>
+          ))}
+        </ul>
+      </div>,
+      document.body
+    )
+  );
+
   return (
     <div className={`episode-time-selector ${compact ? 'episode-time-selector--compact' : ''}`}>
       <div className={`episode-time-selector-container ${compact ? 'episode-time-selector-container--compact' : ''}`}>
-        <select 
-          className="episode-select"
-          value={episodeId}
-          onChange={handleEpisodeChange}
-        >
-          {episodes.map(episode => (
-            <option key={episode.id} value={episode.id}>
-              Ep {episode.episodeNumber}
-            </option>
-          ))}
-        </select>
+        {compact ? (
+          <>
+            <button
+              ref={triggerRef}
+              type="button"
+              className="episode-select episode-select-trigger"
+              onClick={() => setDropdownOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={dropdownOpen}
+              aria-label="Select episode"
+            >
+              Ep {episodeNumber}
+            </button>
+            {dropdownPortal}
+          </>
+        ) : (
+          <select
+            className="episode-select"
+            value={episodeId}
+            onChange={handleEpisodeChange}
+          >
+            {episodes.map(episode => (
+              <option key={episode.id} value={episode.id}>
+                Ep {episode.episodeNumber}
+              </option>
+            ))}
+          </select>
+        )}
         {!compact && <div className="episode-time-divider"></div>}
         <input 
           className="episode-time-input" 
