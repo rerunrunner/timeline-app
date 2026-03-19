@@ -111,7 +111,7 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
 
   return (
     <div className="player-controls">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {/* Playback Speed Controls */}
         <div className="flex flex-col gap-1">
           <div className="flex flex-col gap-1">
@@ -144,7 +144,8 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
           {isPlaying ? '⏸' : '▶'}
         </button>
         
-        <Playbar 
+        <div className="min-w-0 flex-1 basis-[18rem]">
+          <Playbar 
           currentTime={currentTime}
           totalDuration={totalDuration}
           onTimeChange={onTimeChange}
@@ -152,7 +153,8 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
           isScrubbing={isScrubbing}
           episodes={episodes}
           episodeLabel={episodeLabel}
-        />
+          />
+        </div>
         <EpisodeTimeSelector 
           currentTime={currentTime}
           onTimeChange={onTimeChange}

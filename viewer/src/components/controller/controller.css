@@ -88,6 +88,7 @@
 .playbar-container {
   flex: 1;
   position: relative;
+  min-width: 0;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -206,9 +207,9 @@
 }
 
 .playbar-track {
-  height: 0.5rem;
+  height: 1rem;
   background-color: #e5e7eb;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
   margin: 0 0.5rem;
   position: relative;
   cursor: pointer;
@@ -217,14 +218,15 @@
   -moz-user-select: none;
   -ms-user-select: none;
   top: 0.5rem;
+  touch-action: none;
 }
 
 .playbar-progress {
   position: absolute;
   top: 0;
-  height: 0.5rem;
+  height: 1rem;
   background-color: #60a5fa;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -234,10 +236,10 @@
 .playbar-playhead {
   position: absolute;
   top: 0;
-  height: 0.5rem;
-  width: 0.25rem;
+  height: 1rem;
+  width: 0.35rem;
   background-color: #3b82f6;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
   transition: all 0.2s ease;
   will-change: transform;
   user-select: none;
@@ -249,3 +251,18 @@
 .playbar-playhead.dragging {
   transform: scale(1.25);
 } 
+
+@media (max-width: 1024px) {
+  .playbar-container {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .episode-markers-container {
+    top: -1.75rem;
+  }
+
+  .playbar-track {
+    margin: 0;
+  }
+}

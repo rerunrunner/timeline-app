@@ -16,12 +16,12 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
   const [isDragging, setIsDragging] = useState(false);
   const [animatedTime, setAnimatedTime] = useState(currentTime);
   const playbarRef = useRef<HTMLDivElement>(null);
+  const activePointerIdRef = useRef<number | null>(null);
   const animationRef = useRef<number>();
   const previousTimeRef = useRef(currentTime);
-  const animationStartTimeRef = useRef<number>(0);
 
   // Calculate playhead position as percentage
-  const playheadPosition = (animatedTime / totalDuration) * 100;
+  const playheadPosition = totalDuration > 0 ? (animatedTime / totalDuration) * 100 : 0;
 
   // Calculate episode start positions
   const episodeMarkers = episodes.map((episode, index) => {
@@ -36,57 +36,60 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
     };
   });
 
-  // Handle mouse down on playbar
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    onDragChange?.(true);
-    
-    // Immediately update to clicked position
-    if (playbarRef.current) {
-      const rect = playbarRef.current.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
-      const newTime = (percentage / 100) * totalDuration;
-      
-      updateScrubbingLocation(newTime);
-    }
-  }, [onDragChange, totalDuration, updateScrubbingLocation]);
-
-  // Handle mouse move during drag
-  const handleMouseMove = useCallback((e: React.MouseEvent | MouseEvent) => {
-    if (!playbarRef.current) return;
+  const updateTimeFromClientX = useCallback((clientX: number) => {
+    if (!playbarRef.current || totalDuration <= 0) return;
 
     const rect = playbarRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const clickX = clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
     const newTime = (percentage / 100) * totalDuration;
-    
+
     updateScrubbingLocation(newTime);
   }, [totalDuration, updateScrubbingLocation]);
 
-  // Handle mouse up to end drag
-  const handleMouseUp = useCallback(() => {
+  // Handle pointer down on playbar
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+    activePointerIdRef.current = e.pointerId;
+    onDragChange?.(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateTimeFromClientX(e.clientX);
+  }, [onDragChange, updateTimeFromClientX]);
+
+  // Handle pointer move during drag
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || activePointerIdRef.current !== e.pointerId) return;
+    updateTimeFromClientX(e.clientX);
+  }, [isDragging, updateTimeFromClientX]);
+
+  // Handle pointer up to end drag
+  const stopDragging = useCallback((pointerId?: number) => {
+    if (pointerId !== undefined && activePointerIdRef.current !== pointerId) return;
+
     setIsDragging(false);
+    activePointerIdRef.current = null;
     onDragChange?.(false);
   }, [onDragChange]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    stopDragging(e.pointerId);
+  }, [stopDragging]);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    stopDragging(e.pointerId);
+  }, [stopDragging]);
 
   // Handle episode marker click
   const handleEpisodeClick = useCallback((episode: typeof episodeMarkers[0]) => {
     updateScrubbingLocation(episode.startTime);
   }, [updateScrubbingLocation]);
 
-  // Add global mouse event listeners
-  React.useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  useEffect(() => {
+    return () => {
+      stopDragging();
+    };
+  }, [stopDragging]);
 
   // Smooth animation between time updates
   useEffect(() => {
@@ -178,7 +181,10 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
       <div 
         ref={playbarRef}
         className="playbar-track"
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         {/* Progress bar */}
         <div 
