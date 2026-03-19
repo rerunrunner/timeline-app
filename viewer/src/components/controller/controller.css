@@ -84,6 +84,43 @@
   outline: none;
 }
 
+/* Compact (mobile): stacked ep + time, single control flush right */
+.episode-time-selector--compact {
+  align-self: flex-end;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.episode-time-selector-container--compact {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.0625rem;
+  padding: 0.25rem 0.35rem;
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+}
+
+.episode-time-selector-container--compact .episode-select {
+  padding: 0.15rem 0;
+  font-size: 0.75rem;
+  text-align: center;
+  width: 3.6rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.episode-time-selector-container--compact .episode-time-input {
+  width: 3.6rem;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
 /* Playbar */
 .playbar-container {
   flex: 1;

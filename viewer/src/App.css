@@ -859,10 +859,17 @@
     padding: 0.75rem;
   }
 
+  .timeline-viewport-container {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .resize-handle-between {
     width: 100%;
     height: 16px;
     cursor: row-resize;
+    flex-shrink: 0;
   }
 
   .resize-handle-between .resize-handle-line {
@@ -873,9 +880,10 @@
   .resizable-event-viewer {
     width: 100% !important;
     min-height: 12rem;
-    max-height: 70%;
+    max-height: 80%;
     border-left: none;
     border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
   }
 
   .event-viewer-content,
@@ -895,6 +903,45 @@
   .width-control-label {
     min-width: auto;
   }
+}
+
+/* iPhone / small phones: more room for event detail + scroll */
+@media (max-width: 480px) {
+  .timeline-container {
+    padding: 0.35rem 0.35rem 0;
+    gap: 0;
+  }
+
+  .resizable-event-viewer {
+    min-height: 10rem;
+    max-height: none;
+  }
+
+  .event-viewer-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  .event-viewer {
+    padding: 0.65rem 0.75rem;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .timeline-controls {
+    padding: 0.5rem 0.65rem;
+    gap: 0.5rem;
+  }
+
+  .timeline-viewer {
+    padding: 0.5rem;
+  }
+
+  /* Time ruler already hidden by ITimeline.css @media (max-width: 1024px) */
 }
 
 /* When an event group is hovered, bring its parent timeline to the front */

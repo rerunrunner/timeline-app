@@ -43,9 +43,146 @@ html, body, #root {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   background-color: #f9fafb;
   border-radius: 0.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .player-controls {
+    padding: 0.5rem 0.65rem;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+    border-radius: 0;
+  }
+
+  .player-controls .player-controls-inner {
+    gap: 0.5rem;
+  }
+
+  .player-controls .speed-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+  }
+
+  .player-controls .speed-row label span {
+    padding: 0.35rem 0.45rem;
+    font-size: 0.65rem;
+  }
+}
+
+/* Mobile: two columns — left = play bar + buttons, right = time selector */
+.player-controls--mobile {
+  padding: 0.4rem 0.5rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.player-controls-mobile-cols {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Left column fills remaining space */
+.player-controls-mobile-left {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.player-controls--mobile .player-controls-scrub {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.player-controls--mobile .player-controls-scrub .playbar-container {
+  min-width: 0;
+}
+
+/* Hide episode labels (Ep 1, Ep 2, End) above scrub bar on mobile */
+.player-controls--mobile .episode-markers-container {
+  display: none;
+}
+
+.player-controls--mobile .playbar-track {
+  top: 0;
+  margin: 0 0.25rem;
+}
+
+.player-controls-mobile-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Right column: anchor to the right, only as wide as content */
+.player-controls-mobile-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.player-controls-mobile-right .episode-time-selector {
+  width: fit-content;
+}
+
+.player-controls-mobile-right .episode-time-selector-container {
+  padding: 0.25rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.player-controls--mobile .player-controls-play {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.player-controls--mobile .player-controls-play:hover {
+  background-color: #2563eb;
+}
+
+.player-controls--mobile .player-controls-speeds {
+  display: flex;
+  flex-direction: row;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.player-controls--mobile .player-controls-speed-label {
+  cursor: pointer;
+}
+
+.player-controls--mobile .player-controls-speed-btn {
+  display: block;
+  padding: 0.28rem 0.4rem;
+  font-size: 0.6875rem;
+  border-radius: 0.2rem;
+  text-align: center;
+  background-color: #e5e7eb;
+  color: #374151;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.player-controls--mobile .player-controls-speed-btn--active {
+  background-color: #3b82f6;
+  color: white;
 }
 
 @layer base {

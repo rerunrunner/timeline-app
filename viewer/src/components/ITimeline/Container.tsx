@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { IEvent, ITimeline } from '../../types/interfaces';
+import type { Platform, Orientation } from '../../hooks/usePlatform';
 import ViewPort from './ViewPort';
 import ResizableEventViewer from './ResizableEventViewer';
 import './ITimeline.css';
@@ -28,13 +29,17 @@ interface ITimelineContainerProps {
   currentTime: number;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   dataSelector?: React.ReactNode;
+  platform: Platform;
+  orientation: Orientation;
 }
 
 const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   timelines,
   currentTime,
   episodes = [],
-  dataSelector
+  dataSelector,
+  platform,
+  orientation: _orientation
 }) => {
   // State for managing timeline interactions
   const [lockedEvent, setLockedEvent] = useState<IEvent | null>(null);
@@ -154,9 +159,9 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
     <div className="timeline-container">
       <ViewPort
         timelines={timelines}
-        events={timelines.flatMap(timeline => 
-          timeline.segments.flatMap(segment => 
-            segment.subSegments.flatMap(subSegment => 
+        events={timelines.flatMap(timeline =>
+            timeline.segments.flatMap(segment =>
+            segment.subSegments.flatMap(subSegment =>
               subSegment.eventGroups.flatMap(group => group.events)
             )
           )
@@ -169,6 +174,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         lockedEvent={lockedEvent}
         activeEvent={activeEvent}
         dataSelector={dataSelector}
+        platform={platform}
       />
       
       <ResizableEventViewer
@@ -180,6 +186,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         initialWidthPercent={22}
         minWidthPercent={10}
         maxWidthPercent={50}
+        platform={platform}
       />
     </div>
   );

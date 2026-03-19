@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import IEventViewer from './EventViewer';
 import type { IEvent } from '../../types/interfaces';
+import type { Platform } from '../../hooks/usePlatform';
 
 interface ResizableEventViewerProps {
   event: IEvent | null;
@@ -11,6 +12,7 @@ interface ResizableEventViewerProps {
   initialWidthPercent?: number;
   minWidthPercent?: number;
   maxWidthPercent?: number;
+  platform: Platform;
 }
 
 const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
@@ -21,41 +23,44 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
   onToggleLock,
   initialWidthPercent = 25,
   minWidthPercent = 10,
-  maxWidthPercent = 50
+  maxWidthPercent = 50,
+  platform
 }) => {
-  const [sizePercent, setSizePercent] = useState(initialWidthPercent);
+  const isNarrowLayout = platform !== 'computer';
+  const [sizePercent, setSizePercent] = useState(() => {
+    if (platform === 'mobile') return 44;
+    if (platform === 'tablet') return 34;
+    return initialWidthPercent;
+  });
   const [isResizing, setIsResizing] = useState(false);
-  const [isNarrowLayout, setIsNarrowLayout] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches
-  );
   const containerRef = useRef<HTMLDivElement>(null);
   const startPointerRef = useRef<number>(0);
   const startSizePercentRef = useRef<number>(0);
   const activePointerIdRef = useRef<number | null>(null);
   const minWidthPercentRef = useRef(minWidthPercent);
   const maxWidthPercentRef = useRef(maxWidthPercent);
-
-  // Update refs when props change
-  useEffect(() => {
-    minWidthPercentRef.current = minWidthPercent;
-    maxWidthPercentRef.current = maxWidthPercent;
-  }, [minWidthPercent, maxWidthPercent]);
+  const prevPlatformRef = useRef<Platform>(platform);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (platform === 'mobile') {
+      minWidthPercentRef.current = Math.max(minWidthPercent, 20);
+      maxWidthPercentRef.current = Math.min(maxWidthPercent, 80);
+    } else if (platform === 'tablet') {
+      minWidthPercentRef.current = Math.max(minWidthPercent, 20);
+      maxWidthPercentRef.current = Math.min(maxWidthPercent, 80);
+    } else {
+      minWidthPercentRef.current = minWidthPercent;
+      maxWidthPercentRef.current = maxWidthPercent;
+    }
+  }, [minWidthPercent, maxWidthPercent, platform]);
 
-    const mediaQuery = window.matchMedia('(max-width: 1024px)');
-    const handleLayoutChange = (event: MediaQueryListEvent) => {
-      setIsNarrowLayout(event.matches);
-    };
-
-    setIsNarrowLayout(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleLayoutChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleLayoutChange);
-    };
-  }, []);
+  useEffect(() => {
+    if (prevPlatformRef.current === platform) return;
+    prevPlatformRef.current = platform;
+    if (platform === 'mobile') setSizePercent(44);
+    else if (platform === 'tablet') setSizePercent(34);
+    else setSizePercent(initialWidthPercent);
+  }, [platform, initialWidthPercent]);
 
   // Handle pointer move during resize
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -139,6 +144,7 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
             episodes={episodes}
             isLocked={isLocked}
             onToggleLock={onToggleLock}
+            hideHeaderActions={platform === 'mobile'}
           />
         </div>
       </div>

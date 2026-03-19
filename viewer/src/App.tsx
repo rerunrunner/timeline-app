@@ -6,6 +6,7 @@ import type { ITimeline } from './types/interfaces'
 import { ITimelineContainer } from './components/ITimeline/Container'
 import Controller from './components/Controller'
 import DataSelector, { type DataFile } from './components/DataSelector'
+import { usePlatform } from './hooks/usePlatform'
 import './App.css'
 
 /** Parse `?t=<seconds>` for deep-linking (non-negative number). */
@@ -29,6 +30,7 @@ function getEditorBaseUrl(): string | null {
 }
 
 function App() {
+  const { platform, orientation } = usePlatform()
   const [dataFiles, setDataFiles] = useState<(DataFile & { data: any })[]>([])
   const [selectedDataFile, setSelectedDataFile] = useState<string>('')
   const [itimelines, setITimelines] = useState<ITimeline[]>([])
@@ -240,6 +242,8 @@ function App() {
         currentTime={currentTime}
         episodes={currentDataFile?.data.episodes}
         dataSelector={dataSelector}
+        platform={platform}
+        orientation={orientation}
       />
       
       <Controller 
@@ -248,6 +252,7 @@ function App() {
         totalDuration={totalDuration}
         episodes={currentDataFile?.data.episodes}
         episodeLabel="Ep"
+        platform={platform}
       />
     </div>
   )

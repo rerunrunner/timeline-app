@@ -103,6 +103,7 @@
 .auto-scroll-control {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -118,6 +119,11 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+.width-control-label--compact {
+  min-width: 2.5em;
+  font-size: 0.75rem;
 }
 
 .width-control-slider {
@@ -713,5 +719,12 @@
   flex-direction: row !important;
   justify-content: space-between !important;
   align-items: center !important;
+}
+
+/* Hide time ruler on narrow viewports (e.g. iPhone, stacked layout) to save vertical space */
+@media (max-width: 1024px) {
+  .i-time-ruler {
+    display: none !important;
+  }
 }
 

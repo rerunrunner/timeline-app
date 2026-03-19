@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ITimeline, IEvent } from '../../types/interfaces';
 import ITimelineComponent from './Timeline';
 import ITimeRuler from './TimeRuler';
@@ -28,6 +28,8 @@ interface ITimelineContentProps {
   activeEvent: IEvent | null;
   timelineWidth: number;
   autoScrollEnabled: boolean;
+  /** When false, time ruler is hidden (e.g. on mobile/tablet). Set by app from platform. */
+  showTimeRuler: boolean;
 }
 
 export default function ITimelineContent({ 
@@ -41,7 +43,8 @@ export default function ITimelineContent({
   lockedEvent,
   activeEvent,
   timelineWidth,
-  autoScrollEnabled
+  autoScrollEnabled,
+  showTimeRuler
 }: ITimelineContentProps) {
   const previousTimeRef = useRef(currentTime);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -84,16 +87,16 @@ export default function ITimelineContent({
       
       // Only scroll if the element is not visible in the viewport
       if (!isElementInViewport(eventGroupElement)) {
-        // Calculate the scroll position to center the element in the viewport
+        // Calculate the scroll position to center the element in the viewport (horizontal and vertical)
         const viewportRect = viewport.getBoundingClientRect();
         const elementRect = eventGroupElement.getBoundingClientRect();
         
-        // Calculate the scroll offset needed to center the element
         const scrollLeft = viewport.scrollLeft + (elementRect.left - viewportRect.left) - (viewportRect.width / 2) + (elementRect.width / 2);
+        const scrollTop = viewport.scrollTop + (elementRect.top - viewportRect.top) - (viewportRect.height / 2) + (elementRect.height / 2);
         
-        // Smooth scroll to the calculated position
         viewport.scrollTo({
           left: scrollLeft,
+          top: scrollTop,
           behavior: 'smooth'
         });
       }
@@ -152,12 +155,14 @@ export default function ITimelineContent({
       ref={viewportRef}
       style={{ width: `${timelineWidth}%`, minWidth: `${timelineWidth}%` }}
     >
-        {/* Time Ruler showing anchor dates/years */}
-        <ITimeRuler
-          globalStartTime={globalStartTime}
-          globalEndTime={globalEndTime}
-          segments={segments}        
-        />
+        {/* Time Ruler showing anchor dates/years (hidden on narrow viewports e.g. iPhone) */}
+        {showTimeRuler && (
+          <ITimeRuler
+            globalStartTime={globalStartTime}
+            globalEndTime={globalEndTime}
+            segments={segments}
+          />
+        )}
       
       {/* Render each timeline as a separate ITimeline component */}
       {timelines.map((timeline, timelineIndex) => {

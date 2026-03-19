@@ -34,6 +34,8 @@ interface IEventViewerProps {
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   isLocked?: boolean; // Whether the current event is locked
   onToggleLock?: () => void;
+  /** When true, copy and lock buttons are hidden (e.g. on mobile) */
+  hideHeaderActions?: boolean;
 }
 
 const IEventViewer: React.FC<IEventViewerProps> = ({ 
@@ -41,7 +43,8 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
   currentTime = 0, 
   episodes = [],
   isLocked = false,
-  onToggleLock
+  onToggleLock,
+  hideHeaderActions = false
 }) => {
   const [linkCopied, setLinkCopied] = useState(false);
   const headerActionClassName =
@@ -182,8 +185,9 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
         </div>
       )}
 
-      {/* Header actions */}
-      <div className="mb-6 flex w-full flex-shrink-0 items-center justify-end gap-2 border-b border-slate-100 pb-4">
+      {/* Header actions (copy link, lock) — hidden on mobile */}
+      {!hideHeaderActions && (
+        <div className="mb-6 flex w-full flex-shrink-0 items-center justify-end gap-2 border-b border-slate-100 pb-4">
           <button
             type="button"
             onClick={() => void copyLinkToMoment()}
@@ -228,8 +232,9 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
               <LockClosedIcon className="h-4 w-4" strokeWidth={1.9} />
             </span>
           </button>
-      </div>
-      
+        </div>
+      )}
+
       {/* Scrollable content area */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         <div className="space-y-8">

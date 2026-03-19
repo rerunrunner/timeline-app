@@ -9,6 +9,8 @@ interface EpisodeTimeSelectorProps {
   selectedEpisode?: string;
   onEpisodeChange?: (episodeId: string) => void;
   updateScrubbingLocation: (newLocation: number) => void;
+  /** Stack ep + time vertically, single control flush right (for mobile) */
+  compact?: boolean;
 }
 
 const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({ 
@@ -17,7 +19,8 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
   episodes = [],
   selectedEpisode,
   onEpisodeChange,
-  updateScrubbingLocation
+  updateScrubbingLocation,
+  compact = false
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -46,7 +49,7 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
     const lastEpisode = episodes[episodes.length - 1];
     return {
       episodeId: lastEpisode?.id || '',
-      episodeNumber: lastEpisode?.number || 1,
+      episodeNumber: lastEpisode?.episodeNumber || 1,
       timeInEpisode: lastEpisode?.duration || 0
     };
   };
@@ -177,8 +180,8 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
   };
 
   return (
-    <div className="episode-time-selector">
-      <div className="episode-time-selector-container">
+    <div className={`episode-time-selector ${compact ? 'episode-time-selector--compact' : ''}`}>
+      <div className={`episode-time-selector-container ${compact ? 'episode-time-selector-container--compact' : ''}`}>
         <select 
           className="episode-select"
           value={episodeId}
@@ -190,7 +193,7 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
             </option>
           ))}
         </select>
-        <div className="episode-time-divider"></div>
+        {!compact && <div className="episode-time-divider"></div>}
         <input 
           className="episode-time-input" 
           placeholder="mm:ss"

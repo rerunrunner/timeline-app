@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { IEvent, ITimeline } from '../../types/interfaces';
+import type { Platform } from '../../hooks/usePlatform';
 import ITimelineContent from './TimelineContent';
 
 /**
@@ -26,6 +27,7 @@ interface ViewPortProps {
   activeEvent: IEvent | null;
   /** Dataset picker (loading / empty / select) — shown next to timeline width */
   dataSelector?: React.ReactNode;
+  platform: Platform;
 }
 
 export default function ViewPort({
@@ -38,22 +40,31 @@ export default function ViewPort({
   onEventHoverEnd,
   lockedEvent,
   activeEvent,
-  dataSelector
+  dataSelector,
+  platform
 }: ViewPortProps) {
   const [timelineWidth, setTimelineWidth] = useState(100); // Default to 200%
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false); // Default to enabled
 
+  const isMobile = platform === 'mobile';
+
   return (
     <div className="timeline-viewport-container">
-      {/* Timeline Controls - Fixed position outside scrollable area */}
+      {/* Timeline Controls - on mobile: scale bar + jump-to-event checkbox; no data selector */}
       <div className="timeline-controls">
         <div className="timeline-width-control">
-          {dataSelector != null ? (
+          {!isMobile && dataSelector != null ? (
             <div className="timeline-data-selector">{dataSelector}</div>
           ) : null}
-          <label htmlFor="timeline-width-slider" className="width-control-label">
-            Timeline Width: {timelineWidth}%
-          </label>
+          {!isMobile ? (
+            <label htmlFor="timeline-width-slider" className="width-control-label">
+              Timeline Width: {timelineWidth}%
+            </label>
+          ) : (
+            <label htmlFor="timeline-width-slider" className="width-control-label width-control-label--compact">
+              {timelineWidth}%
+            </label>
+          )}
           <input
             id="timeline-width-slider"
             type="range"
@@ -63,18 +74,16 @@ export default function ViewPort({
             onChange={(e) => setTimelineWidth(Number(e.target.value))}
             className="width-control-slider"
           />
-        </div>
-        
-        <div className="auto-scroll-control">
-          <label className="auto-scroll-label">
+          <div className="auto-scroll-control" title="Jump to event">
             <input
               type="checkbox"
+              id="jump-to-event-checkbox"
               checked={autoScrollEnabled}
               onChange={(e) => setAutoScrollEnabled(e.target.checked)}
               className="auto-scroll-checkbox"
+              aria-label="Jump to event"
             />
-            Auto-scroll to new events
-          </label>
+          </div>
         </div>
       </div>
 
@@ -92,6 +101,7 @@ export default function ViewPort({
           activeEvent={activeEvent}
           timelineWidth={timelineWidth}
           autoScrollEnabled={autoScrollEnabled}
+          showTimeRuler={platform === 'computer'}
         />
       </div>
     </div>

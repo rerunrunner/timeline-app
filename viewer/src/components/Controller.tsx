@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import type { Platform } from '../hooks/usePlatform'
 import EpisodeTimeSelector from './controller/EpisodeTimeSelector'
 import Playbar from './controller/Playbar'
 
@@ -8,11 +9,17 @@ interface ControllerProps {
   totalDuration: number; // Total duration in seconds
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   episodeLabel?: string;
+  platform?: Platform;
 }
 
-const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, totalDuration, episodes = [], episodeLabel }) => {
+const SPEEDS_DESKTOP = [1, 60, 120, 600];
+const SPEEDS_MOBILE = [1, 60, 600];
+
+const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, totalDuration, episodes = [], episodeLabel, platform = 'computer' }) => {
+  const isMobile = platform === 'mobile';
+  const speeds = isMobile ? SPEEDS_MOBILE : SPEEDS_DESKTOP;
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1); // 1x, 60x, 120x
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [scrubbingLocation, setScrubbingLocation] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout>();
@@ -109,13 +116,69 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
     setScrubbingLocation(newLocation);
   };
 
+  if (isMobile) {
+    return (
+      <div className="player-controls player-controls--mobile">
+        <div className="player-controls-mobile-cols">
+          <div className="player-controls-mobile-left">
+            <div className="player-controls-scrub">
+              <Playbar
+                currentTime={currentTime}
+                totalDuration={totalDuration}
+                onTimeChange={onTimeChange}
+                updateScrubbingLocation={updateScrubbingLocation}
+                isScrubbing={isScrubbing}
+                episodes={episodes}
+                episodeLabel={episodeLabel}
+              />
+            </div>
+            <div className="player-controls-mobile-buttons">
+              <button
+                className="player-controls-play"
+                onClick={handlePlayPause}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? '⏸' : '▶'}
+              </button>
+              <div className="player-controls-speeds">
+                {speeds.map((speed) => (
+                  <label key={speed} className="player-controls-speed-label">
+                    <input
+                      type="radio"
+                      name="playbackSpeed"
+                      value={speed}
+                      checked={playbackSpeed === speed}
+                      onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                      className="sr-only"
+                    />
+                    <span className={`player-controls-speed-btn ${playbackSpeed === speed ? 'player-controls-speed-btn--active' : ''}`}>
+                      {speed}x
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="player-controls-mobile-right">
+            <EpisodeTimeSelector
+              currentTime={currentTime}
+              onTimeChange={onTimeChange}
+              episodes={episodes}
+              updateScrubbingLocation={updateScrubbingLocation}
+              compact
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="player-controls">
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Playback Speed Controls */}
+      <div className="player-controls-inner flex flex-wrap items-center gap-4">
         <div className="flex flex-col gap-1">
-          <div className="flex flex-col gap-1">
-            {[1, 60, 120, 600].map((speed) => (
+          <div className="speed-row flex flex-col gap-1">
+            {speeds.map((speed) => (
               <label key={speed} className="cursor-pointer">
                 <input
                   type="radio"
@@ -136,23 +199,23 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
             ))}
           </div>
         </div>
-        
+
         <button 
           className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors text-lg w-10 h-8 flex items-center justify-center"
           onClick={handlePlayPause}
         >
           {isPlaying ? '⏸' : '▶'}
         </button>
-        
+
         <div className="min-w-0 flex-1 basis-[18rem]">
           <Playbar 
-          currentTime={currentTime}
-          totalDuration={totalDuration}
-          onTimeChange={onTimeChange}
-          updateScrubbingLocation={updateScrubbingLocation}
-          isScrubbing={isScrubbing}
-          episodes={episodes}
-          episodeLabel={episodeLabel}
+            currentTime={currentTime}
+            totalDuration={totalDuration}
+            onTimeChange={onTimeChange}
+            updateScrubbingLocation={updateScrubbingLocation}
+            isScrubbing={isScrubbing}
+            episodes={episodes}
+            episodeLabel={episodeLabel}
           />
         </div>
         <EpisodeTimeSelector 
