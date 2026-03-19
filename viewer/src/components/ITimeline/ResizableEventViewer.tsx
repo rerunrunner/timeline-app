@@ -23,11 +23,15 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
   minWidthPercent = 10,
   maxWidthPercent = 50
 }) => {
-  const [widthPercent, setWidthPercent] = useState(initialWidthPercent);
+  const [sizePercent, setSizePercent] = useState(initialWidthPercent);
   const [isResizing, setIsResizing] = useState(false);
+  const [isNarrowLayout, setIsNarrowLayout] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches
+  );
   const containerRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef<number>(0);
-  const startWidthPercentRef = useRef<number>(0);
+  const startPointerRef = useRef<number>(0);
+  const startSizePercentRef = useRef<number>(0);
+  const activePointerIdRef = useRef<number | null>(null);
   const minWidthPercentRef = useRef(minWidthPercent);
   const maxWidthPercentRef = useRef(maxWidthPercent);
 
@@ -37,56 +41,87 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
     maxWidthPercentRef.current = maxWidthPercent;
   }, [minWidthPercent, maxWidthPercent]);
 
-  // Handle mouse move during resize
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!containerRef.current) return;
-    
-    const containerWidth = containerRef.current.parentElement?.offsetWidth || 1000;
-    const deltaX = startXRef.current - e.clientX; // Inverted because we're dragging from the left edge
-    const deltaPercent = (deltaX / containerWidth) * 100;
-    const newWidthPercent = Math.max(
-      minWidthPercentRef.current, 
-      Math.min(maxWidthPercentRef.current, startWidthPercentRef.current + deltaPercent)
-    );
-    setWidthPercent(newWidthPercent);
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const handleLayoutChange = (event: MediaQueryListEvent) => {
+      setIsNarrowLayout(event.matches);
+    };
+
+    setIsNarrowLayout(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleLayoutChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleLayoutChange);
+    };
   }, []);
 
-  // Handle mouse up to end resize
-  const handleMouseUp = useCallback(() => {
-    setIsResizing(false);
-    
-    // Remove global mouse event listeners
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseMove]);
+  // Handle pointer move during resize
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    if (!isResizing || activePointerIdRef.current !== e.pointerId) return;
 
-  // Handle mouse down on resize handle
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const parentSize = isNarrowLayout
+      ? containerRef.current.parentElement?.offsetHeight || 1000
+      : containerRef.current.parentElement?.offsetWidth || 1000;
+    const delta = isNarrowLayout
+      ? startPointerRef.current - e.clientY
+      : startPointerRef.current - e.clientX;
+    const deltaPercent = (delta / parentSize) * 100;
+    const newSizePercent = Math.max(
+      minWidthPercentRef.current, 
+      Math.min(maxWidthPercentRef.current, startSizePercentRef.current + deltaPercent)
+    );
+    setSizePercent(newSizePercent);
+  }, [isNarrowLayout, isResizing]);
+
+  // Handle pointer up to end resize
+  const stopResizing = useCallback((pointerId?: number) => {
+    if (pointerId !== undefined && activePointerIdRef.current !== pointerId) return;
+
+    setIsResizing(false);
+    activePointerIdRef.current = null;
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    stopResizing(e.pointerId);
+  }, [stopResizing]);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    stopResizing(e.pointerId);
+  }, [stopResizing]);
+
+  // Handle pointer down on resize handle
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
     setIsResizing(true);
-    startXRef.current = e.clientX;
-    startWidthPercentRef.current = widthPercent;
-    
-    // Add global mouse event listeners
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [widthPercent, handleMouseMove, handleMouseUp]);
+    activePointerIdRef.current = e.pointerId;
+    startPointerRef.current = isNarrowLayout ? e.clientY : e.clientX;
+    startSizePercentRef.current = sizePercent;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [isNarrowLayout, sizePercent]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      stopResizing();
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [stopResizing]);
 
   return (
     <>
       {/* Resize handle - positioned between timeline and event viewer */}
       <div 
         className={`resize-handle-between ${isResizing ? 'resizing' : ''}`}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        role="separator"
+        aria-orientation={isNarrowLayout ? 'horizontal' : 'vertical'}
       >
         <div className="resize-handle-line"></div>
       </div>
@@ -95,7 +130,7 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
       <div 
         ref={containerRef}
         className="resizable-event-viewer"
-        style={{ width: `${widthPercent}%` }}
+        style={isNarrowLayout ? { height: `${sizePercent}%` } : { width: `${sizePercent}%` }}
       >
         <div className="event-viewer-content">
           <IEventViewer
