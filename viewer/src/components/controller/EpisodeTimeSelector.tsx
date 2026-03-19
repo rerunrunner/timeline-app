@@ -206,7 +206,7 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
     const rect = el.getBoundingClientRect();
     setDropdownPosition({
       left: rect.left,
-      top: rect.bottom + 4,
+      top: rect.top - 4,
       width: rect.width,
     });
   }, [compact, dropdownOpen]);
@@ -220,6 +220,7 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
           position: 'fixed',
           left: dropdownPosition.left,
           top: dropdownPosition.top,
+          transform: 'translateY(-100%)',
           zIndex: 10000,
           minWidth: dropdownPosition.width,
         }}
