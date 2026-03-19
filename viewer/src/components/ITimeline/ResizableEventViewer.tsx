@@ -44,10 +44,10 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
   useEffect(() => {
     if (platform === 'mobile') {
       minWidthPercentRef.current = Math.max(minWidthPercent, 20);
-      maxWidthPercentRef.current = Math.min(maxWidthPercent, 80);
+      maxWidthPercentRef.current = 80;
     } else if (platform === 'tablet') {
       minWidthPercentRef.current = Math.max(minWidthPercent, 20);
-      maxWidthPercentRef.current = Math.min(maxWidthPercent, 80);
+      maxWidthPercentRef.current = 80;
     } else {
       minWidthPercentRef.current = minWidthPercent;
       maxWidthPercentRef.current = maxWidthPercent;
