@@ -36,6 +36,8 @@ interface IEventViewerProps {
   onToggleLock?: () => void;
   /** When true, copy and lock buttons are hidden (e.g. on mobile) */
   hideHeaderActions?: boolean;
+  /** Fires when user opens the OST outbound link (PostHog). */
+  onSoundtrackOutboundClick?: () => void;
 }
 
 const IEventViewer: React.FC<IEventViewerProps> = ({ 
@@ -44,7 +46,8 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
   episodes = [],
   isLocked = false,
   onToggleLock,
-  hideHeaderActions = false
+  hideHeaderActions = false,
+  onSoundtrackOutboundClick,
 }) => {
   const [linkCopied, setLinkCopied] = useState(false);
   const headerActionClassName =
@@ -281,6 +284,7 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
                     href={event.soundtrack.mediaUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
+                    onClick={onSoundtrackOutboundClick}
                     className="inline-flex items-center gap-1 text-slate-700 underline decoration-slate-300 underline-offset-4 transition-colors hover:text-sky-700 hover:decoration-sky-300"
                   >
                     {event.soundtrack.title}

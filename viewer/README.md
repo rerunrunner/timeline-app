@@ -37,6 +37,20 @@ A dynamic timeline visualization tool for non-linear narratives, built with Reac
 
 The application will be available at `http://localhost:5173`.
 
+### PostHog analytics (optional)
+
+1. Create a [PostHog](https://posthog.com) project and copy the project API key and ingest host (US/EU) from project settings.
+2. Copy `.env.example` to `.env.local` and set:
+   - `VITE_PUBLIC_POSTHOG_TOKEN` — project token
+   - `VITE_PUBLIC_POSTHOG_HOST` — e.g. `https://us.i.posthog.com` (must match your region)
+3. Restart `npm run dev`. If these variables are unset, the app runs without analytics.
+
+**Custom events:** `timeline_event_group_click` (properties: `event_group_id`, `event_id`, `lock_action` — `lock` | `unlock` | `switch`, optional `previous_locked_event_id` when switching, optional `dataset_id`), `timeline_soundtrack_outbound` (OST link: `soundtrack_id`, `soundtrack_title`, `event_id`, `event_group_id`, optional `media_host`, optional `dataset_id`), `timeline_session_started`, `timeline_session_ended` (`page_duration_ms` — time from app load to leaving the page; when a dataset had loaded, also `duration_ms` — time since timeline was ready, `dataset_id`, `path`).
+
+**Noise tuning:** The SDK is initialized with `autocapture: false`, `capture_pageview: false`, and `disable_session_recording: true` so timeline-specific events stay the signal. You can also turn off session replay in the PostHog project settings to save free-tier quota.
+
+**Validation:** With env set, open PostHog **Activity → Live events** and interact with the timeline; events should appear within a few seconds.
+
 ## 🧪 Testing
 
 Run the test suite:

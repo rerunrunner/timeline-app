@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { usePostHog } from '@posthog/react';
 import type { IEvent, ITimeline } from '../../types/interfaces';
 import type { Platform, Orientation } from '../../hooks/usePlatform';
 import ViewPort from './ViewPort';
@@ -31,6 +32,8 @@ interface ITimelineContainerProps {
   dataSelector?: React.ReactNode;
   platform: Platform;
   orientation: Orientation;
+  /** Current dataset id for analytics (PostHog). */
+  datasetId?: string;
 }
 
 const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
@@ -39,8 +42,14 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   episodes = [],
   dataSelector,
   platform,
-  orientation: _orientation
+  orientation: _orientation,
+  datasetId,
 }) => {
+  const posthog = usePostHog();
+  const analyticsEnabled = Boolean(
+    import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST
+  );
+
   // State for managing timeline interactions
   const [lockedEvent, setLockedEvent] = useState<IEvent | null>(null);
   const [activeEvent, setActiveEvent] = useState<IEvent | null>(null);
@@ -117,6 +126,24 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
    * - Click different event: locks the new event
    */
   const handleEventClick = (event: IEvent) => {
+    const lockAction: 'lock' | 'unlock' | 'switch' =
+      lockedEvent?.id === event.id
+        ? 'unlock'
+        : lockedEvent
+          ? 'switch'
+          : 'lock';
+
+    if (analyticsEnabled) {
+      posthog.capture('timeline_event_group_click', {
+        event_group_id: event.eventGroup.id,
+        event_id: event.id,
+        lock_action: lockAction,
+        ...(lockAction === 'switch' && lockedEvent
+          ? { previous_locked_event_id: lockedEvent.id }
+          : {}),
+        ...(datasetId ? { dataset_id: datasetId } : {}),
+      });
+    }
     // Toggle lock/unlock behavior
     if (lockedEvent?.id === event.id) {
       // If clicking the same event that's already locked, unlock it
@@ -155,6 +182,24 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
     }
   };
 
+  const handleSoundtrackOutboundClick = useCallback(() => {
+    if (!analyticsEnabled || !eventToShow?.soundtrack) return;
+    let mediaHost: string | undefined;
+    try {
+      mediaHost = new URL(eventToShow.soundtrack.mediaUrl).hostname;
+    } catch {
+      mediaHost = undefined;
+    }
+    posthog.capture('timeline_soundtrack_outbound', {
+      soundtrack_id: eventToShow.soundtrack.id,
+      soundtrack_title: eventToShow.soundtrack.title,
+      event_id: eventToShow.id,
+      event_group_id: eventToShow.eventGroup.id,
+      ...(mediaHost ? { media_host: mediaHost } : {}),
+      ...(datasetId ? { dataset_id: datasetId } : {}),
+    });
+  }, [analyticsEnabled, posthog, eventToShow, datasetId]);
+
   return (
     <div className="timeline-container">
       <ViewPort
@@ -187,6 +232,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         minWidthPercent={10}
         maxWidthPercent={50}
         platform={platform}
+        onSoundtrackOutboundClick={handleSoundtrackOutboundClick}
       />
     </div>
   );

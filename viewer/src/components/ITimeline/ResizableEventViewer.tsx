@@ -13,6 +13,8 @@ interface ResizableEventViewerProps {
   minWidthPercent?: number;
   maxWidthPercent?: number;
   platform: Platform;
+  /** Fires when user opens the OST outbound link (PostHog). */
+  onSoundtrackOutboundClick?: () => void;
 }
 
 const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
@@ -24,7 +26,8 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
   initialWidthPercent = 25,
   minWidthPercent = 10,
   maxWidthPercent = 50,
-  platform
+  platform,
+  onSoundtrackOutboundClick,
 }) => {
   const isNarrowLayout = platform !== 'computer';
   const [sizePercent, setSizePercent] = useState(() => {
@@ -145,6 +148,7 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
             isLocked={isLocked}
             onToggleLock={onToggleLock}
             hideHeaderActions={platform === 'mobile'}
+            onSoundtrackOutboundClick={onSoundtrackOutboundClick}
           />
         </div>
       </div>

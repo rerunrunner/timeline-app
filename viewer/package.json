@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@posthog/react": "^1.8.2",
     "@stomp/stompjs": "^7.2.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "posthog-js": "^1.363.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sockjs-client": "^1.6.1"

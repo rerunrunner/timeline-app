@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { usePostHog } from '@posthog/react'
 import SockJS from 'sockjs-client'
 import { Stomp } from '@stomp/stompjs'
 import { hydrate } from './utils/hydrate/index'
@@ -19,6 +20,11 @@ function readTimeFromUrl(): number | null {
   return n
 }
 
+/** Avoid duplicate session_started in React StrictMode (dev double-mount). */
+let timelineSessionStartLogged = false
+/** Wall-clock when dataset/timeline became ready (for `duration_ms` on exit). */
+let timelineDatasetSessionStartTs = 0
+
 function getEditorBaseUrl(): string | null {
   const url = import.meta.env.VITE_EDITOR_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5001/api/export/dataset' : null)
   if (!url) return null
@@ -30,6 +36,7 @@ function getEditorBaseUrl(): string | null {
 }
 
 function App() {
+  const posthog = usePostHog()
   const { platform, orientation } = usePlatform()
   const [dataFiles, setDataFiles] = useState<(DataFile & { data: any })[]>([])
   const [selectedDataFile, setSelectedDataFile] = useState<string>('')
@@ -41,6 +48,47 @@ function App() {
   const prevSelectedDataFileRef = useRef<string | null>(null)
   const urlTimeAppliedRef = useRef(false)
   const urlSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pageEnteredAtRef = useRef(0)
+
+  const analyticsEnabled = Boolean(
+    import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST
+  )
+
+  useEffect(() => {
+    if (!analyticsEnabled) return
+    pageEnteredAtRef.current = Date.now()
+  }, [analyticsEnabled])
+
+  useEffect(() => {
+    if (!analyticsEnabled) return
+    if (!selectedDataFile || itimelines.length === 0 || timelineSessionStartLogged) return
+    timelineSessionStartLogged = true
+    timelineDatasetSessionStartTs = Date.now()
+    posthog.capture('timeline_session_started', {
+      dataset_id: selectedDataFile,
+      path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    })
+  }, [analyticsEnabled, posthog, selectedDataFile, itimelines.length])
+
+  useEffect(() => {
+    if (!analyticsEnabled) return
+    const onPageHide = () => {
+      if (pageEnteredAtRef.current === 0) return
+      const now = Date.now()
+      const payload: Record<string, string | number> = {
+        page_duration_ms: now - pageEnteredAtRef.current,
+        path:
+          typeof window !== 'undefined' ? window.location.pathname : '',
+      }
+      if (timelineSessionStartLogged && timelineDatasetSessionStartTs > 0) {
+        payload.duration_ms = now - timelineDatasetSessionStartTs
+        payload.dataset_id = selectedDataFile
+      }
+      posthog.capture('timeline_session_ended', payload)
+    }
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [analyticsEnabled, posthog, selectedDataFile])
 
   const loadDataFiles = async () => {
     try {
@@ -244,6 +292,7 @@ function App() {
         dataSelector={dataSelector}
         platform={platform}
         orientation={orientation}
+        datasetId={selectedDataFile || undefined}
       />
       
       <Controller 
