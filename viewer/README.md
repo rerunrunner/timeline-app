@@ -45,7 +45,15 @@ The application will be available at `http://localhost:5173`.
    - `VITE_PUBLIC_POSTHOG_HOST` — e.g. `https://us.i.posthog.com` (must match your region)
 3. Restart `npm run dev`. If these variables are unset, the app runs without analytics.
 
-**Custom events:** `timeline_event_group_click` (properties: `event_group_id`, `event_id`, `lock_action` — `lock` | `unlock` | `switch`, optional `previous_locked_event_id` when switching, optional `dataset_id`), `timeline_soundtrack_outbound` (OST link: `soundtrack_id`, `soundtrack_title`, `event_id`, `event_group_id`, optional `media_host`, optional `dataset_id`), `timeline_session_started`, `timeline_session_ended` (`page_duration_ms` — time from app load to leaving the page; when a dataset had loaded, also `duration_ms` — time since timeline was ready, `dataset_id`, `path`).
+**Custom events:**
+
+- `timeline_event_hover` — pointer over an event marker or expanded row (`event_group_id`, `event_id`, optional `dataset_id`). Throttled to once per event id every 2s to limit noise.
+- `timeline_event_group_click` — lock / unlock / switch (`lock_action`, etc.; same as before).
+- `timeline_episode_marker_click` — episode chip or **End** above the scrub bar (`marker`: `episode` | `end`, `start_time_seconds`, optional `episode_id`, `episode_number`, optional `dataset_id`).
+- `timeline_scrub` — drag on the scrub track (`phase`: `start` | `end`, `time_seconds`, optional `dataset_id`).
+- `timeline_playback_toggle` — play / pause button or spacebar (`playing`: boolean, optional `dataset_id`).
+- `timeline_soundtrack_outbound` — OST outbound link.
+- `timeline_session_started` / `timeline_session_ended` — session and page duration (see above).
 
 **Noise tuning:** The SDK is initialized with `autocapture: false`, `capture_pageview: false`, and `disable_session_recording: true` so timeline-specific events stay the signal. You can also turn off session replay in the PostHog project settings to save free-tier quota.
 

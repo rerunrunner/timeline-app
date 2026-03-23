@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePostHog } from '@posthog/react'
 import SockJS from 'sockjs-client'
 import { Stomp } from '@stomp/stompjs'
@@ -265,6 +265,44 @@ function App() {
     setCurrentTime(newTime)
   }
 
+  const onPlaybackToggle = useCallback(
+    (playing: boolean) => {
+      if (!analyticsEnabled) return
+      posthog.capture('timeline_playback_toggle', {
+        playing,
+        ...(selectedDataFile ? { dataset_id: selectedDataFile } : {}),
+      })
+    },
+    [analyticsEnabled, posthog, selectedDataFile]
+  )
+
+  const onEpisodeMarkerClick = useCallback(
+    (payload: {
+      marker: 'episode' | 'end'
+      episode_id?: string
+      episode_number?: number
+      start_time_seconds: number
+    }) => {
+      if (!analyticsEnabled) return
+      posthog.capture('timeline_episode_marker_click', {
+        ...payload,
+        ...(selectedDataFile ? { dataset_id: selectedDataFile } : {}),
+      })
+    },
+    [analyticsEnabled, posthog, selectedDataFile]
+  )
+
+  const onScrubInteraction = useCallback(
+    (payload: { phase: 'start' | 'end'; time_seconds: number }) => {
+      if (!analyticsEnabled) return
+      posthog.capture('timeline_scrub', {
+        ...payload,
+        ...(selectedDataFile ? { dataset_id: selectedDataFile } : {}),
+      })
+    },
+    [analyticsEnabled, posthog, selectedDataFile]
+  )
+
   // Get current data file for episodes
   const currentDataFile = dataFiles.find(df => df.id === selectedDataFile)
 
@@ -302,6 +340,9 @@ function App() {
         episodes={currentDataFile?.data.episodes}
         episodeLabel="Ep"
         platform={platform}
+        onPlaybackToggle={onPlaybackToggle}
+        onEpisodeMarkerClick={onEpisodeMarkerClick}
+        onScrubInteraction={onScrubInteraction}
       />
     </div>
   )

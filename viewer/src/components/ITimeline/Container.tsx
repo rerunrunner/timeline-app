@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
 import type { IEvent, ITimeline } from '../../types/interfaces';
 import type { Platform, Orientation } from '../../hooks/usePlatform';
@@ -49,6 +49,10 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   const analyticsEnabled = Boolean(
     import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST
   );
+
+  /** Throttle repeated hover analytics for the same event (mouse moves across expanded rows). */
+  const hoverThrottleRef = useRef<{ eventId: string; at: number } | null>(null);
+  const HOVER_THROTTLE_MS = 2000;
 
   // State for managing timeline interactions
   const [lockedEvent, setLockedEvent] = useState<IEvent | null>(null);
@@ -161,6 +165,23 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
     // Set activeEvent on hover (only if no lockedEvent)
     if (!lockedEvent) {
       setActiveEvent(event);
+    }
+    if (analyticsEnabled) {
+      const now = Date.now();
+      const last = hoverThrottleRef.current;
+      if (
+        last &&
+        last.eventId === event.id &&
+        now - last.at < HOVER_THROTTLE_MS
+      ) {
+        return;
+      }
+      hoverThrottleRef.current = { eventId: event.id, at: now };
+      posthog.capture('timeline_event_hover', {
+        event_group_id: event.eventGroup.id,
+        event_id: event.id,
+        ...(datasetId ? { dataset_id: datasetId } : {}),
+      });
     }
   };
 

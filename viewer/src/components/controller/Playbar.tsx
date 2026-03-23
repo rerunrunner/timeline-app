@@ -10,13 +10,34 @@ interface PlaybarProps {
   onDragChange?: (isDragging: boolean) => void;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   episodeLabel?: string;
+  /** Scrub bar drag on the track (not episode markers). */
+  onScrubInteraction?: (payload: { phase: 'start' | 'end'; time_seconds: number }) => void;
+  /** Episode markers or End marker above the scrub bar. */
+  onEpisodeMarkerClick?: (payload: {
+    marker: 'episode' | 'end';
+    episode_id?: string;
+    episode_number?: number;
+    start_time_seconds: number;
+  }) => void;
 }
 
-const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeChange, updateScrubbingLocation, isScrubbing, onDragChange, episodes = [], episodeLabel = "Ep" }) => {
+const Playbar: React.FC<PlaybarProps> = ({
+  currentTime,
+  totalDuration,
+  onTimeChange,
+  updateScrubbingLocation,
+  isScrubbing,
+  onDragChange,
+  episodes = [],
+  episodeLabel = 'Ep',
+  onScrubInteraction,
+  onEpisodeMarkerClick,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [animatedTime, setAnimatedTime] = useState(currentTime);
   const playbarRef = useRef<HTMLDivElement>(null);
   const activePointerIdRef = useRef<number | null>(null);
+  const lastScrubTimeSecondsRef = useRef(0);
   const animationRef = useRef<number>();
   const previousTimeRef = useRef(currentTime);
 
@@ -44,18 +65,26 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
     const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
     const newTime = (percentage / 100) * totalDuration;
 
+    lastScrubTimeSecondsRef.current = newTime;
     updateScrubbingLocation(newTime);
   }, [totalDuration, updateScrubbingLocation]);
 
   // Handle pointer down on playbar
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-    activePointerIdRef.current = e.pointerId;
-    onDragChange?.(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
-    updateTimeFromClientX(e.clientX);
-  }, [onDragChange, updateTimeFromClientX]);
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(true);
+      activePointerIdRef.current = e.pointerId;
+      onDragChange?.(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      updateTimeFromClientX(e.clientX);
+      onScrubInteraction?.({
+        phase: 'start',
+        time_seconds: lastScrubTimeSecondsRef.current,
+      });
+    },
+    [onDragChange, onScrubInteraction, updateTimeFromClientX]
+  );
 
   // Handle pointer move during drag
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -64,13 +93,23 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
   }, [isDragging, updateTimeFromClientX]);
 
   // Handle pointer up to end drag
-  const stopDragging = useCallback((pointerId?: number) => {
-    if (pointerId !== undefined && activePointerIdRef.current !== pointerId) return;
+  const stopDragging = useCallback(
+    (pointerId?: number) => {
+      if (pointerId !== undefined && activePointerIdRef.current !== pointerId) return;
 
-    setIsDragging(false);
-    activePointerIdRef.current = null;
-    onDragChange?.(false);
-  }, [onDragChange]);
+      const hadActivePointer = activePointerIdRef.current !== null;
+      setIsDragging(false);
+      activePointerIdRef.current = null;
+      onDragChange?.(false);
+      if (hadActivePointer) {
+        onScrubInteraction?.({
+          phase: 'end',
+          time_seconds: lastScrubTimeSecondsRef.current,
+        });
+      }
+    },
+    [onDragChange, onScrubInteraction]
+  );
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     stopDragging(e.pointerId);
@@ -81,9 +120,18 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
   }, [stopDragging]);
 
   // Handle episode marker click
-  const handleEpisodeClick = useCallback((episode: typeof episodeMarkers[0]) => {
-    updateScrubbingLocation(episode.startTime);
-  }, [updateScrubbingLocation]);
+  const handleEpisodeClick = useCallback(
+    (episode: (typeof episodeMarkers)[0]) => {
+      updateScrubbingLocation(episode.startTime);
+      onEpisodeMarkerClick?.({
+        marker: 'episode',
+        episode_id: episode.id,
+        episode_number: episode.episodeNumber,
+        start_time_seconds: episode.startTime,
+      });
+    },
+    [onEpisodeMarkerClick, updateScrubbingLocation]
+  );
 
   useEffect(() => {
     return () => {
@@ -165,7 +213,13 @@ const Playbar: React.FC<PlaybarProps> = ({ currentTime, totalDuration, onTimeCha
         {/* End marker - right aligned */}
         <div 
           className="end-marker"
-          onClick={() => updateScrubbingLocation(totalDuration)}
+          onClick={() => {
+            updateScrubbingLocation(totalDuration);
+            onEpisodeMarkerClick?.({
+              marker: 'end',
+              start_time_seconds: totalDuration,
+            });
+          }}
         >
           <div className="end-marker-label">
             <div className="end-marker-badge">

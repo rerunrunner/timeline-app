@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import type { Platform } from '../hooks/usePlatform'
 import EpisodeTimeSelector from './controller/EpisodeTimeSelector'
 import Playbar from './controller/Playbar'
@@ -10,12 +10,30 @@ interface ControllerProps {
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   episodeLabel?: string;
   platform?: Platform;
+  onPlaybackToggle?: (playing: boolean) => void;
+  onEpisodeMarkerClick?: (payload: {
+    marker: 'episode' | 'end';
+    episode_id?: string;
+    episode_number?: number;
+    start_time_seconds: number;
+  }) => void;
+  onScrubInteraction?: (payload: { phase: 'start' | 'end'; time_seconds: number }) => void;
 }
 
 const SPEEDS_DESKTOP = [1, 60, 120, 600];
 const SPEEDS_MOBILE = [1, 60, 600];
 
-const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, totalDuration, episodes = [], episodeLabel, platform = 'computer' }) => {
+const Controller: React.FC<ControllerProps> = ({
+  currentTime,
+  onTimeChange,
+  totalDuration,
+  episodes = [],
+  episodeLabel,
+  platform = 'computer',
+  onPlaybackToggle,
+  onEpisodeMarkerClick,
+  onScrubInteraction,
+}) => {
   const isMobile = platform === 'mobile';
   const speeds = isMobile ? SPEEDS_MOBILE : SPEEDS_DESKTOP;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,9 +51,13 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
   }, [onTimeChange]);
 
   // Handle play/pause toggle
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
+  const handlePlayPause = useCallback(() => {
+    setIsPlaying((prev) => {
+      const next = !prev;
+      onPlaybackToggle?.(next);
+      return next;
+    });
+  }, [onPlaybackToggle]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -123,6 +145,8 @@ const Controller: React.FC<ControllerProps> = ({ currentTime, onTimeChange, tota
               isScrubbing={isScrubbing}
               episodes={episodes}
               episodeLabel={episodeLabel}
+              onScrubInteraction={onScrubInteraction}
+              onEpisodeMarkerClick={onEpisodeMarkerClick}
             />
           </div>
           <div className="player-controls-mobile-buttons">
