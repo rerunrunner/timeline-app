@@ -12,6 +12,9 @@ if (token && host) {
   posthog.init(token, {
     api_host: host,
     defaults: '2026-01-30',
+    // Default is `identified_only`: anonymous custom events show in Activity but
+    // do not build Person profiles until identify(). Timeline has no login flow.
+    person_profiles: 'always',
     autocapture: false,
     capture_pageview: false,
     disable_session_recording: true,
