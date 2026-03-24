@@ -7,4 +7,19 @@ export default defineConfig({
   define: {
     global: 'globalThis', // sockjs-client expects Node's global
   },
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/viewer-latest.js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.css')) {
+            return 'assets/viewer-latest.css'
+          }
+
+          return 'assets/[name][extname]'
+        },
+      },
+    },
+  },
 })

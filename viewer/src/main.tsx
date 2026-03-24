@@ -19,6 +19,15 @@ if (token && host) {
     capture_pageview: false,
     disable_session_recording: true,
   })
+  // In an iframe, `document.referrer` is the embedding page (e.g. the site shell),
+  // not Reddit/Tumblr/etc. The parent page passes its own referrer via
+  // `?landing_referrer=` so analytics can attribute traffic correctly.
+  const landing = new URLSearchParams(window.location.search).get('landing_referrer')
+  if (landing !== null) {
+    posthog.register_once({
+      landing_referrer: landing,
+    })
+  }
 }
 
 const root = document.getElementById('root')!
