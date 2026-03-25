@@ -4,6 +4,7 @@ import type { IEvent, ITimeline } from '../../types/interfaces';
 import type { Platform, Orientation } from '../../hooks/usePlatform';
 import ViewPort from './ViewPort';
 import ResizableEventViewer from './ResizableEventViewer';
+import { isPosthogActive } from '../../utils/posthogEnabled';
 import './ITimeline.css';
 
 /**
@@ -46,9 +47,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   datasetId,
 }) => {
   const posthog = usePostHog();
-  const analyticsEnabled = Boolean(
-    import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST
-  );
+  const analyticsEnabled = isPosthogActive;
 
   /** Throttle repeated hover analytics for the same event (mouse moves across expanded rows). */
   const hoverThrottleRef = useRef<{ eventId: string; at: number } | null>(null);

@@ -43,7 +43,7 @@ The application will be available at `http://localhost:5173`.
 2. Copy `.env.example` to `.env.local` and set:
    - `VITE_PUBLIC_POSTHOG_TOKEN` — project token
    - `VITE_PUBLIC_POSTHOG_HOST` — e.g. `https://us.i.posthog.com` (must match your region)
-3. Restart `npm run dev`. If these variables are unset, the app runs without analytics.
+3. Restart `npm run dev`. If these variables are unset, the app runs without analytics. **Local dev:** PostHog does not initialize during `npm run dev` even when token and host are set (so `.env.local` can keep production-like values). To send events from the dev server, set `VITE_PUBLIC_POSTHOG_ENABLE_IN_DEV=true` in `.env.local`.
 
 **Custom events:**
 

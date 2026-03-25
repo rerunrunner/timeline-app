@@ -8,6 +8,7 @@ import { ITimelineContainer } from './components/ITimeline/Container'
 import Controller from './components/Controller'
 import DataSelector, { type DataFile } from './components/DataSelector'
 import { usePlatform } from './hooks/usePlatform'
+import { isPosthogActive } from './utils/posthogEnabled'
 import './App.css'
 
 /** Parse `?t=<seconds>` for deep-linking (non-negative number). */
@@ -50,9 +51,7 @@ function App() {
   const urlSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageEnteredAtRef = useRef(0)
 
-  const analyticsEnabled = Boolean(
-    import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST
-  )
+  const analyticsEnabled = isPosthogActive
 
   useEffect(() => {
     if (!analyticsEnabled) return

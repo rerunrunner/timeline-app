@@ -4,11 +4,12 @@ import posthog from 'posthog-js'
 import { PostHogProvider } from '@posthog/react'
 import './index.css'
 import App from './App.tsx'
+import { isPosthogActive } from './utils/posthogEnabled'
 
 const token = import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN
 const host = import.meta.env.VITE_PUBLIC_POSTHOG_HOST
 
-if (token && host) {
+if (isPosthogActive && token && host) {
   posthog.init(token, {
     api_host: host,
     defaults: '2026-01-30',
@@ -34,7 +35,7 @@ const root = document.getElementById('root')!
 
 createRoot(root).render(
   <StrictMode>
-    {token && host ? (
+    {isPosthogActive && token && host ? (
       <PostHogProvider client={posthog}>
         <App />
       </PostHogProvider>
