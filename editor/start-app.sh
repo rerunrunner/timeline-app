@@ -1,12 +1,14 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Optional: point backend at a data repo (e.g. ../../../runner-data when run from editor/). If unset, uses ./data inside backend-java.
+# Optional: point backend at a data repo. If unset, uses ./data inside backend-java.
 export TIMELINE_DATA_DIR="${TIMELINE_DATA_DIR:-}"
 
 echo -e "${GREEN}Starting Timeline Data Editor...${NC}"
@@ -34,11 +36,18 @@ cd ..
 # Wait a moment for backend to start
 sleep 3
 
+# Install frontend dependencies once per checkout
+if [ ! -d frontend/node_modules ]; then
+  echo -e "${YELLOW}Installing frontend dependencies...${NC}"
+  cd frontend
+  npm install
+  cd ..
+fi
+
 # Start frontend
 echo -e "${YELLOW}Starting React frontend on port 5174...${NC}"
 cd frontend
-npm install
-npm run dev &
+npm run dev -- --host 127.0.0.1 --port 5174 --strictPort &
 FRONTEND_PID=$!
 cd ..
 

@@ -5,13 +5,11 @@ import { PostHogProvider } from '@posthog/react'
 import './index.css'
 import App from './App.tsx'
 import { isPosthogActive } from './utils/posthogEnabled'
+import { posthogHost, posthogToken } from './utils/runtimeConfig'
 
-const token = import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN
-const host = import.meta.env.VITE_PUBLIC_POSTHOG_HOST
-
-if (isPosthogActive && token && host) {
-  posthog.init(token, {
-    api_host: host,
+if (isPosthogActive && posthogToken && posthogHost) {
+  posthog.init(posthogToken, {
+    api_host: posthogHost,
     defaults: '2026-01-30',
     // Default is `identified_only`: anonymous custom events show in Activity but
     // do not build Person profiles until identify(). Timeline has no login flow.
@@ -35,7 +33,7 @@ const root = document.getElementById('root')!
 
 createRoot(root).render(
   <StrictMode>
-    {isPosthogActive && token && host ? (
+    {isPosthogActive && posthogToken && posthogHost ? (
       <PostHogProvider client={posthog}>
         <App />
       </PostHogProvider>

@@ -6,3 +6,11 @@ interface ImportMetaEnv {
   /** Set to `true` or `1` to send PostHog events during `npm run dev` (default is off). */
   readonly VITE_PUBLIC_POSTHOG_ENABLE_IN_DEV?: string
 }
+
+interface Window {
+  __TIMELINE_CONFIG__?: {
+    posthogToken?: string
+    posthogHost?: string
+    posthogEnableInDev?: boolean | string
+  }
+}

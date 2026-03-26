@@ -22,7 +22,7 @@ const DatasetMetadataDisplay: React.FC = () => {
   const [exportToFilesystem, setExportToFilesystem] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [exportPath, setExportPath] = useState<string>('../../../runner-data/export');
+  const [exportPath, setExportPath] = useState<string>('TIMELINE_DATA_DIR/export');
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -47,7 +47,7 @@ const DatasetMetadataDisplay: React.FC = () => {
     const fetchSettings = async () => {
       try {
         const response = await api.get('/settings');
-        setExportPath(response.data.exportPath || '../../../runner-data/export');
+        setExportPath(response.data.exportPath || 'TIMELINE_DATA_DIR/export');
       } catch (err) {
         console.error('Error fetching settings:', err);
       }
@@ -333,7 +333,7 @@ const DatasetMetadataDisplay: React.FC = () => {
         // Refresh settings to update export path display
         try {
           const response = await api.get('/settings');
-          setExportPath(response.data.exportPath || '../../../runner-data/export');
+          setExportPath(response.data.exportPath || 'TIMELINE_DATA_DIR/export');
         } catch (err) {
           console.error('Error fetching settings:', err);
         }

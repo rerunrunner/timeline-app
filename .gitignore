@@ -1,7 +1,5 @@
-# Data and local config (data lives in per-project repo, e.g. runner-data)
+# Data and local config
 editor/backend-java/data/
-# Wrong path (../../runner-data) creates this; use ../../../runner-data to point at sibling repo
-runner-data/
 
 # Viewer data dir: populated at build time from data repo; do not commit JSON
 viewer/src/data/*.json

@@ -1,227 +1,74 @@
 # Timeline Viewer
 
-A dynamic timeline visualization tool for non-linear narratives, built with React, TypeScript, and Tailwind CSS.
-
-## Features
-
-- Dynamic timeline rendering with support for multiple timelines
-- Playhead-based reveal system
-- Interactive event viewer
-- Time-based navigation controls
-- Support for mutable timelines and narrative reveals
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v18 or later)
-- npm (v9 or later)
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/timeline-viewer.git
-   cd timeline-viewer
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The application will be available at `http://localhost:5173` (or the next free port if 5173 is taken).
-
-### Publish the editor dataset to the viewer
-
-**Option A — Live while you edit (dev, no file copy)**  
-1. Start the editor so the **Java backend** is up on port **5001** (from repo root: `cd editor && ./start-app.sh`, or run the backend only from `editor/backend-java`).  
-2. In another terminal: `cd viewer && npm run dev`.  
-3. The viewer **in development mode** loads data from `http://localhost:5001/api/export/dataset` (override with `VITE_EDITOR_API_URL` if needed). Edits in the editor can trigger a refresh via WebSocket; you can also reload the viewer tab.
-
-**Option B — Write `public/dataset.json` for a static / production build**  
-1. With the same backend on **5001**, from `viewer/` run:
-   ```bash
-   npm run fetch-data
-   ```
-   (alias: `npm run publish-dataset`) — this writes [`public/dataset.json`](public/dataset.json).  
-2. Then `npm run build` or use `npm run build:static` to fetch again and build in one step.
-
-If `fetch-data` fails with “fetch failed”, the editor API is not reachable — confirm port 5001 and that the backend started.
-
-### PostHog analytics (optional)
-
-1. Create a [PostHog](https://posthog.com) project and copy the project API key and ingest host (US/EU) from project settings.
-2. Copy `.env.example` to `.env.local` and set:
-   - `VITE_PUBLIC_POSTHOG_TOKEN` — project token
-   - `VITE_PUBLIC_POSTHOG_HOST` — e.g. `https://us.i.posthog.com` (must match your region)
-3. Restart `npm run dev`. If these variables are unset, the app runs without analytics. **Local dev:** PostHog does not initialize during `npm run dev` even when token and host are set (so `.env.local` can keep production-like values). To send events from the dev server, set `VITE_PUBLIC_POSTHOG_ENABLE_IN_DEV=true` in `.env.local`.
-
-**Custom events:**
-
-- `timeline_event_hover` — pointer over an event marker or expanded row (`event_group_id`, `event_id`, optional `dataset_id`). Throttled to once per event id every 2s to limit noise.
-- `timeline_event_group_click` — lock / unlock / switch (`lock_action`, etc.; same as before).
-- `timeline_episode_marker_click` — episode chip or **End** above the scrub bar (`marker`: `episode` | `end`, `start_time_seconds`, optional `episode_id`, `episode_number`, optional `dataset_id`).
-- `timeline_scrub` — drag on the scrub track (`phase`: `start` | `end`, `time_seconds`, optional `dataset_id`).
-- `timeline_playback_toggle` — play / pause button or spacebar (`playing`: boolean, optional `dataset_id`).
-- `timeline_soundtrack_outbound` — OST outbound link.
-- `timeline_session_started` / `timeline_session_ended` — session and page duration (see above).
-
-**Noise tuning:** The SDK is initialized with `autocapture: false`, `capture_pageview: false`, and `disable_session_recording: true` so timeline-specific events stay the signal. You can also turn off session replay in the PostHog project settings to save free-tier quota.
-
-**Validation:** With env set, open PostHog **Activity → Live events** and interact with the timeline; events should appear within a few seconds.
-
-## 🧪 Testing
-
-Run the test suite:
-```bash
-npm test
-```
-
-## 📁 Project Structure
-
-```
-timeline-viewer/
-├── src/
-│   ├── components/     # React components
-│   ├── types/         # TypeScript type definitions
-│   ├── data/          # Sample and test data
-│   ├── utils/         # Utility functions
-│   └── hooks/         # Custom React hooks
-├── public/            # Static assets
-└── tests/            # Test files
-```
-
-## 📝 Data Files
-
-The application uses JSON data files that follow the `TimelineViewerTransformedSchema`. Sample data is provided in `src/data/sample-timeline.json`.
-
-### Schema Overview
-
-The data structure includes:
-- Episodes: Series episodes with metadata
-- Timelines: Multiple timeline views
-- Events: Timeline events with reveals
-- Notes: Additional context and annotations
-
-## 🎯 Implementation Progress
-
-### ✅ Step 0: Bootstrap Project
-- [x] Set up React + TypeScript + Tailwind project with Vite
-- [x] Configure development tooling and build system
-- [x] Add unit test support with Vitest and Testing Library
-- [x] Create basic project structure
-- [x] Add initial components (App, Timeline, EpisodeList)
-- [x] Set up sample data structure
-
-### ✅ Step 1: Sample Data Integration & Rendering Pipeline
-- [x] Build parser for transformed JSON data
-- [x] Implement schema validation using Ajv
-- [x] Write unit tests for schema validation
-- [x] Create data loading utility with error handling
-- [x] Set up static timeline layout
-
-### 🔄 Next Steps
-- [ ] Step 2: Static UI Layout
-- [ ] Step 3: Segment Scaling and Compression
-- [ ] Step 4: Playhead Simulation
-- [ ] Step 5: Reveal Viewer & Interactivity
-- [ ] Step 6: Timeline Visibility Logic
-- [ ] Step 7: Reveal Field Overrides
-- [ ] Step 8: Styling and Visual Transitions
-- [ ] Step 9: Finalize Controller Behavior
-- [ ] Step 10: Localization & Config Support
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+React/Vite viewer for the exported narrative dataset.
 
 ## Development
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run test` - Run tests (using Vitest)
-- `npm run lint` - Run linter
-
-## 🚀 Deployment
-
-Screenshot images are not stored in this repo. The canonical source is your data repo (e.g. `runner-data/images/`). In dev the viewer loads images from the editor API; for a static build you must copy images from the data repo before building.
-
-### Using a data-repo build script (recommended)
-
-If you use a site build script (e.g. `runner-site/scripts/build.sh`), it copies JSON from the data repo's `export/` and images from `images/` into the viewer, then runs `npm run build`. The built site serves images from `/images/screenshots/`.
-
-### Standalone zip deploy
-
-To build a deployment zip with images:
+Install dependencies once:
 
 ```bash
-# Copy images from your data repo into the viewer (one-time or from your build env)
-mkdir -p public/images/screenshots
-cp /path/to/runner-data/images/* public/images/screenshots/
-
-# Build and zip
-npm run build
-cd dist && zip -r ../timeline-viewer-deploy.zip . && cd ..
+npm install
 ```
 
-The zip contains the built app and screenshot images.
-
-### Testing
-
-The project uses Vitest for testing. To run tests:
+Run the viewer dev server:
 
 ```bash
-npm test
+npm run dev
 ```
 
-Key test files:
-- `src/utils/schema.test.ts` - Tests for data validation
-- `src/utils/dataLoader.test.ts` - Tests for data loading
-- `src/components/*.test.tsx` - Component tests
+In development, the viewer reads live data from the editor backend at `http://localhost:5001/api/export/dataset` by default. Override with `VITE_EDITOR_API_URL` if you need a different backend.
 
-The test suite includes:
-- Schema validation using Ajv
-- Data loading and error handling
-- Component rendering and interactions
+Screenshots also use the editor backend in dev, so local edits show up without copying files.
 
-## Data Structure
+## Static Build
 
-The timeline data is defined in JSON format following the schema defined in `src/types/timeline.ts`. To add or modify timeline data:
+The production build is file-based. It does **not** need a running editor.
 
-1. Create a new JSON file in the `src/data` directory
-2. Follow the schema structure for timelines, events, and reveals
-3. Import and use the data in your components
-
-## Project Structure
-
-```
-src/
-  ├── components/     # React components
-  ├── types/         # TypeScript type definitions
-  ├── data/          # Timeline data files
-  ├── utils/         # Utility functions
-  └── hooks/         # Custom React hooks
+```bash
+npm run build:static
 ```
 
-## Dependencies
+That script:
 
-Key dependencies:
-- React + TypeScript
-- Tailwind CSS for styling
-- Vitest for testing
-- Ajv and ajv-formats for JSON schema validation
-- Testing Library for component testing
+1. Reads the newest JSON export from `$TIMELINE_DATA_DIR/export`
+2. Copies screenshots from `$TIMELINE_DATA_DIR/images`
+3. Writes them into `public/`
+4. Runs the Vite build into `dist/`
 
-## Contributing
+Set `TIMELINE_DATA_DIR` to the root of your data repo before building.
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+## Optional API Export
+
+If you want to capture `public/dataset.json` from a running editor instead of from files:
+
+```bash
+npm run fetch-data
+```
+
+This uses `TIMELINE_EDITOR_API_URL` or `http://localhost:5001/api/export/dataset`.
+
+## PostHog
+
+The preferred production path is a site-provided `runtime-config.js`, not local env files.
+
+- `public/runtime-config.js` ships with analytics disabled by default
+- deployed environments can override it with real values
+- local dev remains analytics-off unless you intentionally opt in
+
+The viewer supports env-based fallback only during `npm run dev`:
+
+- `VITE_PUBLIC_POSTHOG_TOKEN`
+- `VITE_PUBLIC_POSTHOG_HOST`
+- `VITE_PUBLIC_POSTHOG_ENABLE_IN_DEV`
+
+`npm run build` and `npm run preview` now use only `runtime-config.js`, so local preview builds do not send analytics unless you intentionally populate that file.
+
+## Commands
+
+- `npm run dev` - start the dev server
+- `npm run build` - build from whatever is already in `public/`
+- `npm run prepare-static` - stage dataset and screenshots from `TIMELINE_DATA_DIR`
+- `npm run build:static` - stage files from `TIMELINE_DATA_DIR` and build
+- `npm run fetch-data` - fetch `public/dataset.json` from a running editor
+- `npm run lint` - run ESLint
+- `npm test` - run Vitest

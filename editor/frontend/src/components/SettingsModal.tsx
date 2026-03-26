@@ -99,7 +99,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               id="exportPath"
               value={formData.exportPath}
               onChange={(e) => setFormData({ ...formData, exportPath: e.target.value })}
-              placeholder="../../../runner-data/export"
+              placeholder="TIMELINE_DATA_DIR/export"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
             <p className="mt-1 text-sm text-gray-500">

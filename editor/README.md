@@ -1,180 +1,61 @@
 # Timeline Data Editor
 
-A web-based CRUD interface for managing timeline data with React frontend and Java Spring Boot backend. Designed for editing complex narrative timelines with events, reveals, episodes, and metadata.
+CRUD editor for the narrative dataset, with a React frontend and Spring Boot backend.
 
-## Features
+## What The Editor Owns
 
-- **Timeline Management**: Create and edit timelines with narrative dates and slices
-- **Event System**: Manage events with tags, types, and timing notes
-- **Reveal System**: Track when and how information is revealed to viewers
-- **Episode Management**: Organize content by episodes with durations
-- **Soundtrack Integration**: Manage OST tracks and their positioning
-- **Notes System**: Add contextual notes linked to events
-- **Dataset Export**: Export complete datasets as JSON or ZIP with images
-- **Real-time Updates**: WebSocket integration for live metadata updates
-- **Image Management**: Upload and manage screenshot images for reveals
-- **Clean UI**: Modern, responsive interface with Tailwind CSS
+- schema migrations in `backend-java/src/main/resources/db/migration/`
+- the editing UI
+- the export API used by the local viewer
+- writing updated content back into the data repo
 
-## Quick Start
+The editor does **not** own the canonical narrative data repo. It reads and writes that through `TIMELINE_DATA_DIR`.
 
-### Prerequisites
-- Java 17 or higher
-- Maven 3.6+
-- Node.js 16+ and npm
+## Data Repo Contract
 
-### Installation
+Point the backend at your data repo:
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd timeline-data-editor
-   ```
-
-2. **Install frontend dependencies**:
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-3. **Start both services**:
-   ```bash
-   ./start-app.sh
-   ```
-
-That's it! The script will start both the backend and frontend automatically.
-
-### Manual Start (Alternative)
-
-If you prefer to start services manually:
-
-**Backend** (Terminal 1):
 ```bash
-cd backend-java
-mvn spring-boot:run
+TIMELINE_DATA_DIR=/absolute/path/to/your-data-repo ./start-app.sh
 ```
 
-**Frontend** (Terminal 2):
+The backend uses:
+
+- `flyway_dump/` for content migrations
+- `images/` for reveal screenshots
+- `export/` as the default filesystem export destination
+
+## Running
+
+From `editor/`:
+
 ```bash
-cd frontend
-npm run dev
+./start-app.sh
 ```
 
-## Access Points
+This starts:
 
-- **Frontend**: http://localhost:5174
-- **Backend API**: http://localhost:5001
-- **H2 Console**: http://localhost:5001/h2-console (for database debugging)
+- frontend: `http://127.0.0.1:5174`
+- backend: `http://localhost:5001`
+- H2 console: `http://localhost:5001/h2-console`
 
-## Usage
+The startup script installs frontend dependencies only if `node_modules/` is missing.
 
-1. **Open the application** at http://localhost:5174
-2. **Navigate tables** using the sidebar to edit different data types
-3. **Add records** using the "Add New" buttons
-4. **Edit records** by clicking the edit icons
-5. **Search and filter** using the search bars
-6. **Export data** using the export button in the sidebar (with optional image inclusion)
+## Local Viewer Integration
 
-## Data Export
+The viewer dev server reads from the editor backend at `GET /api/export/dataset` and listens on `/ws` for metadata updates. That means local edits should appear in the viewer without using the filesystem export flow.
 
-The application includes a comprehensive export system:
+## Export Modes
 
-- **JSON Export**: Export dataset as JSON file
-- **ZIP Export**: Export dataset with all referenced images
-- **Automatic Versioning**: Dataset version updates on any data change
-- **Real-time Metadata**: Live updates via WebSocket
+The editor supports two different export paths:
 
-Export files are named: `{dataset-id}.{version}.{json|zip}`
+- `GET /api/export/dataset` for live local development and browser downloads
+- `POST /api/export/dataset/to-filesystem` for writing a versioned JSON or ZIP into the configured export directory
 
-## Project Structure
+Filesystem export defaults to `TIMELINE_DATA_DIR/export`.
 
-```
-timeline-data-editor/
-├── backend-java/
-│   ├── src/main/java/com/timeline/editor/
-│   │   ├── controller/          # REST API controllers
-│   │   ├── model/              # JPA entities
-│   │   ├── repository/         # Data repositories
-│   │   ├── service/            # Business logic
-│   │   └── config/             # Configuration classes
-│   ├── src/main/resources/
-│   │   ├── db/migration/       # Flyway database migrations
-│   │   └── application.properties
-│   └── data/
-│       ├── images/             # Uploaded images
-│       └── narrative.mv.db # H2 database
-├── frontend/
-│   ├── src/
-│   │   ├── components/         # React components
-│   │   ├── api/                # API client
-│   │   ├── contexts/           # React contexts
-│   │   └── styles/             # CSS styles
-│   └── package.json
-├── start-app.sh                # Unified startup script
-└── README.md
-```
+## Notes
 
-## Database Schema
-
-The application uses an H2 database with the following main entities:
-
-- **Timeline**: Narrative timelines with slices
-- **Event**: Events with tags, types, and timing
-- **Reveal**: When/how information is revealed
-- **Episode**: Episodes with durations and metadata
-- **Soundtrack**: OST tracks with positioning
-- **Note**: Contextual notes linked to events
-- **EventTag**: Tags for categorizing events
-- **DatasetMetadata**: Dataset information and versioning
-
-## API Endpoints
-
-### Core CRUD Operations
-- `GET /api/tables/{table}` - Get table data
-- `POST /api/tables/{table}` - Create record
-- `PUT /api/tables/{table}/{id}` - Update record
-- `DELETE /api/tables/{table}/{id}` - Delete record
-
-### Specialized Endpoints
-- `GET /api/metadata` - Get dataset metadata
-- `GET /api/export/dataset` - Export dataset (JSON)
-- `GET /api/export/dataset?includeImages=true` - Export with images (ZIP)
-- `POST /api/tables/reveal/{id}/image` - Upload reveal image
-- `GET /api/tables/reveal/{id}/image/{filename}` - Get reveal image
-
-### WebSocket
-- `ws://localhost:5001/ws` - WebSocket connection for real-time updates
-- `/topic/metadata` - Subscribe to metadata updates
-
-## Development
-
-### Backend Development
-- **Framework**: Spring Boot with JPA/Hibernate
-- **Database**: H2 with Flyway migrations
-- **Build Tool**: Maven
-- **Features**: REST API, WebSocket, file uploads, automatic versioning
-
-### Frontend Development
-- **Framework**: React with TypeScript
-- **Styling**: Tailwind CSS
-- **Build Tool**: Vite
-- **Features**: Real-time updates, file downloads, responsive design
-
-### Key Features Implemented
-- ✅ **Automatic Versioning**: Dataset version updates on any data change
-- ✅ **Real-time Updates**: WebSocket integration for live metadata
-- ✅ **Image Management**: Upload and serve images for reveals
-- ✅ **Data Export**: JSON and ZIP export with image inclusion
-- ✅ **Unified Startup**: Single script to start both services
-
-## Troubleshooting
-
-- **Backend won't start**: Ensure Java 17+ and Maven are installed
-- **Frontend won't start**: Run `npm install` in the frontend directory
-- **Port conflicts**: Backend uses 5001, frontend uses 5174
-- **Database issues**: Check H2 console at http://localhost:5001/h2-console
-- **Export fails**: Ensure images directory exists and has proper permissions
-
-## License
-
-This project is open source and available under the MIT License.
+- metadata updates bump the dataset version and write `V1000__data.sql` back into the data repo
+- screenshot upload writes files into `TIMELINE_DATA_DIR/images`
+- local CORS is configured for Vite dev ports on `localhost` and `127.0.0.1`

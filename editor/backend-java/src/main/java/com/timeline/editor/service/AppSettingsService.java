@@ -10,8 +10,11 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.file.Path;
 
 @Service
 public class AppSettingsService {
@@ -20,6 +23,9 @@ public class AppSettingsService {
     
     @Autowired
     private AppSettingsRepository appSettingsRepository;
+
+    @Value("${timeline.data.path:./data}")
+    private String dataPath;
     
     public AppSettings getSettings() {
         AppSettings settings = appSettingsRepository.findFirstByIdIsNotNull();
@@ -27,7 +33,7 @@ public class AppSettingsService {
             // Create default settings if none exist
             settings = new AppSettings();
             settings.setId("default");
-            settings.setExportPath("../../timeline-viewer/src/data");
+            settings.setExportPath(Path.of(dataPath, "export").toString());
             settings.setLoggingLevel("INFO");
             appSettingsRepository.save(settings);
         }

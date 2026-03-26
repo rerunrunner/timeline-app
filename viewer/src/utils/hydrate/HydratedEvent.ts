@@ -7,6 +7,14 @@ import type { NarrativeTransition } from './narrativeTransitions';
 
 type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]];
 
+function hasNonEmptyString(value: string | null | undefined): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function hasValue<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
 /**
  * Class that implements IEvent interface
  */
@@ -72,7 +80,9 @@ export class HydratedEvent implements IEvent {
     const sortedReveals = [...rawEvent.reveals].sort((a: any, b: any) => a.absolutePlayTime - b.absolutePlayTime);
     
     // Initialize with first reveal's values, then update as we process each reveal
-    let currentTitle = sortedReveals[0].displayedTitle || rawEvent.shortDescription;
+    let currentTitle = hasNonEmptyString(sortedReveals[0].displayedTitle)
+      ? sortedReveals[0].displayedTitle
+      : rawEvent.shortDescription;
     let currentDescription = sortedReveals[0].displayedDescription || '';
     let currentDate = sortedReveals[0].displayedDate || (rawEvent.narrativeDate ? new Date(rawEvent.narrativeDate).toLocaleDateString() : '');
     let currentScreenshotFilename = sortedReveals[0].screenshotFilename || null;
@@ -80,16 +90,16 @@ export class HydratedEvent implements IEvent {
     // Process each reveal and update values
     const resolvedReveals = sortedReveals.map((reveal: any) => {
       // Update current values if this reveal has non-null values
-      if (reveal.displayedTitle !== null) {
+      if (hasNonEmptyString(reveal.displayedTitle)) {
         currentTitle = reveal.displayedTitle;
       }
-      if (reveal.displayedDescription !== null) {
+      if (hasValue(reveal.displayedDescription)) {
         currentDescription = reveal.displayedDescription;
       }
-      if (reveal.displayedDate !== null) {
+      if (hasValue(reveal.displayedDate)) {
         currentDate = reveal.displayedDate;
       }
-      if (reveal.screenshotFilename !== null) {
+      if (hasValue(reveal.screenshotFilename)) {
         currentScreenshotFilename = reveal.screenshotFilename;
       }
       
@@ -183,10 +193,14 @@ export class HydratedEvent implements IEvent {
   }
   
   getTitle(playbackTime: number): string {
-    const visibleReveal = this.reveals
-      .filter(reveal => reveal.playtimeTimestamp <= playbackTime)
-      .at(-1);
-    return visibleReveal?.title || `Event ${this.id}`;
+    const visibleReveals = this.reveals.filter(reveal => reveal.playtimeTimestamp <= playbackTime);
+    for (let i = visibleReveals.length - 1; i >= 0; i -= 1) {
+      const title = visibleReveals[i].title;
+      if (hasNonEmptyString(title)) {
+        return title;
+      }
+    }
+    return this.reveals[0]?.title || `Event ${this.id}`;
   }
   
   getDescription(playbackTime: number): string {

@@ -10,7 +10,7 @@ coverage/
 dist/
 build/
 
-# Images (canonical source is data repo; build script copies from runner-data)
+# Images (canonical source is TIMELINE_DATA_DIR; build script copies from the data repo)
 public/images/
 
 # Misc
