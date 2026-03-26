@@ -8,6 +8,7 @@
     "build": "tsc && node ./node_modules/vite/bin/vite.js build",
     "build:static": "node scripts/fetch-data.js && npm run build",
     "fetch-data": "node scripts/fetch-data.js",
+    "publish-dataset": "node scripts/fetch-data.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
     "test": "vitest"

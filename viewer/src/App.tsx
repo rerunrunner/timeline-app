@@ -111,9 +111,16 @@ function App() {
                 data: { ...data, metadata: { ...data.metadata, filename } }
               })
             }
+          } else {
+            console.warn(
+              `[viewer] Editor export failed: HTTP ${res.status} ${res.statusText} (${apiUrl}). Is the backend on port 5001?`
+            )
           }
-        } catch {
-          // Editor not running; no bundled data — user must use editor or configure VITE_EDITOR_API_URL
+        } catch (err) {
+          console.warn(
+            `[viewer] Could not reach editor export (${apiUrl}). CORS, wrong URL, or backend not running.`,
+            err
+          )
         }
       }
 
@@ -309,8 +316,10 @@ function App() {
     isLoading ? (
       <div className="text-sm text-gray-500">Loading data files...</div>
     ) : dataFiles.length === 0 ? (
-      <div className="text-sm text-amber-600">
-        No dataset. Start the editor or set VITE_EDITOR_API_URL to the export endpoint.
+      <div className="text-sm text-amber-600 max-w-md">
+        No dataset. Start the editor backend on port 5001, open the viewer dev URL Vite prints (any port), or set{' '}
+        <code className="text-xs bg-amber-50 px-1 rounded">VITE_EDITOR_API_URL</code> to your export URL. Check the
+        browser console if this persists (often CORS or wrong port).
       </div>
     ) : (
       <DataSelector

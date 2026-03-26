@@ -35,7 +35,24 @@ A dynamic timeline visualization tool for non-linear narratives, built with Reac
    npm run dev
    ```
 
-The application will be available at `http://localhost:5173`.
+The application will be available at `http://localhost:5173` (or the next free port if 5173 is taken).
+
+### Publish the editor dataset to the viewer
+
+**Option A — Live while you edit (dev, no file copy)**  
+1. Start the editor so the **Java backend** is up on port **5001** (from repo root: `cd editor && ./start-app.sh`, or run the backend only from `editor/backend-java`).  
+2. In another terminal: `cd viewer && npm run dev`.  
+3. The viewer **in development mode** loads data from `http://localhost:5001/api/export/dataset` (override with `VITE_EDITOR_API_URL` if needed). Edits in the editor can trigger a refresh via WebSocket; you can also reload the viewer tab.
+
+**Option B — Write `public/dataset.json` for a static / production build**  
+1. With the same backend on **5001**, from `viewer/` run:
+   ```bash
+   npm run fetch-data
+   ```
+   (alias: `npm run publish-dataset`) — this writes [`public/dataset.json`](public/dataset.json).  
+2. Then `npm run build` or use `npm run build:static` to fetch again and build in one step.
+
+If `fetch-data` fails with “fetch failed”, the editor API is not reachable — confirm port 5001 and that the backend started.
 
 ### PostHog analytics (optional)
 
