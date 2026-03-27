@@ -25,6 +25,7 @@ Screenshots also use the editor backend in dev, so local edits show up without c
 The production build is file-based. It does **not** need a running editor.
 
 ```bash
+TIMELINE_DATA_DIR=/absolute/path/to/your-data-repo \
 npm run build:static
 ```
 
@@ -35,7 +36,7 @@ That script:
 3. Writes them into `public/`
 4. Runs the Vite build into `dist/`
 
-Set `TIMELINE_DATA_DIR` to the root of your data repo before building.
+Set `TIMELINE_DATA_DIR` to the root of your data repo before building. The build will fail if `TIMELINE_DATA_DIR/export` does not contain at least one exported dataset JSON.
 
 ## Optional API Export
 

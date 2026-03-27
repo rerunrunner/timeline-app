@@ -17,13 +17,7 @@ There are two separate contracts between the app and the data repo:
 
 ## Local Development
 
-From the `timeline-app/` repo root:
-
-```bash
-./start-dev.sh
-```
-
-Set `TIMELINE_DATA_DIR` to the root of your data repo:
+From the `timeline-app/` repo root, set `TIMELINE_DATA_DIR` and start the stack:
 
 ```bash
 TIMELINE_DATA_DIR=/absolute/path/to/your-data-repo ./start-dev.sh
@@ -48,7 +42,7 @@ npm install
 npm run build:static
 ```
 
-`build:static` does two things:
+`build:static` does three things:
 
 1. Copies the newest JSON export from `$TIMELINE_DATA_DIR/export` to `viewer/public/dataset.json`
 2. Copies `$TIMELINE_DATA_DIR/images` into `viewer/public/images/screenshots/`
