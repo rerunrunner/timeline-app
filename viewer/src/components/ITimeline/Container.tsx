@@ -33,6 +33,7 @@ interface ITimelineContainerProps {
   dataSelector?: React.ReactNode;
   platform: Platform;
   orientation: Orientation;
+  compactLandscape: boolean;
   /** Current dataset id for analytics (PostHog). */
   datasetId?: string;
 }
@@ -44,6 +45,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   dataSelector,
   platform,
   orientation: _orientation,
+  compactLandscape,
   datasetId,
 }) => {
   const posthog = usePostHog();
@@ -56,6 +58,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   // State for managing timeline interactions
   const [lockedEvent, setLockedEvent] = useState<IEvent | null>(null);
   const [activeEvent, setActiveEvent] = useState<IEvent | null>(null);
+  const [detailVisibility, setDetailVisibility] = useState<'hidden' | 'visible'>('visible');
 
   /** Get all events from timelines (same shape as used elsewhere). */
   const getAllEvents = (tls: ITimeline[]) =>
@@ -123,6 +126,10 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
     }
   }, [currentTime, timelines, lockedEvent]);
 
+  useEffect(() => {
+    setDetailVisibility(compactLandscape ? 'hidden' : 'visible');
+  }, [compactLandscape]);
+
   /**
    * Handle event click - implements toggle lock/unlock behavior
    * - Click same locked event: unlocks it
@@ -154,6 +161,9 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
     } else {
       // Otherwise, lock the clicked event
       setLockedEvent(event);
+    }
+    if (compactLandscape) {
+      setDetailVisibility('visible');
     }
   };
 
@@ -221,7 +231,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
   }, [analyticsEnabled, posthog, eventToShow, datasetId]);
 
   return (
-    <div className="timeline-container">
+    <div className={`timeline-container${compactLandscape ? ' timeline-container--compact-landscape' : ''}`}>
       <ViewPort
         timelines={timelines}
         events={timelines.flatMap(timeline =>
@@ -240,6 +250,7 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         activeEvent={activeEvent}
         dataSelector={dataSelector}
         platform={platform}
+        compactLandscape={compactLandscape}
       />
       
       <ResizableEventViewer
@@ -252,6 +263,9 @@ const ITimelineContainer: React.FC<ITimelineContainerProps> = ({
         minWidthPercent={10}
         maxWidthPercent={50}
         platform={platform}
+        compactLandscape={compactLandscape}
+        visibility={detailVisibility}
+        onVisibilityChange={setDetailVisibility}
         onSoundtrackOutboundClick={handleSoundtrackOutboundClick}
       />
     </div>

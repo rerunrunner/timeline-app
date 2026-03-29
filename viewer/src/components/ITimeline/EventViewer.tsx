@@ -203,70 +203,70 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
         </h2>
       </div>
 
-      {/* Screenshot - shown when event has been revealed and has a screenshot */}
-      {visibleReveal && screenshotSrc && (
-        <div className="mb-3 flex-shrink-0">
-          <img 
-            src={screenshotSrc} 
-            alt={`Screenshot for ${visibleReveal.title}`}
-            className="h-auto w-full rounded-2xl border border-slate-200/80 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.35)]"
-          />
-        </div>
-      )}
-
-      {/* Header actions (copy link, lock) — hidden on mobile */}
-      {!hideHeaderActions && (
-        <div className="mb-6 flex w-full flex-shrink-0 items-center justify-end gap-2 border-b border-slate-100 pb-4">
-          <button
-            type="button"
-            onClick={() => void copyLinkToMoment()}
-            className={`${headerActionClassName} ${
-              linkCopied
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-800 focus-visible:ring-emerald-400'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-800 hover:shadow-md focus-visible:ring-sky-400'
-            }`}
-            aria-label={
-              linkCopied
-                ? 'Link copied to clipboard'
-                : 'Copy link to this moment in the show'
-            }
-            title="Copy link to this moment in the show"
-          >
-            <span
-              className={`inline-flex h-4 w-4 items-center justify-center transition-transform duration-300 ${
-                linkCopied ? 'scale-110' : ''
-              }`}
-              aria-hidden="true"
-            >
-              {linkCopied ? (
-                <CheckIcon className="h-4 w-4 text-emerald-600" strokeWidth={2.25} />
-              ) : (
-                <ShareIcon className="h-4 w-4 text-sky-600/90" strokeWidth={1.75} />
-              )}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={onToggleLock}
-            className={`${headerActionClassName} ${
-              isLocked
-                ? 'border-rose-200/80 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100'
-                : 'border-gray-200 bg-white text-gray-400 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-700 hover:shadow-md'
-            }`}
-            aria-label={isLocked ? 'Unlock event' : 'Lock event'}
-            title={isLocked ? 'Unlock event' : 'Lock event'}
-            disabled={!onToggleLock}
-          >
-            <span aria-hidden="true">
-              <LockClosedIcon className="h-4 w-4" strokeWidth={1.9} />
-            </span>
-          </button>
-        </div>
-      )}
-
       {/* Scrollable content area */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         <div className="space-y-8">
+        {/* Screenshot and actions share one block to preserve the original spacing. */}
+        {(visibleReveal && screenshotSrc) || !hideHeaderActions ? (
+          <section className="flex-shrink-0">
+            {visibleReveal && screenshotSrc && (
+              <img 
+                src={screenshotSrc} 
+                alt={`Screenshot for ${visibleReveal.title}`}
+                className="mb-3 h-auto w-full rounded-2xl border border-slate-200/80 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.35)]"
+              />
+            )}
+            {!hideHeaderActions && (
+              <div className="flex w-full items-center justify-end gap-2 border-b border-slate-100 pb-4">
+              <button
+                type="button"
+                onClick={() => void copyLinkToMoment()}
+                className={`${headerActionClassName} ${
+                  linkCopied
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 focus-visible:ring-emerald-400'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-800 hover:shadow-md focus-visible:ring-sky-400'
+                }`}
+                aria-label={
+                  linkCopied
+                    ? 'Link copied to clipboard'
+                    : 'Copy link to this moment in the show'
+                }
+                title="Copy link to this moment in the show"
+              >
+                <span
+                  className={`inline-flex h-4 w-4 items-center justify-center transition-transform duration-300 ${
+                    linkCopied ? 'scale-110' : ''
+                  }`}
+                  aria-hidden="true"
+                >
+                  {linkCopied ? (
+                    <CheckIcon className="h-4 w-4 text-emerald-600" strokeWidth={2.25} />
+                  ) : (
+                    <ShareIcon className="h-4 w-4 text-sky-600/90" strokeWidth={1.75} />
+                  )}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={onToggleLock}
+                className={`${headerActionClassName} ${
+                  isLocked
+                    ? 'border-rose-200/80 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100'
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-700 hover:shadow-md'
+                }`}
+                aria-label={isLocked ? 'Unlock event' : 'Lock event'}
+                title={isLocked ? 'Unlock event' : 'Lock event'}
+                disabled={!onToggleLock}
+              >
+                <span aria-hidden="true">
+                  <LockClosedIcon className="h-4 w-4" strokeWidth={1.9} />
+                </span>
+              </button>
+              </div>
+            )}
+          </section>
+        ) : null}
+
         {/* Reveal content - shown when event has been revealed */}
         {visibleReveal && (
           <section className="flex-shrink-0">

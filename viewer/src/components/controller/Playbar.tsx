@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import './controller.css';
 
 interface PlaybarProps {
@@ -10,6 +10,7 @@ interface PlaybarProps {
   onDragChange?: (isDragging: boolean) => void;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   episodeLabel?: string;
+  showEpisodeMarkers?: boolean;
   /** Scrub bar drag on the track (not episode markers). */
   onScrubInteraction?: (payload: { phase: 'start' | 'end'; time_seconds: number }) => void;
   /** Episode markers or End marker above the scrub bar. */
@@ -30,94 +31,60 @@ const Playbar: React.FC<PlaybarProps> = ({
   onDragChange,
   episodes = [],
   episodeLabel = 'Ep',
+  showEpisodeMarkers = true,
   onScrubInteraction,
   onEpisodeMarkerClick,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [animatedTime, setAnimatedTime] = useState(currentTime);
-  const playbarRef = useRef<HTMLDivElement>(null);
-  const activePointerIdRef = useRef<number | null>(null);
+  const [draftTime, setDraftTime] = useState<number | null>(null);
   const lastScrubTimeSecondsRef = useRef(0);
-  const animationRef = useRef<number>();
-  const previousTimeRef = useRef(currentTime);
 
   // Calculate playhead position as percentage
-  const playheadPosition = totalDuration > 0 ? (animatedTime / totalDuration) * 100 : 0;
+  const displayedTime = draftTime ?? currentTime;
+  const playheadPosition = totalDuration > 0 ? (displayedTime / totalDuration) * 100 : 0;
 
   // Calculate episode start positions
-  const episodeMarkers = episodes.map((episode, index) => {
+  const episodeMarkers = useMemo(() => episodes.map((episode, index) => {
     const startTime = episodes
       .slice(0, index)
       .reduce((sum, ep) => sum + ep.duration, 0);
-    const position = (startTime / totalDuration) * 100;
+    const position = totalDuration > 0 ? (startTime / totalDuration) * 100 : 0;
     return {
       ...episode,
       startTime,
       position
     };
-  });
+  }), [episodes, totalDuration]);
 
-  const updateTimeFromClientX = useCallback((clientX: number) => {
-    if (!playbarRef.current || totalDuration <= 0) return;
+  const beginDragging = useCallback((timeSeconds: number) => {
+    if (isDragging) return;
+    setIsDragging(true);
+    onDragChange?.(true);
+    onScrubInteraction?.({
+      phase: 'start',
+      time_seconds: timeSeconds,
+    });
+  }, [isDragging, onDragChange, onScrubInteraction]);
 
-    const rect = playbarRef.current.getBoundingClientRect();
-    const clickX = clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
-    const newTime = (percentage / 100) * totalDuration;
+  const stopDragging = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    onDragChange?.(false);
+    onScrubInteraction?.({
+      phase: 'end',
+      time_seconds: lastScrubTimeSecondsRef.current,
+    });
+  }, [isDragging, onDragChange, onScrubInteraction]);
 
+  const handleRangeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = Number(e.target.value);
     lastScrubTimeSecondsRef.current = newTime;
+    if (!isDragging) {
+      beginDragging(newTime);
+    }
+    setDraftTime(newTime);
     updateScrubbingLocation(newTime);
-  }, [totalDuration, updateScrubbingLocation]);
-
-  // Handle pointer down on playbar
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(true);
-      activePointerIdRef.current = e.pointerId;
-      onDragChange?.(true);
-      e.currentTarget.setPointerCapture(e.pointerId);
-      updateTimeFromClientX(e.clientX);
-      onScrubInteraction?.({
-        phase: 'start',
-        time_seconds: lastScrubTimeSecondsRef.current,
-      });
-    },
-    [onDragChange, onScrubInteraction, updateTimeFromClientX]
-  );
-
-  // Handle pointer move during drag
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging || activePointerIdRef.current !== e.pointerId) return;
-    updateTimeFromClientX(e.clientX);
-  }, [isDragging, updateTimeFromClientX]);
-
-  // Handle pointer up to end drag
-  const stopDragging = useCallback(
-    (pointerId?: number) => {
-      if (pointerId !== undefined && activePointerIdRef.current !== pointerId) return;
-
-      const hadActivePointer = activePointerIdRef.current !== null;
-      setIsDragging(false);
-      activePointerIdRef.current = null;
-      onDragChange?.(false);
-      if (hadActivePointer) {
-        onScrubInteraction?.({
-          phase: 'end',
-          time_seconds: lastScrubTimeSecondsRef.current,
-        });
-      }
-    },
-    [onDragChange, onScrubInteraction]
-  );
-
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    stopDragging(e.pointerId);
-  }, [stopDragging]);
-
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    stopDragging(e.pointerId);
-  }, [stopDragging]);
+  }, [beginDragging, isDragging, updateScrubbingLocation]);
 
   // Handle episode marker click
   const handleEpisodeClick = useCallback(
@@ -139,58 +106,16 @@ const Playbar: React.FC<PlaybarProps> = ({
     };
   }, [stopDragging]);
 
-  // Smooth animation between time updates
   useEffect(() => {
-    
-    // If dragging or scrubbing, use currentTime directly (no animation)
-    if (isDragging || isScrubbing) {
-      setAnimatedTime(currentTime);
-      previousTimeRef.current = currentTime;
-      return;
+    if (!isDragging && !isScrubbing) {
+      setDraftTime(null);
     }
-
-    // Only animate if we have a time change and we're not dragging or scrubbing
-    if (!isDragging && !isScrubbing && currentTime !== previousTimeRef.current && !animationRef.current) {
-      
-      // Start smooth animation from previous to current time
-      const startTime = previousTimeRef.current;
-      const endTime = currentTime;
-      const startTimestamp = performance.now();
-      
-      const animate = (timestamp: number) => {
-        const elapsed = timestamp - startTimestamp;
-        const progress = Math.min(elapsed / 1000, 1); // 1 second duration
-        
-        // Interpolate between start and end time
-        const interpolatedTime = startTime + (endTime - startTime) * progress;
-        setAnimatedTime(interpolatedTime);
-        
-        // Continue animation if not complete
-        if (progress < 1) {
-          animationRef.current = requestAnimationFrame(animate);
-        } else {
-          // Animation complete, clear ref
-          animationRef.current = undefined;
-        }
-      };
-
-      animationRef.current = requestAnimationFrame(animate);
-      previousTimeRef.current = currentTime;
-    }
-
-    // Cleanup
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = undefined;
-      }
-    };
   }, [currentTime, isDragging, isScrubbing]);
 
   return (
     <div className="playbar-container">
       {/* Episode Markers - positioned above */}
-      <div className="episode-markers-container">
+      <div className={`episode-markers-container${showEpisodeMarkers ? '' : ' episode-markers-container--hidden'}`}>
         {episodeMarkers.map((episode) => (
           <div
             key={episode.id}
@@ -232,25 +157,23 @@ const Playbar: React.FC<PlaybarProps> = ({
       </div>
 
       {/* Playbar - centered with other controls */}
-      <div 
-        ref={playbarRef}
-        className="playbar-track"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-      >
-        {/* Progress bar */}
-        <div 
+      <div className="playbar-track">
+        <div
           className="playbar-progress"
           style={{ width: `${playheadPosition}%` }}
         />
-        {/* Playhead */}
-        <div 
-          className={`playbar-playhead ${isDragging ? 'dragging' : ''}`}
-          style={{ 
-            transform: `translateX(${playheadPosition}%)`
-          }}
+        <input
+          type="range"
+          min={0}
+          max={Math.max(totalDuration, 0)}
+          step={1}
+          value={Math.round(displayedTime)}
+          className={`playbar-range ${isDragging ? 'dragging' : ''}`}
+          onPointerUp={stopDragging}
+          onPointerCancel={stopDragging}
+          onBlur={stopDragging}
+          onChange={handleRangeChange}
+          aria-label="Timeline scrubber"
         />
       </div>
     </div>

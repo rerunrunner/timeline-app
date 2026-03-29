@@ -129,6 +129,154 @@ const InlineEditableNotes: React.FC<{
   );
 };
 
+const normalizeDateTimeValue = (timestamp: string | null | undefined) => {
+  if (!timestamp) return '';
+
+  const normalizedTimestamp = timestamp.trim().replace(' ', 'T').replace(/Z$/, '');
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedTimestamp)) {
+    return `${normalizedTimestamp}T00:00:00`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalizedTimestamp)) {
+    return `${normalizedTimestamp}:00`;
+  }
+
+  const isoMatch = normalizedTimestamp.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
+  if (isoMatch) {
+    return isoMatch[1];
+  }
+
+  const parsedDate = new Date(timestamp);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return normalizedTimestamp;
+  }
+
+  const pad = (value: number) => value.toString().padStart(2, '0');
+
+  return `${parsedDate.getFullYear()}-${pad(parsedDate.getMonth() + 1)}-${pad(parsedDate.getDate())}T${pad(parsedDate.getHours())}:${pad(parsedDate.getMinutes())}:${pad(parsedDate.getSeconds())}`;
+};
+
+const formatDateTimeDisplay = (timestamp: string | null | undefined) => {
+  if (!timestamp) return 'None';
+
+  try {
+    const normalizedTimestamp = normalizeDateTimeValue(timestamp);
+    const date = new Date(normalizedTimestamp);
+
+    if (Number.isNaN(date.getTime())) {
+      return timestamp;
+    }
+
+    return normalizedTimestamp.endsWith('T00:00:00')
+      ? date.toLocaleDateString()
+      : date.toLocaleString();
+  } catch {
+    return timestamp;
+  }
+};
+
+const InlineEditableDateTime: React.FC<{
+  value: string | null | undefined;
+  onSave: (value: string) => Promise<void>;
+}> = ({ value, onSave }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(normalizeDateTimeValue(value));
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(normalizeDateTimeValue(value));
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.showPicker?.();
+    }
+  }, [isEditing]);
+
+  const handleClick = () => {
+    setEditValue(normalizeDateTimeValue(value));
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditValue(normalizeDateTimeValue(value));
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    const normalizedValue = normalizeDateTimeValue(value);
+
+    if (!editValue) {
+      handleCancel();
+      return;
+    }
+
+    if (editValue === normalizedValue) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await onSave(editValue);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save timestamp:', error);
+      setEditValue(normalizedValue);
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <td className="inline-editable-cell editing">
+        <input
+          ref={inputRef}
+          type="datetime-local"
+          step={1}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            if (!isSaving) {
+              handleSave();
+            }
+          }}
+          disabled={isSaving}
+          title="Press Enter to save, Esc to cancel"
+        />
+      </td>
+    );
+  }
+
+  return (
+    <td
+      className="inline-editable-cell"
+      onClick={handleClick}
+      title="Click to edit"
+    >
+      <span className="truncated-text" title={value || 'None'}>
+        {formatDateTimeDisplay(value)}
+      </span>
+    </td>
+  );
+};
+
 const TimelineSliceEditor: React.FC = () => {
   const [timelineSlices, setTimelineSlices] = useState<any[]>([]);
   const [timelines, setTimelines] = useState<any[]>([]);
@@ -234,17 +382,6 @@ const TimelineSliceEditor: React.FC = () => {
     }
   };
 
-
-  const formatDate = (timestamp: string) => {
-    if (!timestamp) return 'None';
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleDateString();
-    } catch {
-      return timestamp;
-    }
-  };
-
   return (
     <div className="space-y-6">
       <EditorHeader
@@ -323,16 +460,14 @@ const TimelineSliceEditor: React.FC = () => {
                       recordId={slice.id}
                       onSave={handleInlineUpdate}
                     />
-                    <td>
-                      <span className="text-sm text-gray-900">
-                        {formatDate(slice.startTimestamp)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="text-sm text-gray-900">
-                        {formatDate(slice.endTimestamp)}
-                      </span>
-                    </td>
+                    <InlineEditableDateTime
+                      value={normalizeDateTimeValue(slice.startTimestamp)}
+                      onSave={(value) => handleInlineUpdate('startTimestamp', value, slice.id)}
+                    />
+                    <InlineEditableDateTime
+                      value={normalizeDateTimeValue(slice.endTimestamp)}
+                      onSave={(value) => handleInlineUpdate('endTimestamp', value, slice.id)}
+                    />
                     <td>
                       <select
                         value={slice.importance || ''}

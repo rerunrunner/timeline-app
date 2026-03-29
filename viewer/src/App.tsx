@@ -38,7 +38,7 @@ function getEditorBaseUrl(): string | null {
 
 function App() {
   const posthog = usePostHog()
-  const { platform, orientation } = usePlatform()
+  const { platform, orientation, isCompactLandscape } = usePlatform()
   const [dataFiles, setDataFiles] = useState<(DataFile & { data: any })[]>([])
   const [selectedDataFile, setSelectedDataFile] = useState<string>('')
   const [itimelines, setITimelines] = useState<ITimeline[]>([])
@@ -330,7 +330,7 @@ function App() {
     )
 
   return (
-    <div className="app">
+    <div className={`app${isCompactLandscape ? ' app--compact-landscape' : ''}`}>
       <ITimelineContainer
         timelines={itimelines}
         currentTime={currentTime}
@@ -338,6 +338,7 @@ function App() {
         dataSelector={dataSelector}
         platform={platform}
         orientation={orientation}
+        compactLandscape={isCompactLandscape}
         datasetId={selectedDataFile || undefined}
       />
       
@@ -348,6 +349,7 @@ function App() {
         episodes={currentDataFile?.data.episodes}
         episodeLabel="Ep"
         platform={platform}
+        compactLandscape={isCompactLandscape}
         onPlaybackToggle={onPlaybackToggle}
         onEpisodeMarkerClick={onEpisodeMarkerClick}
         onScrubInteraction={onScrubInteraction}

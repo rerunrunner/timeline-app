@@ -10,6 +10,7 @@ interface ControllerProps {
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
   episodeLabel?: string;
   platform?: Platform;
+  compactLandscape?: boolean;
   onPlaybackToggle?: (playing: boolean) => void;
   onEpisodeMarkerClick?: (payload: {
     marker: 'episode' | 'end';
@@ -30,34 +31,63 @@ const Controller: React.FC<ControllerProps> = ({
   episodes = [],
   episodeLabel,
   platform = 'computer',
+  compactLandscape = false,
   onPlaybackToggle,
   onEpisodeMarkerClick,
   onScrubInteraction,
 }) => {
-  const isMobile = platform === 'mobile';
-  const speeds = isMobile ? SPEEDS_MOBILE : SPEEDS_DESKTOP;
+  const isCompactUi = platform === 'mobile' || compactLandscape;
+  const speeds = isCompactUi ? SPEEDS_MOBILE : SPEEDS_DESKTOP;
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [scrubbingLocation, setScrubbingLocation] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const [overlayAwake, setOverlayAwake] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout>();
   const startTimeRef = useRef<number>(0);
   const startPositionRef = useRef<number>(0);
   const onTimeChangeRef = useRef(onTimeChange);
+  const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Update the ref when onTimeChange changes
   useEffect(() => {
     onTimeChangeRef.current = onTimeChange;
   }, [onTimeChange]);
 
+  const wakeOverlay = useCallback(() => {
+    if (!compactLandscape) return;
+    setOverlayAwake(true);
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    overlayTimerRef.current = setTimeout(() => setOverlayAwake(false), 2600);
+  }, [compactLandscape]);
+
+  useEffect(() => {
+    if (!compactLandscape) {
+      setOverlayAwake(true);
+      if (overlayTimerRef.current) {
+        clearTimeout(overlayTimerRef.current);
+        overlayTimerRef.current = null;
+      }
+      return;
+    }
+    wakeOverlay();
+    return () => {
+      if (overlayTimerRef.current) {
+        clearTimeout(overlayTimerRef.current);
+        overlayTimerRef.current = null;
+      }
+    };
+  }, [compactLandscape, wakeOverlay]);
+
   // Handle play/pause toggle
   const handlePlayPause = useCallback(() => {
+    wakeOverlay();
     setIsPlaying((prev) => {
       const next = !prev;
       onPlaybackToggle?.(next);
       return next;
     });
-  }, [onPlaybackToggle]);
+  }, [onPlaybackToggle, wakeOverlay]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -128,12 +158,18 @@ const Controller: React.FC<ControllerProps> = ({
 
   // Function to update scrubbing location (used by child components)
   const updateScrubbingLocation = (newLocation: number) => {
+    wakeOverlay();
     setScrubbingLocation(newLocation);
   };
 
   // Same two-column layout for all: left = scrub bar + play + speeds, right = ep/time. Episode markers hidden only on mobile via CSS.
   return (
-    <div className={`player-controls ${isMobile ? 'player-controls--mobile' : ''}`}>
+    <div
+      className={`player-controls ${isCompactUi ? 'player-controls--mobile' : ''}${compactLandscape ? ' player-controls--floating' : ''}${compactLandscape && !overlayAwake ? ' player-controls--dormant' : ''}`}
+      onPointerDown={wakeOverlay}
+      onPointerMove={wakeOverlay}
+      onFocusCapture={wakeOverlay}
+    >
       <div className="player-controls-mobile-cols">
         <div className="player-controls-mobile-left">
           <div className="player-controls-scrub">
@@ -145,6 +181,7 @@ const Controller: React.FC<ControllerProps> = ({
               isScrubbing={isScrubbing}
               episodes={episodes}
               episodeLabel={episodeLabel}
+              showEpisodeMarkers={!isCompactUi}
               onScrubInteraction={onScrubInteraction}
               onEpisodeMarkerClick={onEpisodeMarkerClick}
             />
@@ -182,7 +219,7 @@ const Controller: React.FC<ControllerProps> = ({
             onTimeChange={onTimeChange}
             episodes={episodes}
             updateScrubbingLocation={updateScrubbingLocation}
-            compact
+            compact={isCompactUi}
           />
         </div>
       </div>
