@@ -46,7 +46,7 @@ export default function ViewPort({
   compactLandscape
 }: ViewPortProps) {
   const [timelineWidth, setTimelineWidth] = useState(100); // Default to 200%
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(false); // Default to enabled
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [controlsOpen, setControlsOpen] = useState(false);
 
   const isMobile = platform === 'mobile';

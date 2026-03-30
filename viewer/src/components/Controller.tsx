@@ -37,6 +37,7 @@ const Controller: React.FC<ControllerProps> = ({
   onScrubInteraction,
 }) => {
   const isCompactUi = platform === 'mobile' || compactLandscape;
+  const useNativeSelects = platform !== 'computer';
   const speeds = isCompactUi ? SPEEDS_MOBILE : SPEEDS_DESKTOP;
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -172,6 +173,30 @@ const Controller: React.FC<ControllerProps> = ({
     >
       <div className="player-controls-mobile-cols">
         <div className="player-controls-mobile-left">
+          <div className="player-controls-mobile-buttons">
+            <button
+              className="player-controls-play"
+              onClick={handlePlayPause}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+            <label className={`player-controls-speed-select-wrap${useNativeSelects ? ' player-controls-speed-select-wrap--native' : ''}`}>
+              <span className="sr-only">Playback speed</span>
+              <select
+                className={`player-controls-speed-select${useNativeSelects ? ' player-controls-speed-select--native' : ''}`}
+                value={playbackSpeed}
+                onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                aria-label="Playback speed"
+              >
+                {speeds.map((speed) => (
+                  <option key={speed} value={speed}>
+                    {speed}x
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="player-controls-scrub">
             <Playbar
               currentTime={currentTime}
@@ -186,32 +211,6 @@ const Controller: React.FC<ControllerProps> = ({
               onEpisodeMarkerClick={onEpisodeMarkerClick}
             />
           </div>
-          <div className="player-controls-mobile-buttons">
-            <button
-              className="player-controls-play"
-              onClick={handlePlayPause}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <div className="player-controls-speeds">
-              {speeds.map((speed) => (
-                <label key={speed} className="player-controls-speed-label">
-                  <input
-                    type="radio"
-                    name="playbackSpeed"
-                    value={speed}
-                    checked={playbackSpeed === speed}
-                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                    className="sr-only"
-                  />
-                  <span className={`player-controls-speed-btn ${playbackSpeed === speed ? 'player-controls-speed-btn--active' : ''}`}>
-                    {speed}x
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
         </div>
         <div className="player-controls-mobile-right">
           <EpisodeTimeSelector
@@ -219,7 +218,8 @@ const Controller: React.FC<ControllerProps> = ({
             onTimeChange={onTimeChange}
             episodes={episodes}
             updateScrubbingLocation={updateScrubbingLocation}
-            compact={isCompactUi}
+            stacked
+            nativeSelect={useNativeSelects}
           />
         </div>
       </div>

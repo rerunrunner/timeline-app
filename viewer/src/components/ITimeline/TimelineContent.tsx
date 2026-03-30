@@ -51,8 +51,7 @@ export default function ITimelineContent({
 
   // Function to get the scrollable viewport element
   const getScrollableViewport = (): HTMLElement | null => {
-    // Find the parent timeline-viewer element (the actual scrollable container)
-    return document.querySelector('.timeline-viewer') as HTMLElement;
+    return viewportRef.current?.parentElement as HTMLElement | null;
   };
 
   // Function to check if an element is visible in the viewport
@@ -72,8 +71,33 @@ export default function ITimelineContent({
     );
   };
 
-  // Function to scroll to a newly revealed event (only if not visible)
-  const scrollToNewlyRevealedEvent = (event: IEvent) => {
+  const getLatestVisibleRevealTime = (event: IEvent, playbackTime: number): number | null => {
+    const visibleRevealTimes = event.reveals
+      .filter((reveal) => reveal.playtimeTimestamp <= playbackTime)
+      .map((reveal) => reveal.playtimeTimestamp);
+
+    return visibleRevealTimes.length > 0 ? Math.max(...visibleRevealTimes) : null;
+  };
+
+  const getMostRecentVisibleEvent = (playbackTime: number): IEvent | null => {
+    let latestEvent: IEvent | null = null;
+    let latestRevealTime = -1;
+
+    events.forEach((event) => {
+      const visibleRevealTime = getLatestVisibleRevealTime(event, playbackTime);
+      if (visibleRevealTime === null) return;
+
+      if (visibleRevealTime > latestRevealTime) {
+        latestRevealTime = visibleRevealTime;
+        latestEvent = event;
+      }
+    });
+
+    return latestEvent;
+  };
+
+  // Function to scroll to an event group (only if not visible)
+  const scrollToEvent = (event: IEvent) => {
     const viewport = getScrollableViewport();
     if (!viewport) return;
     
@@ -124,13 +148,33 @@ export default function ITimelineContent({
         
         // If event just became visible, we're not locked on another event, and auto-scroll is enabled
         if (!wasVisibleBefore && isVisibleNow && !lockedEvent && autoScrollEnabled) {
-          scrollToNewlyRevealedEvent(event);
+          scrollToEvent(event);
         }
       });
+
+      if (currentTime < previousTime && !lockedEvent && autoScrollEnabled) {
+        const disappearingEvents = events.filter((event) => {
+          const wasVisibleBefore = event.reveals.some((reveal) =>
+            reveal.playtimeTimestamp <= previousTime
+          );
+          const isVisibleNow = event.reveals.some((reveal) =>
+            reveal.playtimeTimestamp <= currentTime
+          );
+
+          return wasVisibleBefore && !isVisibleNow;
+        });
+
+        if (disappearingEvents.length > 0) {
+          const mostRecentVisibleEvent = getMostRecentVisibleEvent(currentTime);
+          if (mostRecentVisibleEvent) {
+            scrollToEvent(mostRecentVisibleEvent);
+          }
+        }
+      }
       
       previousTimeRef.current = currentTime;
     }
-  }, [currentTime, events, lockedEvent]);
+  }, [autoScrollEnabled, currentTime, events, lockedEvent]);
 
   // Show loading state while timelines are being loaded
   if (isLoading || timelines.length === 0) {

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect } from 'react';
 import './controller.css';
 
 interface EpisodeTimeSelectorProps {
@@ -9,8 +8,10 @@ interface EpisodeTimeSelectorProps {
   selectedEpisode?: string;
   onEpisodeChange?: (episodeId: string) => void;
   updateScrubbingLocation: (newLocation: number) => void;
-  /** Stack ep + time vertically, single control flush right (for mobile) */
-  compact?: boolean;
+  /** Stack ep + time vertically in the scrub-bar controller. */
+  stacked?: boolean;
+  /** Use native browser select styling. */
+  nativeSelect?: boolean;
 }
 
 const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({ 
@@ -20,12 +21,11 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
   selectedEpisode,
   onEpisodeChange,
   updateScrubbingLocation,
-  compact = false
+  stacked = false,
+  nativeSelect = false
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Calculate which episode we're currently in and time within that episode
   const getCurrentEpisodeAndTime = () => {
@@ -69,7 +69,7 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
     }
   };
 
-  const { episodeId, episodeNumber, timeInEpisode } = getCurrentEpisodeAndTime();
+  const { episodeId, timeInEpisode } = getCurrentEpisodeAndTime();
 
   // Update input value when not editing
   useEffect(() => {
@@ -177,108 +177,21 @@ const EpisodeTimeSelector: React.FC<EpisodeTimeSelectorProps> = ({
     selectEpisodeById(e.target.value);
   };
 
-  // Close dropdown when clicking outside (compact mode)
-  useEffect(() => {
-    if (!compact || !dropdownOpen) return;
-    const close = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as Node;
-      if (triggerRef.current?.contains(target)) return;
-      const portal = document.getElementById('episode-dropdown-portal');
-      if (portal?.contains(target)) return;
-      setDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', close);
-    document.addEventListener('touchstart', close, { passive: true });
-    return () => {
-      document.removeEventListener('mousedown', close);
-      document.removeEventListener('touchstart', close);
-    };
-  }, [compact, dropdownOpen]);
-
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
-
-  useEffect(() => {
-    if (!compact || !dropdownOpen || !triggerRef.current) {
-      setDropdownPosition(null);
-      return;
-    }
-    const el = triggerRef.current;
-    const rect = el.getBoundingClientRect();
-    setDropdownPosition({
-      left: rect.left,
-      top: rect.top - 4,
-      width: rect.width,
-    });
-  }, [compact, dropdownOpen]);
-
-  const dropdownPortal = compact && dropdownOpen && dropdownPosition && typeof document !== 'undefined' && (
-    createPortal(
-      <div
-        id="episode-dropdown-portal"
-        className="episode-dropdown-portal"
-        style={{
-          position: 'fixed',
-          left: dropdownPosition.left,
-          top: dropdownPosition.top,
-          transform: 'translateY(-100%)',
-          zIndex: 10000,
-          minWidth: dropdownPosition.width,
-        }}
-      >
-        <ul className="episode-dropdown-list" role="listbox">
-          {episodes.map((episode) => (
-            <li
-              key={episode.id}
-              role="option"
-              aria-selected={episode.id === episodeId}
-              className={`episode-dropdown-option ${episode.id === episodeId ? 'episode-dropdown-option--selected' : ''}`}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                selectEpisodeById(episode.id);
-                setDropdownOpen(false);
-              }}
-            >
-              Ep {episode.episodeNumber}
-            </li>
-          ))}
-        </ul>
-      </div>,
-      document.body
-    )
-  );
-
   return (
-    <div className={`episode-time-selector ${compact ? 'episode-time-selector--compact' : ''}`}>
-      <div className={`episode-time-selector-container ${compact ? 'episode-time-selector-container--compact' : ''}`}>
-        {compact ? (
-          <>
-            <button
-              ref={triggerRef}
-              type="button"
-              className="episode-select episode-select-trigger"
-              onClick={() => setDropdownOpen((o) => !o)}
-              aria-haspopup="listbox"
-              aria-expanded={dropdownOpen}
-              aria-label="Select episode"
-            >
-              Ep {episodeNumber}
-            </button>
-            {dropdownPortal}
-          </>
-        ) : (
-          <select
-            className="episode-select"
-            value={episodeId}
-            onChange={handleEpisodeChange}
-          >
-            {episodes.map(episode => (
-              <option key={episode.id} value={episode.id}>
-                Ep {episode.episodeNumber}
-              </option>
-            ))}
-          </select>
-        )}
-        {!compact && <div className="episode-time-divider"></div>}
+    <div className={`episode-time-selector ${stacked ? 'episode-time-selector--compact' : ''}${nativeSelect ? ' episode-time-selector--native' : ''}`}>
+      <div className={`episode-time-selector-container ${stacked ? 'episode-time-selector-container--compact' : ''}${nativeSelect ? ' episode-time-selector-container--native' : ''}`}>
+        <select
+          className={`episode-select${nativeSelect ? ' episode-select--native' : ''}`}
+          value={episodeId}
+          onChange={handleEpisodeChange}
+        >
+          {episodes.map(episode => (
+            <option key={episode.id} value={episode.id}>
+              Ep {episode.episodeNumber}
+            </option>
+          ))}
+        </select>
+        {!stacked && <div className="episode-time-divider"></div>}
         <input 
           className="episode-time-input" 
           placeholder="mm:ss"

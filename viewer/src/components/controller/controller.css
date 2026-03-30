@@ -51,6 +51,17 @@
   color: #2563eb;
 }
 
+.episode-select--native {
+  display: block;
+  padding: initial;
+  border: initial;
+  background: initial;
+  color: inherit;
+  font: inherit;
+  appearance: auto;
+  -webkit-appearance: menulist;
+}
+
 .episode-select:focus {
   outline: none;
 }
@@ -84,7 +95,7 @@
   outline: none;
 }
 
-/* Compact (mobile): stacked ep + time, single control flush right */
+/* Stacked ep + time selector used in the scrub-bar controller */
 .episode-time-selector--compact {
   align-self: flex-end;
   margin-left: auto;
@@ -103,71 +114,45 @@
 }
 
 .episode-time-selector-container--compact .episode-select {
-  padding: 0.15rem 0;
+  height: 1.25rem;
+  padding: 0;
   font-size: 0.75rem;
+  line-height: 1.25rem;
   text-align: center;
-  width: 3.6rem;
+  text-align-last: center;
+  width: 4.5rem;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.episode-time-selector-container--compact .episode-select--native {
+  height: auto;
+  width: auto;
+  min-width: 0;
+  padding: initial;
+  text-align: initial;
+  text-align-last: auto;
+}
+
+.episode-time-selector--native {
+  margin-left: 0;
+}
+
+.episode-time-selector-container--native {
+  width: auto;
 }
 
 .episode-time-selector-container--compact .episode-time-input {
-  width: 3.6rem;
+  height: 1.25rem;
+  width: 4.5rem;
+  padding: 0;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
   text-align: center;
   font-size: 0.75rem;
-}
-
-/* Compact mode: custom dropdown trigger (replaces native select for correct positioning) */
-.episode-select-trigger {
-  display: block;
-  width: 100%;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  padding: 0.15rem 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.episode-dropdown-portal {
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: min(60vh, 12rem);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.episode-dropdown-list {
-  margin: 0;
-  padding: 0.25rem 0;
-  list-style: none;
-}
-
-.episode-dropdown-option {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  color: #374151;
-  transition: background-color 0.15s;
-}
-
-.episode-dropdown-option:hover,
-.episode-dropdown-option:focus {
-  background-color: #f3f4f6;
-}
-
-.episode-dropdown-option--selected {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  font-weight: 500;
+  line-height: 1.25rem;
 }
 
 /* Playbar */
@@ -298,7 +283,7 @@
 
 .playbar-track {
   height: 1.25rem;
-  background-color: #e5e7eb;
+  background-color: transparent;
   border-radius: 9999px;
   margin: 0 0.5rem;
   position: relative;
@@ -309,6 +294,19 @@
   -ms-user-select: none;
   top: 0.35rem;
   overflow: hidden;
+}
+
+.playbar-track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  height: 0.45rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  pointer-events: none;
 }
 
 .playbar-progress {
