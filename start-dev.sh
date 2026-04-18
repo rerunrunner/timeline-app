@@ -18,9 +18,13 @@ PIDS=()
 
 cleanup() {
   echo -e "\n${YELLOW}Shutting down services...${NC}"
+  trap - EXIT SIGINT SIGTERM
   for pid in "${PIDS[@]:-}"; do
-    kill "$pid" 2>/dev/null || true
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -TERM -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+    fi
   done
+  wait 2>/dev/null || true
 }
 
 trap cleanup EXIT SIGINT SIGTERM
@@ -52,7 +56,7 @@ ensure_npm_dependencies "$VIEWER_DIR"
 echo -e "${YELLOW}Starting Java backend on port 5001...${NC}"
 (
   cd "$BACKEND_DIR"
-  TIMELINE_DATA_DIR="$TIMELINE_DATA_DIR" mvn spring-boot:run
+  exec env TIMELINE_DATA_DIR="$TIMELINE_DATA_DIR" mvn spring-boot:run
 ) &
 PIDS+=($!)
 
@@ -61,14 +65,14 @@ sleep 3
 echo -e "${YELLOW}Starting editor frontend on port 5174...${NC}"
 (
   cd "$EDITOR_FRONTEND_DIR"
-  npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
+  exec npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
 ) &
 PIDS+=($!)
 
 echo -e "${YELLOW}Starting viewer on port 5173...${NC}"
 (
   cd "$VIEWER_DIR"
-  npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+  exec npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ) &
 PIDS+=($!)
 
