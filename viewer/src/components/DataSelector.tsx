@@ -3,6 +3,8 @@ import React from 'react';
 export interface LanguageOption {
   code: string;
   name: string;
+  localizedName?: string;
+  flagEmoji?: string | null;
   isDefault?: boolean;
 }
 
@@ -13,6 +15,11 @@ interface DataSelectorProps {
 }
 
 const DataSelector: React.FC<DataSelectorProps> = ({ selectedLanguageCode, onLanguageChange, languages }) => {
+  const formatLanguageLabel = (language: LanguageOption) => {
+    const parts = [language.flagEmoji, language.localizedName || language.name].filter(Boolean);
+    return parts.length > 0 ? parts.join(' ') : language.code;
+  };
+
   return (
     <div className="data-selector">
       <label htmlFor="data-file-select" className="sr-only">
@@ -26,7 +33,7 @@ const DataSelector: React.FC<DataSelectorProps> = ({ selectedLanguageCode, onLan
       >
         {languages.map((language) => (
           <option key={language.code} value={language.code}>
-            {language.name}
+            {formatLanguageLabel(language)}
           </option>
         ))}
       </select>

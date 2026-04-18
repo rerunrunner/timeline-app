@@ -18,6 +18,8 @@ interface Language {
   id: number;
   code: string;
   name: string;
+  localizedName: string;
+  flagEmoji?: string | null;
   isDefault: boolean;
   isEnabled: boolean;
 }
@@ -50,6 +52,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [newLanguage, setNewLanguage] = useState({
     code: '',
     name: '',
+    localizedName: '',
+    flagEmoji: '',
     isEnabled: true
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -150,6 +154,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await api.post('/languages', {
         code: newLanguage.code,
         name: newLanguage.name,
+        localizedName: newLanguage.localizedName,
+        flagEmoji: newLanguage.flagEmoji || null,
         isEnabled: newLanguage.isEnabled
       });
 
@@ -159,7 +165,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         }
         return a.name.localeCompare(b.name);
       }));
-      setNewLanguage({ code: '', name: '', isEnabled: true });
+      setNewLanguage({ code: '', name: '', localizedName: '', flagEmoji: '', isEnabled: true });
     } catch (err) {
       console.error('Error creating language:', err);
       setLanguageError(getErrorMessage(err, 'Failed to add language.'));
@@ -181,6 +187,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await api.put(`/languages/${language.id}`, {
         code: language.code,
         name: language.name,
+        localizedName: language.localizedName,
+        flagEmoji: language.flagEmoji || null,
         isEnabled: !language.isEnabled
       });
 
@@ -430,8 +438,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </div>
                   <div>
+                    <label htmlFor="languageFlagEmoji" className="block text-sm font-medium text-gray-700 mb-2">
+                      Flag
+                    </label>
+                    <input
+                      type="text"
+                      id="languageFlagEmoji"
+                      value={newLanguage.flagEmoji}
+                      onChange={(e) => setNewLanguage({ ...newLanguage, flagEmoji: e.target.value })}
+                      placeholder="🇪🇸"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="languageName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Name
+                      Canonical Name
                     </label>
                     <input
                       type="text"
@@ -439,6 +460,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={newLanguage.name}
                       onChange={(e) => setNewLanguage({ ...newLanguage, name: e.target.value })}
                       placeholder="Spanish"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="languageLocalizedName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Localized Name
+                    </label>
+                    <input
+                      type="text"
+                      id="languageLocalizedName"
+                      value={newLanguage.localizedName}
+                      onChange={(e) => setNewLanguage({ ...newLanguage, localizedName: e.target.value })}
+                      placeholder="Español"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -467,9 +501,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="grid grid-cols-[1fr_1.5fr_auto_auto] gap-4 px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 border-b border-gray-200">
+                <div className="grid grid-cols-[0.5fr_1fr_1.2fr_1.2fr_auto_auto] gap-4 px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 border-b border-gray-200">
+                  <div>Flag</div>
                   <div>Code</div>
                   <div>Name</div>
+                  <div>Localized Name</div>
                   <div>Enabled</div>
                   <div>Actions</div>
                 </div>
@@ -486,11 +522,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     return (
                       <div
                         key={language.id}
-                        className="grid grid-cols-[1fr_1.5fr_auto_auto] gap-4 px-4 py-3 items-center border-b last:border-b-0 border-gray-100"
+                        className="grid grid-cols-[0.5fr_1fr_1.2fr_1.2fr_auto_auto] gap-4 px-4 py-3 items-center border-b last:border-b-0 border-gray-100"
                       >
+                        <div className="text-lg leading-none">{language.flagEmoji || ' '}</div>
                         <div className="font-mono text-sm text-gray-900">{language.code}</div>
+                        <div className="text-sm text-gray-900">{language.name}</div>
                         <div className="text-sm text-gray-900">
-                          {language.name}
+                          {language.localizedName}
                           {language.isDefault && (
                             <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                               Default

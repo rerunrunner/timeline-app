@@ -7,8 +7,8 @@ function createLocalizedDataset(): RawData {
   return {
     defaultLanguageCode: 'en',
     languages: [
-      { code: 'en', name: 'English', isDefault: true },
-      { code: 'ko', name: 'Korean', isDefault: false },
+      { code: 'en', name: 'English', localizedName: 'English', flagEmoji: '🇺🇸', isDefault: true },
+      { code: 'ko', name: 'Korean', localizedName: '한국어', flagEmoji: '🇰🇷', isDefault: false },
     ],
     episodes: [
       {
@@ -127,5 +127,14 @@ describe('resolveLocalizedRawData', () => {
     expect(event.reveals[0].narrativeTimeframeSpecificityLevel).toBe(9);
     expect(event.reveals[1].narrativeTimeframeSpecificityLevel).toBe(9);
     expect(event.reveals[2].narrativeTimeframeSpecificityLevel).toBe(9);
+  });
+
+  it('preserves exported language metadata for selector rendering', () => {
+    const localized = resolveLocalizedRawData(createLocalizedDataset(), 'ko');
+
+    expect(localized.languages).toEqual([
+      { code: 'en', name: 'English', localizedName: 'English', flagEmoji: '🇺🇸', isDefault: true },
+      { code: 'ko', name: 'Korean', localizedName: '한국어', flagEmoji: '🇰🇷', isDefault: false },
+    ]);
   });
 });

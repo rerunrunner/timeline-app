@@ -45,9 +45,14 @@ const RevealCardTranslation: React.FC<RevealCardTranslationProps> = ({
     const selectedTranslation = translations.find((translation) => translation.languageCode === selectedLanguageCode);
     const hasStoredSelectedTranslation = Boolean(selectedTranslation?.hasStoredTranslation);
 
+    const formatLanguageLabel = (language: Language) => {
+        const parts = [language.flagEmoji, language.localizedName].filter(Boolean);
+        return parts.length > 0 ? parts.join(' ') : language.code;
+    };
+
     const languageOptions = targetLanguages.map((language) => ({
         value: language.code,
-        label: language.code
+        label: formatLanguageLabel(language)
     }));
 
     const displayedDescriptionValue = hasStoredSelectedTranslation
@@ -83,7 +88,7 @@ const RevealCardTranslation: React.FC<RevealCardTranslationProps> = ({
                         onClick={() => onTranslate(reveal.id, selectedLanguageCode)}
                         className="translation-trigger-btn"
                         disabled={isTranslating || !translationReady}
-                        title={translationReady ? `Translate this reveal into ${selectedLanguage?.code}` : 'Add a supported target language to translate'}
+                        title={translationReady ? `Translate this reveal into ${selectedLanguage ? formatLanguageLabel(selectedLanguage) : selectedLanguageCode}` : 'Add a supported target language to translate'}
                     >
                         {isTranslating ? 'Translating...' : 'Translate'}
                     </button>

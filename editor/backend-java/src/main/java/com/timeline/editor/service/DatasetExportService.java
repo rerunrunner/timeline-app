@@ -333,6 +333,8 @@ public class DatasetExportService {
                 Map<String, Object> languageData = new LinkedHashMap<>();
                 languageData.put("code", language.getCode());
                 languageData.put("name", language.getName());
+                languageData.put("localizedName", language.getLocalizedName());
+                languageData.put("flagEmoji", language.getFlagEmoji());
                 languageData.put("isDefault", language.getIsDefault());
                 return languageData;
             })

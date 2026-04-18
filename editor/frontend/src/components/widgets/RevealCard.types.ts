@@ -2,6 +2,8 @@ export interface Language {
     id: number;
     code: string;
     name: string;
+    localizedName: string;
+    flagEmoji?: string | null;
     isDefault: boolean;
     isEnabled: boolean;
 }

@@ -22,6 +22,12 @@ public class Language {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    @Column(name = "localized_name", nullable = false, length = 100)
+    private String localizedName;
+
+    @Column(name = "flag_emoji", length = 16)
+    private String flagEmoji;
+
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault;
 
@@ -31,9 +37,15 @@ public class Language {
     public Language() {}
 
     public Language(Long id, String code, String name, Boolean isDefault, Boolean isEnabled) {
+        this(id, code, name, name, null, isDefault, isEnabled);
+    }
+
+    public Language(Long id, String code, String name, String localizedName, String flagEmoji, Boolean isDefault, Boolean isEnabled) {
         this.id = id;
         this.code = code;
         this.name = name;
+        this.localizedName = localizedName;
+        this.flagEmoji = flagEmoji;
         this.isDefault = isDefault;
         this.isEnabled = isEnabled;
     }
@@ -60,6 +72,22 @@ public class Language {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLocalizedName() {
+        return localizedName;
+    }
+
+    public void setLocalizedName(String localizedName) {
+        this.localizedName = localizedName;
+    }
+
+    public String getFlagEmoji() {
+        return flagEmoji;
+    }
+
+    public void setFlagEmoji(String flagEmoji) {
+        this.flagEmoji = flagEmoji;
     }
 
     public Boolean getIsDefault() {

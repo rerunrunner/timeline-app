@@ -33,6 +33,8 @@ public class LanguageService {
     public Language createLanguage(LanguageUpsertRequest request) {
         String code = normalizeCode(request.code());
         String name = normalizeName(request.name());
+        String localizedName = normalizeLocalizedName(request.localizedName());
+        String flagEmoji = normalizeFlagEmoji(request.flagEmoji());
 
         if (languageRepository.findByCode(code).isPresent()) {
             throw new IllegalArgumentException("Language code already exists: " + code);
@@ -41,6 +43,8 @@ public class LanguageService {
         Language language = new Language();
         language.setCode(code);
         language.setName(name);
+        language.setLocalizedName(localizedName);
+        language.setFlagEmoji(flagEmoji);
         language.setIsDefault(false);
         language.setIsEnabled(request.isEnabled() == null || request.isEnabled());
         return languageRepository.save(language);
@@ -52,6 +56,8 @@ public class LanguageService {
 
         String code = normalizeCode(request.code());
         String name = normalizeName(request.name());
+        String localizedName = normalizeLocalizedName(request.localizedName());
+        String flagEmoji = normalizeFlagEmoji(request.flagEmoji());
 
         languageRepository.findByCode(code)
                 .filter(existing -> !existing.getId().equals(languageId))
@@ -61,6 +67,8 @@ public class LanguageService {
 
         language.setCode(code);
         language.setName(name);
+        language.setLocalizedName(localizedName);
+        language.setFlagEmoji(flagEmoji);
         if (Boolean.TRUE.equals(language.getIsDefault())) {
             language.setIsEnabled(true);
         } else {
@@ -104,9 +112,33 @@ public class LanguageService {
         return normalized;
     }
 
+    private String normalizeLocalizedName(String localizedName) {
+        String normalized = localizedName == null ? "" : localizedName.trim();
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("Localized language name is required.");
+        }
+        if (normalized.length() > 100) {
+            throw new IllegalArgumentException("Localized language name must be 100 characters or fewer.");
+        }
+        return normalized;
+    }
+
+    private String normalizeFlagEmoji(String flagEmoji) {
+        String normalized = flagEmoji == null ? "" : flagEmoji.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        if (normalized.length() > 16) {
+            throw new IllegalArgumentException("Language flag emoji must be 16 characters or fewer.");
+        }
+        return normalized;
+    }
+
     public record LanguageUpsertRequest(
             String code,
             String name,
+            String localizedName,
+            String flagEmoji,
             Boolean isEnabled
     ) {}
 }

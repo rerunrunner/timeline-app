@@ -32,6 +32,8 @@ export interface RawEpisode {
 export interface RawLanguage {
   code: string;
   name: string;
+  localizedName?: string;
+  flagEmoji?: string | null;
   isDefault?: boolean;
 }
 

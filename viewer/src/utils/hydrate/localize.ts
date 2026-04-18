@@ -4,6 +4,8 @@ function normalizeLanguage(language: RawLanguage): RawLanguage {
   return {
     code: language.code,
     name: language.name,
+    localizedName: language.localizedName || language.name,
+    flagEmoji: language.flagEmoji ?? null,
     isDefault: Boolean(language.isDefault),
   };
 }
@@ -19,7 +21,13 @@ function firstDefinedString(...values: Array<string | null | undefined>): string
 
 function getLegacyFallbackLanguages(rawData: RawData): RawLanguage[] {
   const fallbackCode = rawData.defaultLanguageCode || 'en';
-  return [{ code: fallbackCode, name: fallbackCode.toUpperCase(), isDefault: true }];
+  return [{
+    code: fallbackCode,
+    name: fallbackCode.toUpperCase(),
+    localizedName: fallbackCode.toUpperCase(),
+    flagEmoji: null,
+    isDefault: true
+  }];
 }
 
 export function getAvailableLanguages(rawData: RawData | null | undefined): RawLanguage[] {
