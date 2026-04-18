@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { IEvent, ITimeline } from '../../types/interfaces';
 import type { Platform } from '../../hooks/usePlatform';
 import ITimelineContent from './TimelineContent';
+import TimelineControls from './TimelineControls';
 
 /**
  * ViewPort - Component that provides the scrollable viewport for timeline visualization
@@ -26,7 +27,7 @@ interface ViewPortProps {
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
   /** Dataset picker (loading / empty / select) — shown next to timeline width */
-  dataSelector?: React.ReactNode;
+  dataSelector: JSX.Element;
   platform: Platform;
   compactLandscape: boolean;
 }
@@ -49,13 +50,8 @@ export default function ViewPort({
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [controlsOpen, setControlsOpen] = useState(false);
 
-  const isMobile = platform === 'mobile';
-  const showInlineControls = !compactLandscape;
-  const maxTimelineWidth = isMobile || compactLandscape ? 1000 : 400;
-
   return (
     <div className={`timeline-viewport-container${compactLandscape ? ' timeline-viewport-container--compact-landscape' : ''}`}>
-      {/* Timeline Controls - on mobile: scale bar + jump-to-event checkbox; no data selector */}
       <div className={`timeline-controls${compactLandscape ? ' timeline-controls--compact-landscape' : ''}${controlsOpen ? ' is-open' : ''}`}>
         {compactLandscape ? (
           <>
@@ -69,73 +65,31 @@ export default function ViewPort({
               More
             </button>
             <div id="timeline-controls-panel" className="timeline-controls-panel">
-              {!isMobile && dataSelector != null ? (
-                <div className="timeline-data-selector">{dataSelector}</div>
-              ) : null}
-              <div className="timeline-width-control">
-                <label htmlFor="timeline-width-slider" className="width-control-label width-control-label--compact">
-                  Width {timelineWidth}%
-                </label>
-                <input
-                  id="timeline-width-slider"
-                  type="range"
-                  min="100"
-                  max={String(maxTimelineWidth)}
-                  value={timelineWidth}
-                  onChange={(e) => setTimelineWidth(Number(e.target.value))}
-                  className="width-control-slider"
-                />
-                <label className="auto-scroll-label" htmlFor="jump-to-event-checkbox">
-                  <input
-                    type="checkbox"
-                    id="jump-to-event-checkbox"
-                    checked={autoScrollEnabled}
-                    onChange={(e) => setAutoScrollEnabled(e.target.checked)}
-                    className="auto-scroll-checkbox"
-                  />
-                  Jump to event
-                </label>
-              </div>
+              <TimelineControls
+                dataSelector={dataSelector}
+                platform={platform}
+                compact
+                timelineWidth={timelineWidth}
+                onTimelineWidthChange={setTimelineWidth}
+                autoScrollEnabled={autoScrollEnabled}
+                onAutoScrollEnabledChange={setAutoScrollEnabled}
+              />
             </div>
           </>
         ) : (
-          <div className="timeline-width-control">
-            {!isMobile && dataSelector != null ? (
-              <div className="timeline-data-selector">{dataSelector}</div>
-            ) : null}
-            {!isMobile ? (
-              <label htmlFor="timeline-width-slider" className="width-control-label">
-                Timeline Width: {timelineWidth}%
-              </label>
-            ) : (
-              <label htmlFor="timeline-width-slider" className="width-control-label width-control-label--compact">
-                {timelineWidth}%
-              </label>
-            )}
-            <input
-              id="timeline-width-slider"
-              type="range"
-              min="100"
-              max={String(maxTimelineWidth)}
-              value={timelineWidth}
-              onChange={(e) => setTimelineWidth(Number(e.target.value))}
-              className="width-control-slider"
-            />
-            <div className="auto-scroll-control" title="Jump to event">
-              <input
-                type="checkbox"
-                id="jump-to-event-checkbox"
-                checked={autoScrollEnabled}
-                onChange={(e) => setAutoScrollEnabled(e.target.checked)}
-                className="auto-scroll-checkbox"
-                aria-label="Jump to event"
-              />
-            </div>
-          </div>
+          <TimelineControls
+            dataSelector={dataSelector}
+            platform={platform}
+            compact={false}
+            timelineWidth={timelineWidth}
+            onTimelineWidthChange={setTimelineWidth}
+            autoScrollEnabled={autoScrollEnabled}
+            onAutoScrollEnabledChange={setAutoScrollEnabled}
+          />
         )}
-        {showInlineControls ? null : (
+        {compactLandscape ? (
           <div className="timeline-controls-scrim" onClick={() => setControlsOpen(false)} aria-hidden={!controlsOpen} />
-        )}
+        ) : null}
       </div>
 
       {compactLandscape && controlsOpen ? (

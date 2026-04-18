@@ -359,7 +359,7 @@ function App() {
     [analyticsEnabled, posthog, selectedDataFile]
   )
 
-  const dataSelector =
+  const dataSelector: JSX.Element =
     isLoading ? (
       <div className="text-sm text-gray-500">Loading languages...</div>
     ) : dataFiles.length === 0 ? (
@@ -373,6 +373,7 @@ function App() {
         languages={availableLanguages}
         selectedLanguageCode={selectedLanguageCode}
         onLanguageChange={handleLanguageChange}
+        platform={platform}
       />
     )
 

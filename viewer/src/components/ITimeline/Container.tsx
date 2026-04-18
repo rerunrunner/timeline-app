@@ -30,7 +30,7 @@ interface ITimelineContainerProps {
   timelines: ITimeline[];
   currentTime: number;
   episodes?: Array<{ id: string; episodeNumber: number; title: string; duration: number }>;
-  dataSelector?: React.ReactNode;
+  dataSelector: JSX.Element;
   platform: Platform;
   orientation: Orientation;
   compactLandscape: boolean;

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Platform } from '../hooks/usePlatform';
 
 export interface LanguageOption {
   code: string;
@@ -12,10 +13,14 @@ interface DataSelectorProps {
   selectedLanguageCode: string;
   onLanguageChange: (languageCode: string) => void;
   languages: LanguageOption[];
+  platform: Platform;
 }
 
-const DataSelector: React.FC<DataSelectorProps> = ({ selectedLanguageCode, onLanguageChange, languages }) => {
+const DataSelector: React.FC<DataSelectorProps> = ({ selectedLanguageCode, onLanguageChange, languages, platform }) => {
   const formatLanguageLabel = (language: LanguageOption) => {
+    if (platform === 'mobile') {
+      return language.flagEmoji || language.code.toUpperCase();
+    }
     const parts = [language.flagEmoji, language.localizedName || language.name].filter(Boolean);
     return parts.length > 0 ? parts.join(' ') : language.code;
   };
