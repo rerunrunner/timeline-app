@@ -7,7 +7,9 @@ import com.timeline.editor.repository.EventRepository;
 import com.timeline.editor.repository.NoteRepository;
 import com.timeline.editor.repository.EpisodeRepository;
 import com.timeline.editor.repository.RevealRepository;
+import com.timeline.editor.repository.RevealTranslationRepository;
 import com.timeline.editor.repository.EventTypeRepository;
+import com.timeline.editor.repository.LanguageRepository;
 import com.timeline.editor.repository.SoundtrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,9 +37,15 @@ public class DatasetExportService {
     
     @Autowired
     private RevealRepository revealRepository;
+
+    @Autowired
+    private RevealTranslationRepository revealTranslationRepository;
     
     @Autowired
     private EventTypeRepository eventTypeRepository;
+
+    @Autowired
+    private LanguageRepository languageRepository;
     
     @Autowired
     private SoundtrackRepository soundtrackRepository;
@@ -47,13 +55,21 @@ public class DatasetExportService {
 
     public Map<String, Object> exportDataset() {
         Map<String, Object> exportData = new LinkedHashMap<>();
+        List<Language> enabledLanguages = languageRepository.findByIsEnabledTrueOrderByIsDefaultDescNameAsc();
+        Language defaultLanguage = enabledLanguages.stream()
+            .filter(language -> Boolean.TRUE.equals(language.getIsDefault()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Default language must be enabled for dataset export."));
+
+        exportData.put("defaultLanguageCode", defaultLanguage.getCode());
+        exportData.put("languages", exportLanguages(enabledLanguages));
         
         // Export timelines with slices
         List<Map<String, Object>> timelines = exportTimelines();
         exportData.put("timelines", timelines);
         
         // Export events with tags and reveals
-        List<Map<String, Object>> events = exportEvents();
+        List<Map<String, Object>> events = exportEvents(enabledLanguages, defaultLanguage);
         exportData.put("events", events);
         
         // Export notes
@@ -102,7 +118,7 @@ public class DatasetExportService {
         }).collect(Collectors.toList());
     }
     
-    private List<Map<String, Object>> exportEvents() {
+    private List<Map<String, Object>> exportEvents(List<Language> enabledLanguages, Language defaultLanguage) {
         List<Event> events = eventRepository.findAll();
         
         // Create mapping from timeline ID to shortId for consistent references
@@ -206,7 +222,19 @@ public class DatasetExportService {
                     return time1.compareTo(time2);
                 })
                 .collect(Collectors.toList());
+            Map<Long, Map<Long, RevealTranslation>> translationsByRevealId = loadTranslationsByRevealId(reveals);
+            Map<Long, Map<String, Object>> resolvedTranslationsByReveal = buildResolvedTranslationsForEvent(
+                event,
+                reveals,
+                enabledLanguages,
+                defaultLanguage,
+                translationsByRevealId
+            );
             List<Map<String, Object>> revealData = reveals.stream().map(reveal -> {
+                Map<String, Object> resolvedTranslations = resolvedTranslationsByReveal.get(reveal.getId());
+                if (resolvedTranslations == null) {
+                    throw new IllegalStateException("Missing resolved translations for reveal " + reveal.getId());
+                }
                 Map<String, Object> revealMap = new LinkedHashMap<>();
                 revealMap.put("id", reveal.getId().toString());
                 // Use semantic event ID: <timeline.shortId>-<event.shortDescription>
@@ -226,9 +254,8 @@ public class DatasetExportService {
                 Integer absolutePlayTime = calculateAbsolutePlayTime(reveal.getEpisodeId(), reveal.getEpisodeTime(), episodes);
                 revealMap.put("absolutePlayTime", absolutePlayTime);
                 
-                revealMap.put("displayedDate", reveal.getDisplayedDate());
-                revealMap.put("displayedTitle", reveal.getDisplayedTitle());
-                revealMap.put("displayedDescription", reveal.getDisplayedDescription());
+                revealMap.put("translations", resolvedTranslations.get("translations"));
+                revealMap.put("narrativeTimeframeSpecificityLevel", resolvedTranslations.get("narrativeTimeframeSpecificityLevel"));
                 revealMap.put("screenshotFilename", reveal.getScreenshotFilename());
                 return revealMap;
             }).collect(Collectors.toList());
@@ -299,6 +326,18 @@ public class DatasetExportService {
         metadataData.put("description", metadata.getDescription());
         return metadataData;
     }
+
+    private List<Map<String, Object>> exportLanguages(List<Language> languages) {
+        return languages.stream()
+            .map(language -> {
+                Map<String, Object> languageData = new LinkedHashMap<>();
+                languageData.put("code", language.getCode());
+                languageData.put("name", language.getName());
+                languageData.put("isDefault", language.getIsDefault());
+                return languageData;
+            })
+            .collect(Collectors.toList());
+    }
     
     private List<Map<String, Object>> exportSoundtracks() {
         List<Soundtrack> soundtracks = soundtrackRepository.findAll();
@@ -335,5 +374,161 @@ public class DatasetExportService {
             .reduce(0, Integer::sum);
 
         return cumulativeDuration + episodeTime;
+    }
+
+    private Map<Long, Map<Long, RevealTranslation>> loadTranslationsByRevealId(List<Reveal> reveals) {
+        List<Long> revealIds = reveals.stream()
+            .map(Reveal::getId)
+            .collect(Collectors.toList());
+        if (revealIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return revealTranslationRepository.findByRevealIdIn(revealIds).stream()
+            .collect(Collectors.groupingBy(
+                RevealTranslation::getRevealId,
+                Collectors.toMap(RevealTranslation::getLanguageId, translation -> translation)
+            ));
+    }
+
+    private Map<Long, Map<String, Object>> buildResolvedTranslationsForEvent(
+        Event event,
+        List<Reveal> reveals,
+        List<Language> enabledLanguages,
+        Language defaultLanguage,
+        Map<Long, Map<Long, RevealTranslation>> translationsByRevealId
+    ) {
+        Map<String, String> currentTitleByLanguage = new HashMap<>();
+        Map<String, String> currentDateByLanguage = new HashMap<>();
+        Map<String, String> currentDescriptionByLanguage = new HashMap<>();
+
+        Map<Long, Map<String, Object>> resolvedByReveal = new LinkedHashMap<>();
+        String defaultLanguageCode = defaultLanguage.getCode();
+
+        for (Reveal reveal : reveals) {
+            if (hasNonEmptyString(reveal.getDisplayedTitle())) {
+                currentTitleByLanguage.put(defaultLanguageCode, reveal.getDisplayedTitle());
+            }
+            if (hasValue(reveal.getDisplayedDate())) {
+                currentDateByLanguage.put(defaultLanguageCode, reveal.getDisplayedDate());
+            }
+            if (hasValue(reveal.getDisplayedDescription())) {
+                currentDescriptionByLanguage.put(defaultLanguageCode, reveal.getDisplayedDescription());
+            }
+
+            Map<Long, RevealTranslation> translationsForReveal = translationsByRevealId.getOrDefault(reveal.getId(), Collections.emptyMap());
+            Map<String, Object> translations = new LinkedHashMap<>();
+
+            for (Language language : enabledLanguages) {
+                String languageCode = language.getCode();
+                if (!languageCode.equals(defaultLanguageCode)) {
+                    RevealTranslation translation = translationsForReveal.get(language.getId());
+                    if (translation != null) {
+                        if (hasNonEmptyString(translation.getDisplayedTitle())) {
+                            currentTitleByLanguage.put(languageCode, translation.getDisplayedTitle());
+                        }
+                        if (hasValue(translation.getDisplayedDate())) {
+                            currentDateByLanguage.put(languageCode, translation.getDisplayedDate());
+                        }
+                        if (hasValue(translation.getDisplayedDescription())) {
+                            currentDescriptionByLanguage.put(languageCode, translation.getDisplayedDescription());
+                        }
+                    }
+                }
+
+                String resolvedTitle = languageCode.equals(defaultLanguageCode)
+                    ? currentTitleByLanguage.get(languageCode)
+                    : firstNonNull(currentTitleByLanguage.get(languageCode), currentTitleByLanguage.get(defaultLanguageCode));
+                String resolvedDate = languageCode.equals(defaultLanguageCode)
+                    ? currentDateByLanguage.get(languageCode)
+                    : firstNonNull(currentDateByLanguage.get(languageCode), currentDateByLanguage.get(defaultLanguageCode));
+                String resolvedDescription = languageCode.equals(defaultLanguageCode)
+                    ? currentDescriptionByLanguage.get(languageCode)
+                    : firstNonNull(currentDescriptionByLanguage.get(languageCode), currentDescriptionByLanguage.get(defaultLanguageCode));
+
+                Map<String, Object> translationData = new LinkedHashMap<>();
+                translationData.put("displayedDate", resolvedDate);
+                translationData.put("displayedTitle", resolvedTitle);
+                translationData.put("displayedDescription", resolvedDescription);
+                translations.put(languageCode, translationData);
+            }
+
+            Map<String, Object> resolvedReveal = new LinkedHashMap<>();
+            resolvedReveal.put("translations", translations);
+            resolvedReveal.put(
+                "narrativeTimeframeSpecificityLevel",
+                calculateNarrativeTimeframeSpecificityLevel(
+                    currentDateByLanguage.get(defaultLanguageCode),
+                    event.getNarrativeDate() != null ? event.getNarrativeDate().toLocalDate().toString() : null
+                )
+            );
+            resolvedByReveal.put(reveal.getId(), resolvedReveal);
+        }
+
+        return resolvedByReveal;
+    }
+
+    private Integer calculateNarrativeTimeframeSpecificityLevel(String displayedDate, String fallbackNarrativeDate) {
+        String value = firstNonNull(displayedDate, fallbackNarrativeDate);
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+
+        String trimmedValue = value.trim();
+        String lowerValue = trimmedValue.toLowerCase(Locale.ROOT);
+
+        if (trimmedValue.matches("^\\d{1,4}[/-]\\d{1,2}[/-]\\d{1,4}$")) {
+            return 9;
+        }
+
+        String monthNames = "(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)";
+        if (trimmedValue.matches("(?i)^" + monthNames + "\\s+\\d{1,2},?\\s+\\d{4}$")) {
+            return 9;
+        }
+
+        String modifiers = "(?:late|early|mid)";
+        if (trimmedValue.matches("(?i)^" + modifiers + "\\s+" + monthNames + "\\s*,?\\s*\\d{4}$")) {
+            return 8;
+        }
+        if (trimmedValue.matches("(?i)^" + monthNames + "\\s*,?\\s*\\d{4}$")) {
+            return 7;
+        }
+
+        String seasons = "(?:spring|summer|fall|autumn|winter)";
+        if (trimmedValue.matches("(?i)^" + modifiers + "\\s+" + seasons + "\\s*,?\\s*\\d{4}$")) {
+            return 6;
+        }
+        if (trimmedValue.matches("(?i)^" + seasons + "\\s*,?\\s*\\d{4}$")) {
+            return 5;
+        }
+        if (trimmedValue.matches("(?i)^" + modifiers + "\\s+\\d{4}$")) {
+            return 4;
+        }
+        if (trimmedValue.matches("^\\d{4}$")) {
+            return 3;
+        }
+        if (trimmedValue.matches("(?i)^" + modifiers + "\\s+\\d{3}0s$")) {
+            return 2;
+        }
+        if (trimmedValue.matches("^\\d{3}0s$")) {
+            return 1;
+        }
+        if (lowerValue.matches("^(?:sometime\\s+in\\s+the\\s+future|future|unknown|tbd|later|eventually)$")) {
+            return 0;
+        }
+
+        return -1;
+    }
+
+    private boolean hasNonEmptyString(String value) {
+        return value != null && !value.isEmpty();
+    }
+
+    private boolean hasValue(String value) {
+        return value != null;
+    }
+
+    private String firstNonNull(String primary, String fallback) {
+        return primary != null ? primary : fallback;
     }
 }

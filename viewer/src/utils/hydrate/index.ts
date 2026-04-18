@@ -232,6 +232,11 @@ function parseRawData(rawData: any): { timelines: RawTimeline[], events: RawEven
         assert(typeof reveal.displayedDate === 'string', 
           `Reveal at index ${revealIndex} in event ${event.id} displayedDate must be a string if present`);
       }
+
+      if (reveal.narrativeTimeframeSpecificityLevel !== undefined && reveal.narrativeTimeframeSpecificityLevel !== null) {
+        assert(typeof reveal.narrativeTimeframeSpecificityLevel === 'number',
+          `Reveal at index ${revealIndex} in event ${event.id} narrativeTimeframeSpecificityLevel must be a number if present`);
+      }
       
       // apparentTimelineId is optional - defaults to event's timeline
       if (reveal.apparentTimelineId !== undefined && reveal.apparentTimelineId !== null) {

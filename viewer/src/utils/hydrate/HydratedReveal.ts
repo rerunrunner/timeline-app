@@ -55,11 +55,14 @@ export class HydratedReveal implements IReveal {
     this.apparentTimeline = rawReveal.apparentTimelineId;
     this.event = parentEvent;
     
-    // Calculate narrative timeframe specificity level
-    this.narrativeTimeframeSpecificityLevel = calculateNarrativeTimeframeSpecificity(rawReveal.displayedDate);
+    const exportedSpecificityLevel = rawReveal.narrativeTimeframeSpecificityLevel;
+    this.narrativeTimeframeSpecificityLevel =
+      typeof exportedSpecificityLevel === 'number'
+        ? exportedSpecificityLevel
+        : calculateNarrativeTimeframeSpecificity(rawReveal.displayedDate);
     
-    // Alert if date format is unrecognized (specificity level -1)
-    if (this.narrativeTimeframeSpecificityLevel === -1) {
+    // Alert if a legacy dataset still has an unrecognized date format.
+    if (typeof exportedSpecificityLevel !== 'number' && this.narrativeTimeframeSpecificityLevel === -1) {
       alert(`Unrecognized date format in event ${parentEvent.id}, reveal ${rawReveal.id}: "${rawReveal.displayedDate}"`);
     }
   }

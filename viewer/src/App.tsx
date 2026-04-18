@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { usePostHog } from '@posthog/react'
 import SockJS from 'sockjs-client'
 import { Stomp } from '@stomp/stompjs'
@@ -6,9 +6,11 @@ import { hydrate } from './utils/hydrate/index'
 import type { ITimeline } from './types/interfaces'
 import { ITimelineContainer } from './components/ITimeline/Container'
 import Controller from './components/Controller'
-import DataSelector, { type DataFile } from './components/DataSelector'
+import DataSelector from './components/DataSelector'
 import { usePlatform } from './hooks/usePlatform'
 import { isPosthogActive } from './utils/posthogEnabled'
+import type { RawData } from './utils/hydrate/types'
+import { getAvailableLanguages, getDefaultLanguageCode, resolveLocalizedRawData } from './utils/hydrate/localize'
 import './App.css'
 
 /** Parse `?t=<seconds>` for deep-linking (non-negative number). */
@@ -21,10 +23,25 @@ function readTimeFromUrl(): number | null {
   return n
 }
 
+function readLanguageFromUrl(): string | null {
+  if (typeof window === 'undefined') return null
+  const raw = new URLSearchParams(window.location.search).get('lang')
+  if (raw == null || raw === '') return null
+  return raw
+}
+
 /** Avoid duplicate session_started in React StrictMode (dev double-mount). */
 let timelineSessionStartLogged = false
 /** Wall-clock when dataset/timeline became ready (for `duration_ms` on exit). */
 let timelineDatasetSessionStartTs = 0
+
+type DatasetFile = {
+  id: string
+  name: string
+  description: string
+  filename: string
+  data: RawData
+}
 
 function getEditorBaseUrl(): string | null {
   const url = import.meta.env.VITE_EDITOR_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5001/api/export/dataset' : null)
@@ -39,8 +56,9 @@ function getEditorBaseUrl(): string | null {
 function App() {
   const posthog = usePostHog()
   const { platform, orientation, isCompactLandscape } = usePlatform()
-  const [dataFiles, setDataFiles] = useState<(DataFile & { data: any })[]>([])
+  const [dataFiles, setDataFiles] = useState<DatasetFile[]>([])
   const [selectedDataFile, setSelectedDataFile] = useState<string>('')
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>('')
   const [itimelines, setITimelines] = useState<ITimeline[]>([])
   const [currentTime, setCurrentTime] = useState<number>(0) // Current playhead position in seconds
   const [totalDuration, setTotalDuration] = useState<number>(0) // Total duration in seconds
@@ -52,6 +70,18 @@ function App() {
   const pageEnteredAtRef = useRef(0)
 
   const analyticsEnabled = isPosthogActive
+  const currentDataFile = useMemo(
+    () => dataFiles.find(df => df.id === selectedDataFile),
+    [dataFiles, selectedDataFile]
+  )
+  const availableLanguages = useMemo(
+    () => getAvailableLanguages(currentDataFile?.data),
+    [currentDataFile]
+  )
+  const defaultLanguageCode = useMemo(
+    () => getDefaultLanguageCode(currentDataFile?.data),
+    [currentDataFile]
+  )
 
   useEffect(() => {
     if (!analyticsEnabled) return
@@ -92,7 +122,7 @@ function App() {
   const loadDataFiles = async () => {
     try {
       setIsLoading(true)
-      const discoveredFiles: (DataFile & { data: any })[] = []
+      const discoveredFiles: DatasetFile[] = []
 
       // In dev: try editor API first so changes show without exporting
       if (import.meta.env.DEV) {
@@ -162,6 +192,23 @@ function App() {
     loadDataFiles()
   }, [refreshKey])
 
+  useEffect(() => {
+    if (!currentDataFile) return
+
+    setSelectedLanguageCode(currentLanguageCode => {
+      if (currentLanguageCode && availableLanguages.some(language => language.code === currentLanguageCode)) {
+        return currentLanguageCode
+      }
+
+      const languageFromUrl = readLanguageFromUrl()
+      if (languageFromUrl && availableLanguages.some(language => language.code === languageFromUrl)) {
+        return languageFromUrl
+      }
+
+      return defaultLanguageCode
+    })
+  }, [availableLanguages, currentDataFile, defaultLanguageCode])
+
   // When editor pushes metadata/version update, re-fetch dataset and re-render (playhead preserved via loadDataFile(..., true))
   useEffect(() => {
     const baseUrl = getEditorBaseUrl()
@@ -182,14 +229,14 @@ function App() {
     }
   }, [])
 
-  const loadDataFile = (dataFileId: string, preserveTime = false) => {
+  const loadDataFile = (dataFileId: string, languageCode: string, preserveTime = false) => {
     try {
       const dataFile = dataFiles.find(df => df.id === dataFileId)
       if (!dataFile) {
         throw new Error(`Unknown data file: ${dataFileId}`)
       }
 
-      const timelineData = dataFile.data
+      const timelineData = resolveLocalizedRawData(dataFile.data, languageCode)
       
       if (!Array.isArray(timelineData.timelines)) {
         throw new Error('Timelines is not an array')
@@ -214,11 +261,11 @@ function App() {
 
   // (Re)load current dataset into timeline when selection or data list changes. Preserve playhead when only data refreshed.
   useEffect(() => {
-    if (!selectedDataFile || dataFiles.length === 0) return
+    if (!selectedDataFile || dataFiles.length === 0 || !selectedLanguageCode) return
     const isSwitchingFile = prevSelectedDataFileRef.current !== selectedDataFile
     prevSelectedDataFileRef.current = selectedDataFile
-    loadDataFile(selectedDataFile, !isSwitchingFile)
-  }, [selectedDataFile, dataFiles])
+    loadDataFile(selectedDataFile, selectedLanguageCode, !isSwitchingFile)
+  }, [selectedDataFile, dataFiles, selectedLanguageCode])
 
   // Update document title when data file changes
   useEffect(() => {
@@ -251,9 +298,12 @@ function App() {
       const rounded = Math.round(currentTime)
       if (rounded <= 0) params.delete('t')
       else params.set('t', String(rounded))
+      if (selectedLanguageCode && selectedLanguageCode !== defaultLanguageCode) params.set('lang', selectedLanguageCode)
+      else params.delete('lang')
       const q = params.toString()
-      const path = window.location.pathname + window.location.hash
-      const next = q ? `${path}?${q}` : path
+      const path = window.location.pathname
+      const hash = window.location.hash
+      const next = q ? `${path}?${q}${hash}` : `${path}${hash}`
       if (next !== window.location.pathname + window.location.search + window.location.hash) {
         window.history.replaceState(null, '', next)
       }
@@ -261,10 +311,10 @@ function App() {
     return () => {
       if (urlSyncTimerRef.current) clearTimeout(urlSyncTimerRef.current)
     }
-  }, [currentTime])
+  }, [currentTime, defaultLanguageCode, selectedLanguageCode])
 
-  const handleDataFileChange = (dataFileId: string) => {
-    setSelectedDataFile(dataFileId)
+  const handleLanguageChange = (languageCode: string) => {
+    setSelectedLanguageCode(languageCode)
   }
 
   const handleTimeChange = (newTime: number) => {
@@ -309,12 +359,9 @@ function App() {
     [analyticsEnabled, posthog, selectedDataFile]
   )
 
-  // Get current data file for episodes
-  const currentDataFile = dataFiles.find(df => df.id === selectedDataFile)
-
   const dataSelector =
     isLoading ? (
-      <div className="text-sm text-gray-500">Loading data files...</div>
+      <div className="text-sm text-gray-500">Loading languages...</div>
     ) : dataFiles.length === 0 ? (
       <div className="text-sm text-amber-600 max-w-md">
         No dataset. Start the editor backend on port 5001, open the viewer dev URL Vite prints (any port), or set{' '}
@@ -323,9 +370,9 @@ function App() {
       </div>
     ) : (
       <DataSelector
-        dataFiles={dataFiles}
-        selectedDataFile={selectedDataFile}
-        onDataFileChange={handleDataFileChange}
+        languages={availableLanguages}
+        selectedLanguageCode={selectedLanguageCode}
+        onLanguageChange={handleLanguageChange}
       />
     )
 

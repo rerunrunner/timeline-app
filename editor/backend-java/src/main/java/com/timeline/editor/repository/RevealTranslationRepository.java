@@ -12,6 +12,8 @@ public interface RevealTranslationRepository extends JpaRepository<RevealTransla
 
     List<RevealTranslation> findByRevealId(Long revealId);
 
+    List<RevealTranslation> findByRevealIdIn(List<Long> revealIds);
+
     Optional<RevealTranslation> findByRevealIdAndLanguageId(Long revealId, Long languageId);
 
     void deleteByRevealIdAndLanguageId(Long revealId, Long languageId);

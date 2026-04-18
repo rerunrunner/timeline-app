@@ -29,6 +29,18 @@ export interface RawEpisode {
   duration: number;
 }
 
+export interface RawLanguage {
+  code: string;
+  name: string;
+  isDefault?: boolean;
+}
+
+export interface RawRevealTranslation {
+  displayedDate?: string | null;
+  displayedTitle?: string | null;
+  displayedDescription?: string | null;
+}
+
 /**
  * Raw timeline slice data from the JSON file.
  * Part of the hydrate package's internal implementation.
@@ -69,6 +81,8 @@ export interface RawReveal {
   displayedDate?: string;
   displayedTitle?: string;
   displayedDescription?: string;
+  translations?: Record<string, RawRevealTranslation>;
+  narrativeTimeframeSpecificityLevel?: number;
   notes?: string;
   screenshotFilename?: string;
 }
@@ -99,6 +113,15 @@ export interface RawData {
   timelines: RawTimeline[];
   events: RawEvent[];
   soundtracks: RawSoundtrack[];
+  languages?: RawLanguage[];
+  defaultLanguageCode?: string;
+  metadata?: {
+    id?: string;
+    version?: string;
+    name?: string;
+    description?: string;
+    filename?: string;
+  };
 }
 
 /**

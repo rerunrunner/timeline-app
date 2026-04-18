@@ -1,33 +1,32 @@
 import React from 'react';
 
-export interface DataFile {
-  id: string;
+export interface LanguageOption {
+  code: string;
   name: string;
-  description: string;
-  filename: string;
+  isDefault?: boolean;
 }
 
 interface DataSelectorProps {
-  selectedDataFile: string;
-  onDataFileChange: (dataFileId: string) => void;
-  dataFiles: DataFile[];
+  selectedLanguageCode: string;
+  onLanguageChange: (languageCode: string) => void;
+  languages: LanguageOption[];
 }
 
-const DataSelector: React.FC<DataSelectorProps> = ({ selectedDataFile, onDataFileChange, dataFiles }) => {
+const DataSelector: React.FC<DataSelectorProps> = ({ selectedLanguageCode, onLanguageChange, languages }) => {
   return (
     <div className="data-selector">
       <label htmlFor="data-file-select" className="sr-only">
-        Select Data File
+        Select Language
       </label>
       <select
         id="data-file-select"
-        value={selectedDataFile}
-        onChange={(e) => onDataFileChange(e.target.value)}
+        value={selectedLanguageCode}
+        onChange={(e) => onLanguageChange(e.target.value)}
         className="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
-        {dataFiles.map((dataFile) => (
-          <option key={dataFile.id} value={dataFile.id}>
-            {dataFile.name}
+        {languages.map((language) => (
+          <option key={language.code} value={language.code}>
+            {language.name}
           </option>
         ))}
       </select>
