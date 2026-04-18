@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getTableData, updateRecord, deleteRecord } from '../api/client';
+import api, { getTableData, updateRecord, deleteRecord } from '../api/client';
 import { Plus, Play } from 'lucide-react';
 import { EditorHeader, CardEditor, CardField, RevealCard, PlaytimeSelector, TagSelector, RichTextEditor } from './widgets';
 import EventCreationModal from './EventCreationModal';
@@ -26,8 +26,37 @@ interface Reveal {
     displayedDate?: string;
     displayedTitle?: string;
     displayedDescription?: string;
+    translationContext?: string;
     screenshotFilename?: string;
 }
+
+interface Language {
+    id: number;
+    code: string;
+    name: string;
+    isDefault: boolean;
+    isEnabled: boolean;
+}
+
+interface ResolvedRevealTranslation {
+    revealId: number;
+    languageId: number;
+    languageCode: string;
+    languageName: string;
+    defaultLanguage: boolean;
+    hasStoredTranslation: boolean;
+    fallbackToDefault: boolean;
+    translationId: number | null;
+    storedDisplayedDate?: string | null;
+    storedDisplayedTitle?: string | null;
+    storedDisplayedDescription?: string | null;
+    displayedDate?: string;
+    displayedTitle?: string;
+    displayedDescription?: string;
+    source?: string | null;
+}
+
+type TranslationField = 'displayedDate' | 'displayedTitle' | 'displayedDescription';
 
 interface Timeline {
     id: number;
@@ -62,6 +91,8 @@ const EventEditorCards: React.FC = () => {
     const [events, setEvents] = useState<Event[]>([]);
     const [allEvents, setAllEvents] = useState<Event[]>([]); // All events for mentions
     const [reveals, setReveals] = useState<Reveal[]>([]);
+    const [languages, setLanguages] = useState<Language[]>([]);
+    const [revealTranslations, setRevealTranslations] = useState<Record<number, ResolvedRevealTranslation[]>>({});
     const [timelines, setTimelines] = useState<Timeline[]>([]);
     const [eventTypes, setEventTypes] = useState<EventType[]>([]);
     const [soundtracks, setSoundtracks] = useState<Soundtrack[]>([]);
@@ -76,6 +107,37 @@ const EventEditorCards: React.FC = () => {
     const [showRevealCreateModal, setShowRevealCreateModal] = useState(false);
     const [selectedEventForReveal, setSelectedEventForReveal] = useState<number | null>(null);
     const [sortBy, setSortBy] = useState<'timeline-date' | 'playtime'>('playtime');
+    const [translatingRevealKeys, setTranslatingRevealKeys] = useState<string[]>([]);
+
+    const fetchSupportedLanguages = async (): Promise<Language[]> => {
+        const response = await api.get('/languages');
+        return Array.isArray(response.data) ? response.data : [];
+    };
+
+    const fetchRevealTranslations = async (revealList: Reveal[]): Promise<Record<number, ResolvedRevealTranslation[]>> => {
+        const results = await Promise.allSettled(
+            revealList.map(async (reveal) => {
+                const response = await api.get(`/reveals/${reveal.id}/translations`);
+                return {
+                    revealId: reveal.id,
+                    translations: Array.isArray(response.data) ? response.data as ResolvedRevealTranslation[] : []
+                };
+            })
+        );
+
+        const nextTranslations: Record<number, ResolvedRevealTranslation[]> = {};
+        results.forEach((result, index) => {
+            const revealId = revealList[index].id;
+            if (result.status === 'fulfilled') {
+                nextTranslations[result.value.revealId] = result.value.translations;
+            } else {
+                console.error(`Failed to fetch translations for reveal ${revealId}:`, result.reason);
+                nextTranslations[revealId] = [];
+            }
+        });
+
+        return nextTranslations;
+    };
 
     const fetchData = async () => {
         try {
@@ -95,10 +157,17 @@ const EventEditorCards: React.FC = () => {
 
             const events = Array.isArray(eventsData) ? eventsData : [];
             const allEvents = Array.isArray(allEventsData) ? allEventsData : [];
+            const revealList = Array.isArray(revealsData) ? revealsData : [];
+            const [supportedLanguages, translationsByReveal] = await Promise.all([
+                fetchSupportedLanguages(),
+                fetchRevealTranslations(revealList)
+            ]);
             
             setEvents(events);
             setAllEvents(allEvents);
-            setReveals(Array.isArray(revealsData) ? revealsData : []);
+            setReveals(revealList);
+            setLanguages(supportedLanguages);
+            setRevealTranslations(translationsByReveal);
             setTimelines(Array.isArray(timelinesData) ? timelinesData : []);
             setEventTypes(Array.isArray(eventTypesData) ? eventTypesData : []);
             setSoundtracks(Array.isArray(soundtracksData) ? soundtracksData : []);
@@ -339,6 +408,61 @@ const EventEditorCards: React.FC = () => {
         }
     };
 
+    const upsertRevealTranslationState = (revealId: number, nextTranslation: ResolvedRevealTranslation) => {
+        setRevealTranslations((prev) => {
+            const existingTranslations = prev[revealId] || [];
+            const filteredTranslations = existingTranslations.filter(
+                (translation) => translation.languageCode !== nextTranslation.languageCode
+            );
+            return {
+                ...prev,
+                [revealId]: [...filteredTranslations, nextTranslation]
+                    .sort((a, b) => a.languageCode.localeCompare(b.languageCode))
+            };
+        });
+    };
+
+    const handleRevealTranslationUpdate = async (
+        revealId: number,
+        languageCode: string,
+        field: 'displayedDate' | 'displayedTitle' | 'displayedDescription',
+        value: string
+    ) => {
+        const currentTranslation = revealTranslations[revealId]?.find(
+            (translation) => translation.languageCode === languageCode
+        );
+        if (!currentTranslation) {
+            return;
+        }
+
+        const payload = {
+            displayedDate: field === 'displayedDate' ? value : currentTranslation.storedDisplayedDate || undefined,
+            displayedTitle: field === 'displayedTitle' ? value : currentTranslation.storedDisplayedTitle || undefined,
+            displayedDescription: field === 'displayedDescription' ? value : currentTranslation.storedDisplayedDescription || undefined,
+            source: 'manual'
+        };
+
+        upsertRevealTranslationState(revealId, {
+            ...currentTranslation,
+            ...payload,
+            storedDisplayedDate: payload.displayedDate ?? null,
+            storedDisplayedTitle: payload.displayedTitle ?? null,
+            storedDisplayedDescription: payload.displayedDescription ?? null,
+            hasStoredTranslation: true,
+            fallbackToDefault: payload.displayedDate == null
+                || payload.displayedTitle == null
+                || payload.displayedDescription == null
+        });
+
+        try {
+            const response = await api.put(`/reveals/${revealId}/translations/${languageCode}`, payload);
+            upsertRevealTranslationState(revealId, response.data as ResolvedRevealTranslation);
+        } catch (error) {
+            console.error(`Failed to update reveal translation ${revealId}/${languageCode}:`, error);
+            await refreshDataInBackground();
+        }
+    };
+
     const handleRevealDelete = async (revealId: number) => {
         if (!confirm('Are you sure you want to delete this reveal?')) {
             return;
@@ -350,6 +474,25 @@ const EventEditorCards: React.FC = () => {
         } catch (error) {
             console.error('Failed to delete reveal:', error);
             alert('Failed to delete reveal: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    };
+
+    const handleRevealTranslate = async (revealId: number, languageCode: string) => {
+        const translationKey = `${revealId}:${languageCode}`;
+        setTranslatingRevealKeys((prev) => prev.includes(translationKey) ? prev : [...prev, translationKey]);
+
+        try {
+            await api.post(
+                `/reveals/${revealId}/translations/generate/${languageCode}`,
+                undefined,
+                { timeout: 305000 }
+            );
+            await refreshDataInBackground();
+        } catch (error) {
+            console.error('Failed to translate reveal:', error);
+            alert('Failed to translate reveal: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        } finally {
+            setTranslatingRevealKeys((prev) => prev.filter((key) => key !== translationKey));
         }
     };
 
@@ -371,15 +514,20 @@ const EventEditorCards: React.FC = () => {
 
     const refreshDataInBackground = async () => {
         try {
-            const [eventsData, revealsData] = await Promise.all([
+            const [eventsData, revealsData, supportedLanguages] = await Promise.all([
                 getTableData('event', searchTerm),
-                getTableData('reveal')
+                getTableData('reveal'),
+                fetchSupportedLanguages()
             ]);
 
             const events = Array.isArray(eventsData) ? eventsData : [];
+            const revealList = Array.isArray(revealsData) ? revealsData : [];
+            const translationsByReveal = await fetchRevealTranslations(revealList);
             
             setEvents(events);
-            setReveals(Array.isArray(revealsData) ? revealsData : []);
+            setReveals(revealList);
+            setLanguages(supportedLanguages);
+            setRevealTranslations(translationsByReveal);
         } catch (error) {
             console.error('Failed to refresh data in background:', error);
         }
@@ -475,6 +623,35 @@ const EventEditorCards: React.FC = () => {
         return getInheritedPlaceholder(earlierSibling, field);
     };
 
+    const getInheritedTranslationPlaceholder = (
+        currentReveal: Reveal,
+        languageCode: string,
+        field: TranslationField
+    ): string => {
+        const earlierSibling = findEarlierSiblingReveal(currentReveal);
+        if (!earlierSibling) {
+            return '';
+        }
+
+        const earlierTranslation = revealTranslations[earlierSibling.id]?.find(
+            (translation) => translation.languageCode === languageCode
+        );
+
+        if (earlierTranslation?.hasStoredTranslation) {
+            const value =
+                field === 'displayedDate'
+                    ? earlierTranslation.storedDisplayedDate
+                    : field === 'displayedTitle'
+                        ? earlierTranslation.storedDisplayedTitle
+                        : earlierTranslation.storedDisplayedDescription;
+            if (value) {
+                return value;
+            }
+        }
+
+        return getInheritedTranslationPlaceholder(earlierSibling, languageCode, field);
+    };
+
 
 
 
@@ -568,7 +745,11 @@ const EventEditorCards: React.FC = () => {
                                             value={event.timelineId}
                                             type="select"
                                             options={timelines.map(t => ({ value: t.id, label: t.shortId }))}
-                                            onChange={(value) => handleFieldUpdate('timelineId', parseInt(value.toString()), event.id)}
+                                            onChange={(value) => {
+                                                if (value !== null) {
+                                                    handleFieldUpdate('timelineId', parseInt(value.toString()), event.id);
+                                                }
+                                            }}
                                             className="w-1/12"
                                         />
 
@@ -713,11 +894,19 @@ const EventEditorCards: React.FC = () => {
                                                 <RevealCard
                                                     key={reveal.id}
                                                     reveal={reveal}
+                                                    languages={languages}
+                                                    translations={revealTranslations[reveal.id] || []}
                                                     events={events}
                                                     episodes={episodes}
                                                     timelines={timelines}
                                                     onUpdate={handleRevealUpdate}
+                                                    onUpdateTranslation={handleRevealTranslationUpdate}
                                                     onDelete={handleRevealDelete}
+                                                    onTranslate={handleRevealTranslate}
+                                                    translatingLanguageCodes={languages
+                                                        .filter((language) => translatingRevealKeys.includes(`${reveal.id}:${language.code}`))
+                                                        .map((language) => language.code)}
+                                                    getTranslationPlaceholder={getInheritedTranslationPlaceholder}
                                                     displayedDatePlaceholder={getInheritedPlaceholder(reveal, 'displayedDate')}
                                                     displayedTitlePlaceholder={getInheritedPlaceholder(reveal, 'displayedTitle')}
                                                 />

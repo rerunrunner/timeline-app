@@ -6,6 +6,7 @@ interface InputProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  title?: string;
   autoFocus?: boolean;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   onBlur?: () => void;
@@ -19,6 +20,7 @@ export const Input: React.FC<InputProps> = ({
   placeholder,
   disabled = false,
   className = '',
+  title,
   autoFocus = false,
   onKeyDown,
   onBlur,
@@ -113,11 +115,13 @@ export const Input: React.FC<InputProps> = ({
           onBlur={handleBlur}
           disabled={disabled}
           placeholder={placeholder}
+          title={title}
         />
       ) : (
         <span 
           style={{ color: disabled ? '#6b7280' : 'inherit' }}
           data-placeholder={!value?.toString() ? 'true' : 'false'}
+          title={title}
         >
           {value?.toString() || placeholder || (disabled ? '' : 'Click to edit...')}
         </span>

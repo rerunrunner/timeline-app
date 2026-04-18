@@ -13,7 +13,8 @@ public interface RevealRepository extends JpaRepository<Reveal, Long> {
     
     @Query("SELECT r FROM Reveal r WHERE " +
            "LOWER(r.displayedTitle) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(r.displayedDescription) LIKE LOWER(CONCAT('%', :search, '%'))")
+           "LOWER(r.displayedDescription) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(r.translationContext) LIKE LOWER(CONCAT('%', :search, '%'))")
     List<Reveal> findBySearchTerm(@Param("search") String search);
     
     List<Reveal> findByEventId(Long eventId);

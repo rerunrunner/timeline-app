@@ -1,149 +1,112 @@
-import React, { useState } from 'react';
-import { Trash2 } from 'lucide-react';
-import { CardField, PlaytimeSelector, ImageUpload } from './index';
+import React, { useEffect, useMemo, useState } from 'react';
+import RevealCardContent from './RevealCardContent';
+import RevealCardHeader from './RevealCardHeader';
+import RevealCardTranslation from './RevealCardTranslation';
+import {
+    Language,
+    ResolvedRevealTranslation,
+    RevealCardData,
+    TranslationField
+} from './RevealCard.types';
 
 interface RevealCardProps {
-    reveal: {
-        id: number;
-        eventId: number;
-        apparentTimelineId?: number;
-        episodeId: number;
-        episodeTime: number;
-        displayedDate?: string;
-        displayedTitle?: string;
-        displayedDescription?: string;
-        screenshotFilename?: string;
-    };
+    reveal: RevealCardData;
+    languages: Language[];
+    translations: ResolvedRevealTranslation[];
     events: Array<{ id: number; shortDescription: string; timelineId: number }>;
     episodes: Array<{ id: number; number: number; title: string }>;
     timelines: Array<{ id: number; shortId: string; title: string }>;
     onUpdate: (revealId: number, field: string, value: any) => void;
+    onUpdateTranslation: (
+        revealId: number,
+        languageCode: string,
+        field: 'displayedDate' | 'displayedTitle' | 'displayedDescription',
+        value: string
+    ) => void;
     onDelete: (revealId: number) => void;
+    onTranslate: (revealId: number, languageCode: string) => void;
+    translatingLanguageCodes?: string[];
+    getTranslationPlaceholder: (
+        reveal: RevealCardProps['reveal'],
+        languageCode: string,
+        field: TranslationField
+    ) => string;
     displayedDatePlaceholder?: string;
     displayedTitlePlaceholder?: string;
 }
 
 const RevealCard: React.FC<RevealCardProps> = ({
     reveal,
+    languages,
+    translations,
     events,
     episodes,
     timelines,
     onUpdate,
+    onUpdateTranslation,
     onDelete,
+    onTranslate,
+    translatingLanguageCodes = [],
+    getTranslationPlaceholder,
     displayedDatePlaceholder,
     displayedTitlePlaceholder
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const targetLanguages = useMemo(
+        () => languages.filter((language) => !language.isDefault),
+        [languages]
+    );
+    const defaultLanguageCode = useMemo(
+        () => languages.find((language) => language.isDefault)?.code ?? languages[0]?.code ?? 'en',
+        [languages]
+    );
+    const [selectedLanguageCode, setSelectedLanguageCode] = useState(targetLanguages[0]?.code ?? defaultLanguageCode);
 
-    const timelineOptions = timelines.map(tl => ({
-        value: tl.id,
-        label: tl.shortId
-    }));
+    useEffect(() => {
+        if (!languages.some((language) => language.code === selectedLanguageCode)) {
+            setSelectedLanguageCode(targetLanguages[0]?.code ?? defaultLanguageCode);
+            return;
+        }
 
-    const eventOptions = events.map(event => {
-        const timeline = timelines.find(tl => tl.id === event.timelineId);
-        return {
-            value: event.id,
-            label: `${timeline?.shortId || 'Unknown'} - ${event.shortDescription}`
-        };
-    });
+        const currentLanguage = languages.find((language) => language.code === selectedLanguageCode);
+        if (targetLanguages.length > 0 && currentLanguage?.isDefault) {
+            setSelectedLanguageCode(targetLanguages[0].code);
+        }
+    }, [defaultLanguageCode, languages, selectedLanguageCode, targetLanguages]);
+
+    const isTranslating = translatingLanguageCodes.includes(selectedLanguageCode);
 
     return (
         <div className="reveal-card">
-            <div className="reveal-card-header">
-                <div className="reveal-card-fields-header">
-                    <CardField
-                        label="Event"
-                        value={reveal.eventId || ''}
-                        type="select"
-                        onChange={(value) => onUpdate(reveal.id, 'eventId', parseInt(value.toString()))}
-                        options={[
-                            { value: '', label: 'Select event' },
-                            ...eventOptions
-                        ]}
-                        className="reveal-header-field"
-                        title="Move this reveal to a different event"
-                    />
-                    
-                    <CardField
-                        label="Apparent Timeline"
-                        value={reveal.apparentTimelineId || ''}
-                        type="select"
-                        onChange={(value) => onUpdate(reveal.id, 'apparentTimelineId', value ? parseInt(value.toString()) : null)}
-                        options={[
-                            { value: '', label: 'None' },
-                            ...timelineOptions
-                        ]}
-                        className="reveal-header-field"
-                    />
-
-                    <CardField
-                        label="Episode & Time"
-                        value=""
-                        onChange={() => {}}
-                        className="reveal-header-field"
-                        customComponent={
-                            <PlaytimeSelector
-                                episodeId={reveal.episodeId}
-                                episodeTime={reveal.episodeTime}
-                                episodes={episodes}
-                                onEpisodeChange={(episodeId) => onUpdate(reveal.id, 'episodeId', episodeId)}
-                                onTimeChange={(timeInSeconds) => onUpdate(reveal.id, 'episodeTime', timeInSeconds)}
-                            />
-                        }
-                    />
-
-                    <CardField
-                        label="Displayed Date"
-                        value={reveal.displayedDate || ''}
-                        onChange={(value) => onUpdate(reveal.id, 'displayedDate', value)}
-                        placeholder={displayedDatePlaceholder ? `↓ ${displayedDatePlaceholder}` : undefined}
-                        className={`reveal-header-field ${displayedDatePlaceholder ? 'inherited-placeholder' : ''}`}
-                    />
-
-                    <CardField
-                        label="Displayed Title"
-                        value={reveal.displayedTitle || ''}
-                        onChange={(value) => onUpdate(reveal.id, 'displayedTitle', value)}
-                        placeholder={displayedTitlePlaceholder ? `↓ ${displayedTitlePlaceholder}` : undefined}
-                        className={`reveal-header-field ${displayedTitlePlaceholder ? 'inherited-placeholder' : ''}`}
-                    />
-                </div>
-                
-                <div className="reveal-card-actions">
-                    <button
-                        onClick={() => onDelete(reveal.id)}
-                        className="reveal-action-btn reveal-delete-btn"
-                        title="Delete reveal"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
-            </div>
+            <RevealCardHeader
+                reveal={reveal}
+                events={events}
+                episodes={episodes}
+                timelines={timelines}
+                onUpdate={onUpdate}
+                onDelete={onDelete}
+                displayedDatePlaceholder={displayedDatePlaceholder}
+                displayedTitlePlaceholder={displayedTitlePlaceholder}
+            />
 
             {isExpanded && (
                 <div className="reveal-card-content">
-                    <div className="reveal-card-fields">
-                        <CardField
-                            label="Displayed Description"
-                            value={reveal.displayedDescription || ''}
-                            type="textarea"
-                            onChange={(value) => onUpdate(reveal.id, 'displayedDescription', value)}
-                        />
-
-                        <CardField
-                            label="Screenshot"
-                            value=""
-                            onChange={() => {}}
-                            customComponent={
-                                <ImageUpload
-                                    revealId={reveal.id}
-                                    filename={reveal.screenshotFilename}
-                                    onImageChange={(filename) => onUpdate(reveal.id, 'screenshotFilename', filename)}
-                                />
-                            }
-                        />
-                    </div>
+                    <RevealCardContent
+                        reveal={reveal}
+                        onUpdate={onUpdate}
+                    />
+                    <RevealCardTranslation
+                        reveal={reveal}
+                        targetLanguages={targetLanguages}
+                        translations={translations}
+                        selectedLanguageCode={selectedLanguageCode}
+                        onSelectLanguage={setSelectedLanguageCode}
+                        onUpdate={onUpdate}
+                        onUpdateTranslation={onUpdateTranslation}
+                        onTranslate={onTranslate}
+                        isTranslating={isTranslating}
+                        getTranslationPlaceholder={getTranslationPlaceholder}
+                    />
                 </div>
             )}
 

@@ -7,7 +7,7 @@ interface SelectOption {
 
 interface SelectProps {
   value: string | number | null;
-  onChange: (value: string | number) => void;
+  onChange: (value: string | number | null) => void;
   options: SelectOption[];
   placeholder?: string;
   disabled?: boolean;

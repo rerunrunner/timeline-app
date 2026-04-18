@@ -167,7 +167,7 @@ public class DatasetMetadataService {
                     """)) {
                 while (tables.next()) {
                     String tableName = tables.getString("TABLE_NAME");
-                    // Skip Flyway tables
+                    // Skip Flyway tables.
                     if (!tableName.toLowerCase().contains("flyway")) {
                         tableNames.add(tableName);
                     }
@@ -186,9 +186,21 @@ public class DatasetMetadataService {
                     try (ResultSet rs = stmt.executeQuery("SELECT * FROM " + table)) {
                         ResultSetMetaData meta = rs.getMetaData();
                         int cols = meta.getColumnCount();
+                        StringBuilder columnList = new StringBuilder();
+                        for (int i = 1; i <= cols; i++) {
+                            if (i > 1) {
+                                columnList.append(", ");
+                            }
+                            columnList.append("\"").append(meta.getColumnName(i)).append("\"");
+                        }
 
                         while (rs.next()) {
-                            dataBuilder.append("INSERT INTO ").append(table).append(" VALUES(");
+                            dataBuilder
+                                    .append("INSERT INTO ")
+                                    .append(table)
+                                    .append(" (")
+                                    .append(columnList)
+                                    .append(") VALUES(");
                             for (int i = 1; i <= cols; i++) {
                                 Object val = rs.getObject(i);
                                 if (val == null) {

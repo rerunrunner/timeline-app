@@ -2,6 +2,7 @@ package com.timeline.editor.controller;
 
 import com.timeline.editor.model.Reveal;
 import com.timeline.editor.repository.RevealRepository;
+import com.timeline.editor.service.RevealWriteService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class RevealController {
     @Autowired
     private RevealRepository revealRepository;
 
+    @Autowired
+    private RevealWriteService revealWriteService;
+
     private Path getImagesDir() {
         return Paths.get(dataPath, "images");
     }
@@ -54,30 +58,16 @@ public class RevealController {
     @PostMapping
     public Reveal createReveal(@RequestBody Reveal reveal) {
         logger.debug("Creating reveal: {}", reveal);
-        Reveal savedReveal = revealRepository.save(reveal);
+        Reveal savedReveal = revealWriteService.createReveal(reveal);
         logger.debug("Saved reveal: {}", savedReveal);
         return savedReveal;
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<Reveal> updateReveal(@PathVariable("id") Long id, @RequestBody Reveal revealDetails) {
-        Optional<Reveal> optionalReveal = revealRepository.findById(id);
-        if (optionalReveal.isPresent()) {
-            Reveal reveal = optionalReveal.get();
-            reveal.setEventId(revealDetails.getEventId());
-            reveal.setApparentTimelineId(revealDetails.getApparentTimelineId());
-            reveal.setEpisodeId(revealDetails.getEpisodeId());
-            reveal.setEpisodeTime(revealDetails.getEpisodeTime());
-            reveal.setDisplayedDate(revealDetails.getDisplayedDate());
-            reveal.setDisplayedTitle(revealDetails.getDisplayedTitle());
-            reveal.setDisplayedDescription(revealDetails.getDisplayedDescription());
-            reveal.setScreenshotFilename(revealDetails.getScreenshotFilename());
-            
-            Reveal updatedReveal = revealRepository.save(reveal);
-            return ResponseEntity.ok(updatedReveal);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return revealWriteService.updateReveal(id, revealDetails)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
     
     @DeleteMapping("/{id}")

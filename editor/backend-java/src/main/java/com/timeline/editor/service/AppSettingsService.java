@@ -33,10 +33,10 @@ public class AppSettingsService {
             // Create default settings if none exist
             settings = new AppSettings();
             settings.setId("default");
-            settings.setExportPath(Path.of(dataPath, "export").toString());
-            settings.setLoggingLevel("INFO");
+            applyDefaults(settings);
             appSettingsRepository.save(settings);
         }
+        applyDefaults(settings);
         return settings;
     }
     
@@ -47,6 +47,13 @@ public class AppSettingsService {
         if (existing != null) {
             existing.setExportPath(settings.getExportPath());
             existing.setLoggingLevel(settings.getLoggingLevel());
+            existing.setTranslationProvider(settings.getTranslationProvider());
+            existing.setTranslationBaseUrl(settings.getTranslationBaseUrl());
+            existing.setTranslationModel(settings.getTranslationModel());
+            existing.setTranslationApiKey(settings.getTranslationApiKey());
+            existing.setAutoTranslateOnSave(settings.getAutoTranslateOnSave());
+            existing.setTranslationTimeoutMs(settings.getTranslationTimeoutMs());
+            applyDefaults(existing);
             AppSettings saved = appSettingsRepository.save(existing);
             
             // Apply logging level change dynamically
@@ -59,6 +66,13 @@ public class AppSettingsService {
             newSettings.setId("default");
             newSettings.setExportPath(settings.getExportPath());
             newSettings.setLoggingLevel(settings.getLoggingLevel());
+            newSettings.setTranslationProvider(settings.getTranslationProvider());
+            newSettings.setTranslationBaseUrl(settings.getTranslationBaseUrl());
+            newSettings.setTranslationModel(settings.getTranslationModel());
+            newSettings.setTranslationApiKey(settings.getTranslationApiKey());
+            newSettings.setAutoTranslateOnSave(settings.getAutoTranslateOnSave());
+            newSettings.setTranslationTimeoutMs(settings.getTranslationTimeoutMs());
+            applyDefaults(newSettings);
             AppSettings saved = appSettingsRepository.save(newSettings);
             
             // Apply logging level change dynamically
@@ -82,6 +96,24 @@ public class AppSettingsService {
             log.info("Logging level changed to: {}", levelStr);
         } catch (Exception e) {
             log.error("Failed to change logging level", e);
+        }
+    }
+
+    private void applyDefaults(AppSettings settings) {
+        if (settings.getExportPath() == null || settings.getExportPath().isBlank()) {
+            settings.setExportPath(Path.of(dataPath, "export").toString());
+        }
+        if (settings.getLoggingLevel() == null || settings.getLoggingLevel().isBlank()) {
+            settings.setLoggingLevel("INFO");
+        }
+        if (settings.getTranslationProvider() == null || settings.getTranslationProvider().isBlank()) {
+            settings.setTranslationProvider("lmstudio");
+        }
+        if (settings.getAutoTranslateOnSave() == null) {
+            settings.setAutoTranslateOnSave(false);
+        }
+        if (settings.getTranslationTimeoutMs() == null || settings.getTranslationTimeoutMs() <= 0) {
+            settings.setTranslationTimeoutMs(300000);
         }
     }
 }

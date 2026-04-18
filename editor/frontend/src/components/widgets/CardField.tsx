@@ -6,7 +6,7 @@ interface CardFieldProps {
   value: string | number | null;
   type?: 'text' | 'textarea' | 'select' | 'number';
   options?: Array<{ value: string | number; label: string }>;
-  onChange?: (value: string | number) => void;
+  onChange?: (value: string | number | null) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -26,7 +26,7 @@ export const CardField: React.FC<CardFieldProps> = ({
   title,
   customComponent
 }) => {
-  const handleFieldUpdate = (newValue: string | number) => {
+  const handleFieldUpdate = (newValue: string | number | null) => {
     if (onChange) {
       onChange(newValue);
     }

@@ -6,6 +6,7 @@ interface TextAreaProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  title?: string;
   autoFocus?: boolean;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   onBlur?: () => void;
@@ -20,6 +21,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   placeholder,
   disabled = false,
   className = '',
+  title,
   autoFocus = false,
   onKeyDown,
   onBlur,
@@ -104,6 +106,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
         readOnly={!isEditing || disabled}
         className="input-widget"
         placeholder={placeholder}
+        title={title}
         rows={rows}
         style={{ 
           cursor: disabled ? 'default' : (isEditing ? 'text' : 'default'),

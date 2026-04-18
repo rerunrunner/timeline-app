@@ -38,6 +38,9 @@ public class Reveal extends BaseEntity {
     
     @Column(name = "displayed_description")
     private String displayedDescription;
+
+    @Column(name = "translation_context")
+    private String translationContext;
     
     @Column(name = "screenshot_filename")
     private String screenshotFilename;
@@ -99,6 +102,9 @@ public class Reveal extends BaseEntity {
     
     public String getDisplayedDescription() { return displayedDescription; }
     public void setDisplayedDescription(String displayedDescription) { this.displayedDescription = displayedDescription; }
+
+    public String getTranslationContext() { return translationContext; }
+    public void setTranslationContext(String translationContext) { this.translationContext = translationContext; }
     
     public String getScreenshotFilename() { return screenshotFilename; }
     public void setScreenshotFilename(String screenshotFilename) { this.screenshotFilename = screenshotFilename; }

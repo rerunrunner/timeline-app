@@ -22,6 +22,7 @@ interface RevealFormData {
     displayedDate: string;
     displayedTitle: string;
     displayedDescription: string;
+    translationContext: string;
     screenshotLink: string;
 }
 
@@ -44,6 +45,7 @@ const RevealCreationModal: React.FC<RevealCreationModalProps> = ({
         displayedDate: '',
         displayedTitle: '',
         displayedDescription: '',
+        translationContext: '',
         screenshotLink: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +62,7 @@ const RevealCreationModal: React.FC<RevealCreationModalProps> = ({
                 displayedDate: '',
                 displayedTitle: '',
                 displayedDescription: '',
+                translationContext: '',
                 screenshotLink: ''
             });
             setError(null);
@@ -107,6 +110,7 @@ const RevealCreationModal: React.FC<RevealCreationModalProps> = ({
                 displayedDate: formData.displayedDate.trim() || null,
                 displayedTitle: formData.displayedTitle.trim() || null,
                 displayedDescription: formData.displayedDescription.trim() || null,
+                translationContext: formData.translationContext.trim() || null,
                 screenshotLink: formData.screenshotLink.trim() || null
             };
 
@@ -260,6 +264,18 @@ const RevealCreationModal: React.FC<RevealCreationModalProps> = ({
                             onChange={(e) => handleInputChange('displayedDescription', e.target.value)}
                             placeholder="Description of this reveal"
                             rows={4}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="translationContext">Translation Context</label>
+                        <textarea
+                            id="translationContext"
+                            value={formData.translationContext}
+                            onChange={(e) => handleInputChange('translationContext', e.target.value)}
+                            placeholder="Optional guidance about tone, ambiguity, or terminology"
+                            rows={3}
                             disabled={isSubmitting}
                         />
                     </div>
