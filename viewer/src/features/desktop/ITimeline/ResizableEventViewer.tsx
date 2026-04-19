@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import IEventViewer from './EventViewer';
-import type { IEvent } from '../../types/interfaces';
-import type { Platform } from '../../hooks/usePlatform';
+import type { IEvent } from '../../../types/interfaces';
+import type { Platform } from '../hooks/usePlatform';
 
 interface ResizableEventViewerProps {
   event: IEvent | null;

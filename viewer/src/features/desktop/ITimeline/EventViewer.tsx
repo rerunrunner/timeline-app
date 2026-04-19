@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ShareIcon, CheckIcon, LockClosedIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
-import type { IEvent } from '../../types/interfaces';
-import { NarrativeStatus } from '../../types/timeline';
+import type { IEvent } from '../../../types/interfaces';
+import { NarrativeStatus } from '../../../types/timeline';
 
 /** Same label as the timeline marker for this event group at the playhead (see EventGroup). */
 function getTimelineNarrativeDateLabel(event: IEvent, currentTime: number): string {

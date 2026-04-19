@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Platform } from '../hooks/usePlatform';
+import type { Platform } from './hooks/usePlatform';
 
 export interface LanguageOption {
   code: string;

@@ -1,6 +1,6 @@
 import React from 'react';
-import type { ISegment, IEvent, ITimeline } from '../../types/interfaces';
-import { calculateImmutableApparentTimelineTransform } from '../../utils/timelineTransforms';
+import type { ISegment, IEvent, ITimeline } from '../../../types/interfaces';
+import { calculateImmutableApparentTimelineTransform } from '../../../utils/timelineTransforms';
 import SubSegment from './SubSegment';
 
 /**

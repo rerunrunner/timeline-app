@@ -1,5 +1,5 @@
 import React from 'react';
-import type { NarrativeDate, ReadonlyArray, ISegment } from '../../types/interfaces';
+import type { NarrativeDate, ReadonlyArray, ISegment } from '../../../types/interfaces';
 
 interface ITimeRulerProps {
   globalStartTime: number;

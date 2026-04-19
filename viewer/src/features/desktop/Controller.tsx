@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import type { Platform } from '../hooks/usePlatform'
+import type { Platform } from './hooks/usePlatform'
 import EpisodeTimeSelector from './controller/EpisodeTimeSelector'
 import Playbar from './controller/Playbar'
 

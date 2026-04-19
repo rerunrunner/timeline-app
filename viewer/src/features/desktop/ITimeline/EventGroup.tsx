@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import type { IEventGroup, IEvent } from '../../types/interfaces';
-import { NarrativeStatus } from '../../types/timeline';
+import type { IEventGroup, IEvent } from '../../../types/interfaces';
+import { NarrativeStatus } from '../../../types/timeline';
 
 /**
  * EventGroup - Component for rendering multiple events that occur on the same day

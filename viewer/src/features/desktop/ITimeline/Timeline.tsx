@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ITimeline, ISegment, IEvent } from '../../types/interfaces';
+import type { ITimeline, ISegment, IEvent } from '../../../types/interfaces';
 import Segment from './Segment';
 
 interface ITimelineComponentProps {

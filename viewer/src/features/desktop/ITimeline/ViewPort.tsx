@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { IEvent, ITimeline } from '../../types/interfaces';
-import type { Platform } from '../../hooks/usePlatform';
+import type { IEvent, ITimeline } from '../../../types/interfaces';
+import type { Platform } from '../hooks/usePlatform';
 import ITimelineContent from './TimelineContent';
 import TimelineControls from './TimelineControls';
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ITimeline, IEvent } from '../../types/interfaces';
+import type { ITimeline, IEvent } from '../../../types/interfaces';
 import ITimelineComponent from './Timeline';
 import ITimeRuler from './TimeRuler';
 

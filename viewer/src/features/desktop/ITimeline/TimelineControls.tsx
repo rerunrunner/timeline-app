@@ -1,4 +1,4 @@
-import type { Platform } from '../../hooks/usePlatform';
+import type { Platform } from '../hooks/usePlatform';
 
 interface TimelineControlsProps {
   dataSelector: JSX.Element;
