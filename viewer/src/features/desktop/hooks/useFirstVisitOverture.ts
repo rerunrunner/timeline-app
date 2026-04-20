@@ -27,7 +27,10 @@ const OVERTURE_DURATION_MS = 10000;
 const OVERTURE_DURATION_SECONDS = OVERTURE_DURATION_MS / 1000;
 const POST_OVERTURE_SPEED = 120;
 const MIN_DURATION_FOR_OVERTURE = PARK_TIME_SECONDS + 60;
-const SESSION_KEY = 'timeline:overturePlayed';
+// Versioned so that materially changing the overture (e.g. a new park time
+// or choreography) can re-show it for everyone by bumping the suffix,
+// without writing a migration.
+const STORAGE_KEY = 'timeline:overtureSeen:v1';
 
 type UseFirstVisitOvertureArgs = {
   totalDuration: number;
@@ -42,23 +45,25 @@ type UseFirstVisitOvertureResult = {
 };
 
 /**
- * First-load "reverse overture" for the desktop renderer.
+ * First-visit "reverse overture" for the desktop renderer.
  *
- * On the first time the desktop viewer is shown in a browser session, this
- * hook orchestrates a short cinematic intro:
+ * On the first time the desktop viewer is shown to this browser profile,
+ * this hook orchestrates a short cinematic intro:
  *   1. Snap the playhead to `totalDuration` so the canvas is fully populated
  *      in frame one (the bounce-killer).
  *   2. Dispatch an `autoStart` to `Controller` that plays backward from the
- *      end to `PARK_TIME_SECONDS` over ~3 seconds. Controller's existing
- *      playback `setInterval` drives the motion; this hook owns no timer
- *      for the actual scrubbing.
- *   3. After 3 seconds, snap to `PARK_TIME_SECONDS` and dispatch a forward
- *      `autoStart` at 120x so events keep arriving and users have something
- *      to watch past the bounce window.
+ *      end to `PARK_TIME_SECONDS` over `OVERTURE_DURATION_MS`. Controller's
+ *      existing playback `setInterval` drives the motion; this hook owns no
+ *      timer for the actual scrubbing.
+ *   3. When that interval elapses, snap to `PARK_TIME_SECONDS` and dispatch
+ *      a forward `autoStart` at `POST_OVERTURE_SPEED` so events keep arriving
+ *      past the bounce window.
  *
  * Skipped if the user arrived via a deep link (`?t=...`), if the story is
  * too short to land somewhere useful at `PARK_TIME_SECONDS`, or if the
- * overture has already played in this browser session.
+ * overture has already played for this browser profile (tracked in
+ * `localStorage` so it persists across tabs and reloads — once-per-user-per-
+ * device, not once-per-tab).
  *
  * Any user input during the overture cancels it: the phase-2 timer is
  * cleared and `Controller` is told to stop.
@@ -75,14 +80,14 @@ export function useFirstVisitOverture({
   const [autoStart, setAutoStart] = useState<OvertureHandoff>(null);
 
   // Capture the "already played?" decision at first render. If we read
-  // sessionStorage inside the effect we'd see the flag we set ourselves
-  // on the second strict-mode invocation and skip — orphaning the phase-2
+  // localStorage inside the effect we'd see the flag we set ourselves on
+  // the second strict-mode invocation and skip — orphaning the phase-2
   // timer that the first invocation's cleanup just tore down.
   const initialAlreadyPlayedRef = useRef<boolean | null>(null);
   if (initialAlreadyPlayedRef.current === null) {
     initialAlreadyPlayedRef.current =
       typeof window !== 'undefined' &&
-      window.sessionStorage.getItem(SESSION_KEY) === '1';
+      window.localStorage.getItem(STORAGE_KEY) === '1';
   }
 
   // Stable refs for values that should not re-fire the effect.
@@ -102,7 +107,7 @@ export function useFirstVisitOverture({
     if (!timelinesReady) return;
     if (totalDuration < MIN_DURATION_FOR_OVERTURE) return;
 
-    window.sessionStorage.setItem(SESSION_KEY, '1');
+    window.localStorage.setItem(STORAGE_KEY, '1');
 
     const startedAt = Date.now();
     let cancelled = false;
