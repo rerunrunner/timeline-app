@@ -10,6 +10,8 @@ let timelineDatasetSessionStartTs = 0;
 type UseSessionAnalyticsArgs = {
   selectedDataFile: string;
   timelinesReady: boolean;
+  /** Dataset language code from DataSelector (ISO-ish code, e.g. en, ko). */
+  selectedLanguageCode: string;
 };
 
 /**
@@ -22,6 +24,7 @@ type UseSessionAnalyticsArgs = {
 export function useSessionAnalytics({
   selectedDataFile,
   timelinesReady,
+  selectedLanguageCode,
 }: UseSessionAnalyticsArgs): void {
   const posthog = usePostHog();
   const pageEnteredAtRef = useRef(0);
@@ -33,15 +36,27 @@ export function useSessionAnalytics({
   }, [analyticsEnabled]);
 
   useEffect(() => {
+    if (!analyticsEnabled || !selectedLanguageCode) return;
+    posthog.register({ selected_language: selectedLanguageCode });
+  }, [analyticsEnabled, posthog, selectedLanguageCode]);
+
+  useEffect(() => {
     if (!analyticsEnabled) return;
     if (!selectedDataFile || !timelinesReady || timelineSessionStartLogged) return;
     timelineSessionStartLogged = true;
     timelineDatasetSessionStartTs = Date.now();
     posthog.capture('timeline_session_started', {
       dataset_id: selectedDataFile,
+      selected_language: selectedLanguageCode || undefined,
       path: typeof window !== 'undefined' ? window.location.pathname : undefined,
     });
-  }, [analyticsEnabled, posthog, selectedDataFile, timelinesReady]);
+  }, [
+    analyticsEnabled,
+    posthog,
+    selectedDataFile,
+    selectedLanguageCode,
+    timelinesReady,
+  ]);
 
   useEffect(() => {
     if (!analyticsEnabled) return;
@@ -56,9 +71,12 @@ export function useSessionAnalytics({
         payload.duration_ms = now - timelineDatasetSessionStartTs;
         payload.dataset_id = selectedDataFile;
       }
+      if (selectedLanguageCode) {
+        payload.selected_language = selectedLanguageCode;
+      }
       posthog.capture('timeline_session_ended', payload);
     };
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
-  }, [analyticsEnabled, posthog, selectedDataFile]);
+  }, [analyticsEnabled, posthog, selectedDataFile, selectedLanguageCode]);
 }

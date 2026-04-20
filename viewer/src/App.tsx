@@ -70,6 +70,7 @@ function App() {
   useSessionAnalytics({
     selectedDataFile,
     timelinesReady: itimelines.length > 0,
+    selectedLanguageCode,
   })
 
   useEffect(() => {
