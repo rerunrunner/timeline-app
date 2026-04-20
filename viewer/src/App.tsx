@@ -48,8 +48,8 @@ function App() {
     setSelectedLanguageCode,
   } = useLanguageSelection(currentDataFile)
 
-  const [currentTime, setCurrentTime] = useState<number>(0)
-  const resetPlayhead = useCallback(() => setCurrentTime(0), [])
+  const [currentTime, setCurrentTime] = useState<number>(1780)
+  const resetPlayhead = useCallback(() => setCurrentTime(1780), [])
 
   const { itimelines, totalDuration } = useLocalizedTimelines({
     dataFiles,
