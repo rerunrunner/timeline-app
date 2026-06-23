@@ -29,6 +29,38 @@ function getTimelineNarrativeDateLabel(event: IEvent, currentTime: number): stri
 }
 
 /**
+ * Build a shareable link to the current moment.
+ *
+ * The viewer runs inside the site shell's `<iframe>` (viewer.html), so its own
+ * `window.location` points at the bare viewer document — a link to that URL
+ * loads the timeline without the site header/footer chrome. When we're embedded
+ * and the top page is same-origin reachable, we instead point the link at the
+ * shell page (which forwards `t`/`lang` back down into the iframe). We also drop
+ * the internal `landing_referrer` analytics param and carry only `t`/`lang`.
+ */
+function buildShareUrl(t: number): string {
+  const viewerParams = new URLSearchParams(window.location.search);
+  const shareParams = new URLSearchParams();
+  if (t > 0) shareParams.set('t', String(t));
+  const lang = viewerParams.get('lang');
+  if (lang) shareParams.set('lang', lang);
+
+  let base = `${window.location.origin}${window.location.pathname}`;
+  try {
+    if (window.top && window.top !== window.self) {
+      // Throws on cross-origin embeds; fall back to the viewer's own URL.
+      const topLoc = window.top.location;
+      base = `${topLoc.origin}${topLoc.pathname}`;
+    }
+  } catch {
+    // Cross-origin embed — keep the viewer URL as the best available base.
+  }
+
+  const q = shareParams.toString();
+  return q ? `${base}?${q}` : base;
+}
+
+/**
  * IEventViewer - Component for displaying detailed event information (Immutable version)
  * 
  * This component renders detailed information about a selected event, including
@@ -93,11 +125,7 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
       ? visibleAtPlayhead.playtimeTimestamp
       : Math.min(...event.reveals.map((r) => r.playtimeTimestamp));
     const t = Math.round(playTimeSeconds);
-    const params = new URLSearchParams(window.location.search);
-    if (t <= 0) params.delete('t');
-    else params.set('t', String(t));
-    const q = params.toString();
-    const url = `${window.location.origin}${window.location.pathname}${q ? `?${q}` : ''}${window.location.hash}`;
+    const url = buildShareUrl(t);
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
