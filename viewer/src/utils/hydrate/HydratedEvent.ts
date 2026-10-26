@@ -26,8 +26,13 @@ export class HydratedEvent implements IEvent {
   readonly reveals: ReadonlyNonEmptyArray<IReveal>;
   readonly eventGroup: IEventGroup;
   readonly narrativeTransitions: readonly [number, NarrativeStatus][];
-  readonly correlatedEvents: readonly IEvent[];
   readonly soundtrack?: ISoundtrack;
+  private readonly linkedEventId?: string;
+  private readonly correlatedEventSet = new Set<IEvent>();
+
+  get correlatedEvents(): readonly IEvent[] {
+    return [...this.correlatedEventSet];
+  }
 
   constructor(rawEvent: RawEvent, eventGroup: IEventGroup, narrativeTransitions?: readonly NarrativeTransition[], soundtracks?: readonly RawSoundtrack[]) {
     // Validate required fields
@@ -74,6 +79,7 @@ export class HydratedEvent implements IEvent {
     this.narrativeTimestamp = narrativeTimestamp;
     this.tags = rawEvent.tags;
     this.eventType = rawEvent.eventType as EventType | undefined;
+    this.linkedEventId = rawEvent.linkedEventId;
     this.eventGroup = eventGroup;
 
     // Sort reveals by playtime and resolve inheritance
@@ -135,8 +141,6 @@ export class HydratedEvent implements IEvent {
     }
     this.soundtrack = resolvedSoundtrack;
     
-    // Calculate correlated events (timeslip pairs)
-    this.correlatedEvents = [];
   }
 
   // Business logic methods
@@ -229,9 +233,27 @@ export class HydratedEvent implements IEvent {
    * This should be called after all events have been created
    */
   static populateCorrelations(allEvents: readonly IEvent[]): void {
-    // Group events by type
-    const timeslipOutEvents = allEvents.filter(e => e.eventType === 'timeslip-out');
-    const timeslipInEvents = allEvents.filter(e => e.eventType === 'timeslip-in');
+    const hydratedEvents = allEvents.filter(
+      (event): event is HydratedEvent => event instanceof HydratedEvent
+    );
+    const eventsById = new Map(hydratedEvents.map(event => [event.id, event]));
+
+    // Prefer the dataset's explicit jump endpoints. Chronological pairing remains
+    // as a compatibility fallback for older datasets without linkedEventId.
+    for (const event of hydratedEvents) {
+      if (!event.linkedEventId) continue;
+      const linkedEvent = eventsById.get(event.linkedEventId);
+      if (!linkedEvent) continue;
+      event.correlatedEventSet.add(linkedEvent);
+      linkedEvent.correlatedEventSet.add(event);
+    }
+
+    const timeslipOutEvents = hydratedEvents.filter(
+      event => event.eventType === EventType.TIMESLIP_OUT && event.correlatedEventSet.size === 0
+    );
+    const timeslipInEvents = hydratedEvents.filter(
+      event => event.eventType === EventType.TIMESLIP_IN && event.correlatedEventSet.size === 0
+    );
     
     // Sort events by their first reveal time to maintain chronological order
     const sortedOutEvents = [...timeslipOutEvents].sort((a, b) => {
@@ -254,9 +276,8 @@ export class HydratedEvent implements IEvent {
       const outEvent = sortedOutEvents[i];
       const inEvent = sortedInEvents[i];
       
-      // Set correlations (we need to cast to HydratedEvent to access the property)
-      (outEvent as any).correlatedEvents = [inEvent];
-      (inEvent as any).correlatedEvents = [outEvent];
+      outEvent.correlatedEventSet.add(inEvent);
+      inEvent.correlatedEventSet.add(outEvent);
     }
   }
 } 

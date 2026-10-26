@@ -201,6 +201,17 @@ function parseRawData(rawData: any): { timelines: RawTimeline[], events: RawEven
         delete event.eventType;
       }
     }
+
+    if (event.linkedEventId !== undefined && event.linkedEventId !== null) {
+      assert(
+        typeof event.linkedEventId === 'string' && event.linkedEventId.length > 0,
+        `Event ${event.id} linkedEventId must be a non-empty string if present`
+      );
+      assert(
+        events.some((candidate: any) => candidate.id === event.linkedEventId),
+        `Event ${event.id} linkedEventId (${event.linkedEventId}) references non-existent event`
+      );
+    }
     
     // Validate reveals within event
     event.reveals.forEach((reveal: any, revealIndex: number) => {

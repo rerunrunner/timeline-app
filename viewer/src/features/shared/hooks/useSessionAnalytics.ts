@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { usePostHog } from '@posthog/react';
 import { isPosthogActive } from '../../../utils/posthogEnabled';
 
@@ -12,6 +12,8 @@ type UseSessionAnalyticsArgs = {
   timelinesReady: boolean;
   /** Dataset language code from DataSelector (ISO-ish code, e.g. en, ko). */
   selectedLanguageCode: string;
+  /** Renderer selected by the App shell. */
+  uiVersion: 'mobile_v1' | 'desktop_v1';
 };
 
 /**
@@ -25,10 +27,16 @@ export function useSessionAnalytics({
   selectedDataFile,
   timelinesReady,
   selectedLanguageCode,
+  uiVersion,
 }: UseSessionAnalyticsArgs): void {
   const posthog = usePostHog();
   const pageEnteredAtRef = useRef(0);
   const analyticsEnabled = isPosthogActive;
+
+  useLayoutEffect(() => {
+    if (!analyticsEnabled) return;
+    posthog.register({ ui_version: uiVersion });
+  }, [analyticsEnabled, posthog, uiVersion]);
 
   useEffect(() => {
     if (!analyticsEnabled) return;
@@ -48,6 +56,7 @@ export function useSessionAnalytics({
     posthog.capture('timeline_session_started', {
       dataset_id: selectedDataFile,
       selected_language: selectedLanguageCode || undefined,
+      ui_version: uiVersion,
       path: typeof window !== 'undefined' ? window.location.pathname : undefined,
     });
   }, [
@@ -56,6 +65,7 @@ export function useSessionAnalytics({
     selectedDataFile,
     selectedLanguageCode,
     timelinesReady,
+    uiVersion,
   ]);
 
   useEffect(() => {
@@ -74,9 +84,10 @@ export function useSessionAnalytics({
       if (selectedLanguageCode) {
         payload.selected_language = selectedLanguageCode;
       }
+      payload.ui_version = uiVersion;
       posthog.capture('timeline_session_ended', payload);
     };
     window.addEventListener('pagehide', onPageHide);
     return () => window.removeEventListener('pagehide', onPageHide);
-  }, [analyticsEnabled, posthog, selectedDataFile, selectedLanguageCode]);
+  }, [analyticsEnabled, posthog, selectedDataFile, selectedLanguageCode, uiVersion]);
 }

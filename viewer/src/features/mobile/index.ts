@@ -1,5 +1,5 @@
+export { default as MobileRoot } from './MobileRoot';
 export type {
   MobilePlatform,
-  MobileRootComponent,
   MobileRootProps,
 } from './contract';

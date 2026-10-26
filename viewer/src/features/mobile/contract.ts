@@ -1,13 +1,7 @@
 /**
- * Integration contract for the future mobile renderer.
+ * Integration contract between the App shell and the mobile renderer.
  *
- * This file is intentionally interface-only — no runtime components, no
- * card UI, no mini-map, no next/back navigation yet. Its job is to pin
- * down what shared data a `MobileRoot` will consume so the App shell
- * (`src/App.tsx`) can be evolved to route `platform === 'mobile'` without
- * re-deriving boundaries at implementation time.
- *
- * Design commitments captured here:
+ * Design commitments:
  *
  * 1. Mobile consumes the same shared, hydrated data as desktop:
  *    - `timelines` (from `features/shared` hydration)
@@ -21,9 +15,8 @@
  *    - no `activeEvent`
  *    - no hover-based focus
  *    - no playhead-driven "most recent event" selection
- *    Navigation on mobile will be card-per-event with explicit next/back,
- *    plus a mini-map for orientation. Selection is the mobile renderer's
- *    own concern and stays inside `features/mobile`.
+ *    Selection is the mobile renderer's own concern and stays inside
+ *    `features/mobile`.
  *
  * 3. Mobile does NOT reuse desktop visual components. `DataSelector`,
  *    `ITimelineContainer`/`ViewPort`/`Timeline`, the `EventViewer`,
@@ -39,12 +32,10 @@
  *      `timeline_scrub`, `timeline_episode_marker_click`,
  *      `timeline_event_group_click`, `timeline_event_hover`,
  *      `timeline_soundtrack_outbound`) stay in `features/desktop` and
- *      should NOT be emitted by `MobileRoot`. Mobile will define its own
- *      event names (e.g. card advance, mini-map jump) at implementation
- *      time.
+ *      should NOT be emitted by `MobileRoot`.
  *
  * 5. Renderer selection stays in the App shell. `platform === 'mobile'`
- *    will be the only condition that routes to `MobileRoot`; `tablet`
+ *    is the only condition that routes to `MobileRoot`; `tablet`
  *    continues to render `DesktopRoot` until a product decision says
  *    otherwise.
  */
@@ -53,14 +44,14 @@ import type { ITimeline } from '../../types/interfaces';
 import type { RawLanguage } from '../../utils/hydrate/types';
 
 /**
- * Platforms that may route to a mobile renderer in the future. `tablet`
+ * Platforms that route to the mobile renderer. `tablet`
  * and `computer` are intentionally excluded here: the App shell keeps
  * them on `DesktopRoot` regardless of how `MobileRoot` evolves.
  */
 export type MobilePlatform = 'mobile';
 
 /**
- * Props the future `MobileRoot` will accept from the App shell.
+ * Props `MobileRoot` accepts from the App shell.
  *
  * Kept deliberately separate from `DesktopRootProps` — the shapes may look
  * similar today, but mobile must be free to diverge (e.g. drop
@@ -72,6 +63,8 @@ export interface MobileRootProps {
   timelines: ITimeline[];
   /** Current playhead position (seconds). */
   currentTime: number;
+  /** The landing URL explicitly selected a playback time. */
+  hasTimeDeepLink: boolean;
   /** Move the playhead. Mobile may drive this from card navigation, the
    *  mini-map, or gestures rather than a scrub bar. */
   onTimeChange: (time: number) => void;
@@ -97,10 +90,3 @@ export interface MobileRootProps {
   /** At least one dataset was discovered. */
   hasDatasets: boolean;
 }
-
-/**
- * The shape the App shell will import once `MobileRoot` is implemented.
- * Exported as a type so the shell can stay typed even while the component
- * file is stubbed.
- */
-export type MobileRootComponent = (props: MobileRootProps) => JSX.Element;

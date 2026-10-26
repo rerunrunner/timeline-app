@@ -102,6 +102,7 @@ export interface RawEvent {
   tags: string[];
   reveals: RawReveal[];
   eventType?: 'timeslip' | 'timeslip-in' | 'timeslip-out';
+  linkedEventId?: string;
   soundtrackId?: string;
 }
 

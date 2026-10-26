@@ -10,6 +10,8 @@ export class HydratedReveal implements IReveal {
   readonly id: string;
   readonly title: string;
   readonly description: string;
+  readonly episodeId: string;
+  readonly episodeTime: number;
   readonly playtimeTimestamp: number;
   readonly narrativeTimeframe: string;
   readonly narrativeTimeframeSpecificityLevel: number;
@@ -49,6 +51,8 @@ export class HydratedReveal implements IReveal {
     this.id = rawReveal.id;
     this.title = rawReveal.displayedTitle;
     this.description = rawReveal.displayedDescription;
+    this.episodeId = rawReveal.episodeId;
+    this.episodeTime = rawReveal.episodeTime;
     this.playtimeTimestamp = rawReveal.absolutePlayTime;
     this.narrativeTimeframe = rawReveal.displayedDate;
     this.screenshotFilename = rawReveal.screenshotFilename || null;

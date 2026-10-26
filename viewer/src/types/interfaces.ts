@@ -33,6 +33,8 @@ export interface IReveal {
     readonly id: string;
     readonly title: string;
     readonly description: string;
+    readonly episodeId: string;
+    readonly episodeTime: number;
     readonly playtimeTimestamp: number; // time in playback when this reveal happens (in seconds)
     readonly narrativeTimeframe: string; // e.g., "late spring", "2023", etc.
     readonly narrativeTimeframeSpecificityLevel: number; // Specificity level: 0=future/unknown, 1=decade, 2=partial decade, 3=year, 4=partial year, 5=season, 6=partial season, 7=month, 8=partial month, 9=day

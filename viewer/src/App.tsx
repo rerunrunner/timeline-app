@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DesktopRoot from './features/desktop/DesktopRoot'
 import { usePlatform } from './features/desktop/hooks/usePlatform'
+import { MobileRoot } from './features/mobile'
 import {
   useDatasetFiles,
   useEditorRefreshSocket,
@@ -18,14 +19,19 @@ import './App.css'
  *   - detects the platform
  *   - hands the shared state to a feature "root" component
  *
- * Renderer selection is centralized in `selectRoot()` below so a future
- * MobileRoot can be wired in with a single switch. Until that renderer
- * exists and is validated, every platform (computer, tablet, mobile) is
- * routed to `DesktopRoot` — this preparation phase must not change live
- * behavior.
+ * Renderer selection lives here so UI routing and shared state have one
+ * source of truth. Phones use MobileRoot; tablets and computers retain
+ * DesktopRoot.
  */
 function App() {
   const { platform, orientation, isCompactLandscape } = usePlatform()
+  const uiVersion = platform === 'mobile' ? 'mobile_v1' : 'desktop_v1'
+  const hasTimeDeepLink = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('t'),
+    []
+  )
 
   const {
     dataFiles,
@@ -71,6 +77,7 @@ function App() {
     selectedDataFile,
     timelinesReady: itimelines.length > 0,
     selectedLanguageCode,
+    uiVersion,
   })
 
   useEffect(() => {
@@ -81,9 +88,26 @@ function App() {
     }
   }, [currentDataFile])
 
-  // For now every platform renders DesktopRoot. When MobileRoot exists,
-  // change this to `platform === 'mobile' ? <MobileRoot .../> : <DesktopRoot .../>`
-  // — `tablet` intentionally stays on DesktopRoot.
+  if (platform === 'mobile') {
+    return (
+      <MobileRoot
+        timelines={itimelines}
+        currentTime={currentTime}
+        hasTimeDeepLink={hasTimeDeepLink}
+        onTimeChange={setCurrentTime}
+        totalDuration={totalDuration}
+        episodes={currentDataFile?.data.episodes}
+        datasetId={selectedDataFile}
+        platform="mobile"
+        availableLanguages={availableLanguages}
+        selectedLanguageCode={selectedLanguageCode}
+        onLanguageChange={setSelectedLanguageCode}
+        isLoadingDatasets={isLoadingDatasets}
+        hasDatasets={dataFiles.length > 0}
+      />
+    )
+  }
+
   return (
     <DesktopRoot
       timelines={itimelines}
