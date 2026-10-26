@@ -66,6 +66,7 @@ export function EventDetailSheet({
     pointerId: number;
     startY: number;
     startOffset: number;
+    startTime: number;
   } | null>(null);
   const draggedRef = useRef(false);
   const internalOpenChangeRef = useRef(false);
@@ -122,6 +123,7 @@ export function EventDetailSheet({
       pointerId: pointerEvent.pointerId,
       startY: pointerEvent.clientY,
       startOffset: sheetOffset ?? (open ? 0 : maximumOffset),
+      startTime: performance.now(),
     };
     draggedRef.current = false;
     setDragging(true);
@@ -141,10 +143,17 @@ export function EventDetailSheet({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== pointerEvent.pointerId) return;
     const maximumOffset = maximumSheetOffset(sheetRef.current, handleRef.current);
-    const offset = Math.min(
-      maximumOffset,
-      Math.max(0, drag.startOffset + pointerEvent.clientY - drag.startY)
-    );
+    const delta = pointerEvent.clientY - drag.startY;
+    const duration = Math.max(1, performance.now() - drag.startTime);
+    const swiped = Math.abs(delta) >= 48 && Math.abs(delta) / duration >= 0.35;
+    const offset = swiped
+      ? delta > 0
+        ? maximumOffset
+        : 0
+      : Math.min(
+          maximumOffset,
+          Math.max(0, drag.startOffset + delta)
+        );
     setSheetOffset(offset);
     setDragging(false);
     dragRef.current = null;
