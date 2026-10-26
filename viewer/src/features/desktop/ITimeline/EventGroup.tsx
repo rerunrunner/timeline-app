@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import type { IEventGroup, IEvent } from '../../../types/interfaces';
 import { NarrativeStatus } from '../../../types/timeline';
+import { getNarrativeDateLabel } from '../../shared';
 
 /**
  * EventGroup - Component for rendering multiple events that occur on the same day
@@ -39,45 +40,9 @@ export default function EventGroup({
   activeEvent,
   position
 }: EventGroupProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const narrativeStatus = eventGroup.getNarrativeState(currentTime);
-  
-  const isVisible = narrativeStatus !== NarrativeStatus.NOT_REACHED;
   const visibleEvents = eventGroup.events.filter(event => 
     event.getNarrativeState(currentTime) !== NarrativeStatus.NOT_REACHED
   );
-  
-  // Helper function to get the most specific displayed date from visible reveals
-  const getMostSpecificDisplayedDate = useCallback(() => {
-    const visibleReveals = visibleEvents.flatMap(event => 
-      event.reveals.filter(reveal => 
-        reveal.playtimeTimestamp <= currentTime
-      )
-    );
-    
-    if (visibleReveals.length === 0) {
-      // Fallback to first event's narrative timestamp
-      return eventGroup.events[0].narrativeTimestamp.toLocaleDateString();
-    }
-    
-    // Find the reveal with the highest specificity level
-    // Specificity levels: 0=future/unknown, 1=decade, 2=partial decade, 3=year, 4=partial year, 5=season, 6=partial season, 7=month, 8=partial month, 9=day
-    // If multiple reveals have the same specificity, use the last one encountered
-    let mostSpecificReveal = visibleReveals[0];
-    let highestSpecificity = mostSpecificReveal.narrativeTimeframeSpecificityLevel;
-    
-    for (const reveal of visibleReveals) {
-      // Use >= to prefer the last reveal when specificities are equal
-      if (reveal.narrativeTimeframeSpecificityLevel >= highestSpecificity) {
-        mostSpecificReveal = reveal;
-        highestSpecificity = reveal.narrativeTimeframeSpecificityLevel;
-      }
-    }
-    
-    return mostSpecificReveal.narrativeTimeframe;
-  }, [visibleEvents, currentTime, eventGroup.events]);
   
   // Check if any event in the group is locked or active
   const isLocked = lockedEvent && eventGroup.events.some(event => event.id === lockedEvent.id);
@@ -106,9 +71,7 @@ export default function EventGroup({
   
   // Handle group hover
   const handleGroupMouseEnter = useCallback(() => {
-    setIsHovered(true);
     if (!isLocked) {
-      setIsExpanded(true);
       // Show the primary event in the event viewer when hovering over the group
       if (visibleEvents.length > 0) {
         onEventHover(eventGroup.primaryEvent);
@@ -117,9 +80,7 @@ export default function EventGroup({
   }, [isLocked, visibleEvents, onEventHover, eventGroup.primaryEvent]);
   
   const handleGroupMouseLeave = useCallback(() => {
-    setIsHovered(false);
     if (!isLocked) {
-      setIsExpanded(false);
       // Only clear the event viewer when leaving the entire group
       onEventHoverEnd();
     }
@@ -165,7 +126,9 @@ export default function EventGroup({
             }
           }}
         >
-          <span className="date">{getMostSpecificDisplayedDate()}</span>
+          <span className="date">
+            {getNarrativeDateLabel(eventGroup, currentTime)}
+          </span>
           <span className="event-count">{visibleEvents.length} events</span>
         </div>
         

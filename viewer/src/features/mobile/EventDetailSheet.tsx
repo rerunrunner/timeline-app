@@ -5,6 +5,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { IReveal } from '../../types/interfaces';
+import { getNarrativeDateLabel } from '../shared';
 import {
   formatEpisodeTime,
   getAdjacentNarrativeReveals,
@@ -49,6 +50,10 @@ export function EventDetailSheet({
 }: EventDetailSheetProps) {
   const event = selectedReveal.event;
   const timeline = event.eventGroup.subSegment.segment.timeline;
+  const narrativeDate = getNarrativeDateLabel(
+    event.eventGroup,
+    Number.POSITIVE_INFINITY
+  );
   const episode = model.episodeById.get(selectedReveal.episodeId);
   const erased =
     selectedTimelineId !== 'all' &&
@@ -217,9 +222,15 @@ export function EventDetailSheet({
               : timelineDisplayName(timeline.name)}
             {' · '}Episode {episode?.episodeNumber ?? '?'}
           </small>
-          <strong>{selectedReveal.title}</strong>
+          <span className="mobile-detail-title-line">
+            <strong>{selectedReveal.title}</strong>
+            {narrativeDate && (
+              <span className="mobile-detail-date">
+                {narrativeDate}
+              </span>
+            )}
+          </span>
         </span>
-        <span className="mobile-detail-chevron" aria-hidden="true">⌄</span>
       </button>
 
       <div className="mobile-detail-content" ref={contentRef}>

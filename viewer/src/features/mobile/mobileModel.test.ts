@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { hydrate } from '../../utils/hydrate';
+import { EventDetailSheet } from './EventDetailSheet';
 import { TimelineMap } from './TimelineMap';
 import {
   buildMobileTimelineModel,
@@ -314,5 +315,37 @@ describe('mobile timeline model', () => {
     expect(activePaths[1].getAttribute('d')).toMatch(
       new RegExp(`^M [^ ]+ ${entryY} `)
     );
+  });
+
+  it('shows the narrative date beside the detail title', () => {
+    const model = buildModel();
+    const selectedReveal = model.revealById.get('reveal-before');
+    expect(selectedReveal).toBeDefined();
+    if (!selectedReveal) return;
+    const originalScrollTo = HTMLElement.prototype.scrollTo;
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: () => undefined,
+    });
+
+    const { container } = render(
+      createElement(EventDetailSheet, {
+        model,
+        selectedReveal,
+        selectedTimelineId: 'all',
+        open: true,
+        onOpenChange: () => undefined,
+        onRevealSelect: () => undefined,
+      })
+    );
+
+    expect(container.querySelector('.mobile-detail-date')?.textContent).toBe(
+      'January 2, 2008'
+    );
+    expect(container.querySelector('.mobile-detail-chevron')).toBeNull();
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: originalScrollTo,
+    });
   });
 });

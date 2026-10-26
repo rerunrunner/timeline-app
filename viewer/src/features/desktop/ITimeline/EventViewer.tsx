@@ -1,32 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ShareIcon, CheckIcon, LockClosedIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import type { IEvent } from '../../../types/interfaces';
-import { NarrativeStatus } from '../../../types/timeline';
-
-/** Same label as the timeline marker for this event group at the playhead (see EventGroup). */
-function getTimelineNarrativeDateLabel(event: IEvent, currentTime: number): string {
-  const eventGroup = event.eventGroup;
-  const visibleEvents = eventGroup.events.filter(
-    (e) => e.getNarrativeState(currentTime) !== NarrativeStatus.NOT_REACHED
-  );
-  const visibleReveals = visibleEvents.flatMap((e) =>
-    e.reveals.filter((reveal) => reveal.playtimeTimestamp <= currentTime)
-  );
-
-  if (visibleReveals.length === 0) {
-    return eventGroup.events[0].narrativeTimestamp.toLocaleDateString();
-  }
-
-  let mostSpecificReveal = visibleReveals[0];
-  let highestSpecificity = mostSpecificReveal.narrativeTimeframeSpecificityLevel;
-  for (const reveal of visibleReveals) {
-    if (reveal.narrativeTimeframeSpecificityLevel >= highestSpecificity) {
-      mostSpecificReveal = reveal;
-      highestSpecificity = reveal.narrativeTimeframeSpecificityLevel;
-    }
-  }
-  return mostSpecificReveal.narrativeTimeframe;
-}
+import { getNarrativeDateLabel } from '../../shared';
 
 /**
  * Build a shareable link to the current moment.
@@ -320,7 +295,7 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
           <div className="grid max-w-[34rem] grid-cols-[max-content_1fr] items-baseline gap-x-4 gap-y-3">
             <p className={`${detailLabelClassName} mb-0 whitespace-nowrap`}>Narrative Date</p>
             <p className="text-[0.875rem] text-slate-700">
-              {getTimelineNarrativeDateLabel(event, currentTime)}
+              {getNarrativeDateLabel(event.eventGroup, currentTime)}
             </p>
             {visibleReveal && (
               <>

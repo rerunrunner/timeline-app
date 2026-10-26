@@ -4,4 +4,5 @@ export { useLanguageSelection } from './hooks/useLanguageSelection';
 export { useLocalizedTimelines } from './hooks/useLocalizedTimelines';
 export { useUrlSync } from './hooks/useUrlSync';
 export { useSessionAnalytics } from './hooks/useSessionAnalytics';
+export { getNarrativeDateLabel } from './narrativeDate';
 export type { DatasetFile } from './types';
