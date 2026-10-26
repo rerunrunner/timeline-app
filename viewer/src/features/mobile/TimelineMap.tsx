@@ -108,8 +108,9 @@ export function TimelineMap({
     const node = [...view.querySelectorAll<HTMLElement>('[data-mobile-event-id]')]
       .find(candidate => candidate.dataset.mobileEventId === selectedEventId);
     if (!node) return;
-    const desiredTop = Math.max(0, node.offsetTop - view.clientHeight * 0.2);
-    view.scrollTo({ top: desiredTop, behavior: 'smooth' });
+    const nodeTop = window.scrollY + node.getBoundingClientRect().top;
+    const desiredTop = Math.max(0, nodeTop - window.innerHeight * 0.2);
+    window.scrollTo({ top: desiredTop, behavior: 'smooth' });
   }, [selectedEventId]);
 
   const ownEventCount =

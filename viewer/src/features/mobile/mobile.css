@@ -1,3 +1,12 @@
+.mobile-viewer-page,
+.mobile-viewer-page body,
+.mobile-viewer-page #root {
+  height: auto;
+  min-height: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
 .mobile-explorer {
   --mobile-navy: #091a2b;
   --mobile-panel: #10283c;
@@ -6,11 +15,12 @@
   --mobile-muted: #91a9bc;
   position: relative;
   width: 100%;
-  height: 100dvh;
+  height: auto;
+  min-height: 100dvh;
   min-width: 320px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   color: var(--mobile-text);
   background: var(--mobile-navy);
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -253,18 +263,18 @@
   position: relative;
   min-height: 0;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .mobile-explorer-stage > div:not([hidden]) {
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .mobile-explorer-view {
   width: 100%;
-  height: 100%;
-  overflow: auto;
+  height: auto;
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -754,7 +764,7 @@
 }
 
 .mobile-detail-sheet {
-  position: absolute;
+  position: fixed;
   z-index: 50;
   right: 8px;
   bottom: 8px;

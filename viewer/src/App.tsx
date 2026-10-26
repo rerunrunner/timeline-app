@@ -88,6 +88,14 @@ function App() {
     }
   }, [currentDataFile])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      'mobile-viewer-page',
+      platform === 'mobile'
+    )
+    return () => document.documentElement.classList.remove('mobile-viewer-page')
+  }, [platform])
+
   if (platform === 'mobile') {
     return (
       <MobileRoot
