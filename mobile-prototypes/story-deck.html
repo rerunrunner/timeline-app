@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1d34" />
+    <title>Concept 1 — Guided Story Deck</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      :root {
+        --deck-navy: #0b1d34;
+        --deck-blue: #4f86d9;
+        --deck-paper: #f4f7fb;
+      }
+
+      .phone-app {
+        display: flex;
+        flex-direction: column;
+        background: var(--deck-paper);
+      }
+
+      .deck-shell {
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .deck-header {
+        position: relative;
+        z-index: 20;
+        display: flex;
+        min-height: 68px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        color: #fff;
+        background: var(--deck-navy);
+      }
+
+      .deck-header .brand-subtitle {
+        color: #9eb6d6;
+      }
+
+      .episode-button {
+        min-width: 65px;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .story-stage {
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .story-progress {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px 10px;
+        color: #52657d;
+        background: var(--deck-paper);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .progress-track {
+        height: 4px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: #dbe3ed;
+      }
+
+      .progress-fill {
+        width: 25%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--deck-blue);
+        transition: width 240ms ease;
+      }
+
+      .story-scroll {
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+
+      .story-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      .story-card {
+        margin: 0 12px;
+        overflow: hidden;
+        border: 1px solid rgba(20, 40, 67, 0.1);
+        border-radius: 25px;
+        background: #fff;
+        box-shadow: 0 18px 45px rgba(32, 59, 94, 0.12);
+        touch-action: pan-y;
+      }
+
+      .story-image {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #182a40;
+      }
+
+      .story-image img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        transition: opacity 150ms ease, transform 350ms ease;
+      }
+
+      .story-image::after {
+        content: "";
+        position: absolute;
+        inset: 45% 0 0;
+        background: linear-gradient(transparent, rgba(5, 16, 30, 0.7));
+        pointer-events: none;
+      }
+
+      .image-meta {
+        position: absolute;
+        z-index: 2;
+        right: 14px;
+        bottom: 12px;
+        left: 14px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 8px;
+        color: #fff;
+      }
+
+      .image-date {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .image-time {
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 999px;
+        background: rgba(4, 14, 27, 0.48);
+        backdrop-filter: blur(9px);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .story-copy {
+        padding: 20px 20px 22px;
+      }
+
+      .moment-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: #4d70a5;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .story-actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .story-actions .icon-button {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        color: #53657a;
+        background: #f2f5f9;
+        font-size: 17px;
+      }
+
+      .story-title {
+        margin: 10px 0 10px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(27px, 7vw, 34px);
+        font-weight: 500;
+        line-height: 1.06;
+        letter-spacing: -0.045em;
+      }
+
+      .story-description {
+        margin: 0;
+        color: #506075;
+        font-size: 15px;
+        line-height: 1.62;
+      }
+
+      .story-context {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        margin: 18px 12px 14px;
+        padding: 14px 15px;
+        border: 1px solid #d9e3f0;
+        border-radius: 16px;
+        color: #43546a;
+        background: #eaf1f9;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .context-icon {
+        display: grid;
+        width: 26px;
+        height: 26px;
+        flex: 0 0 26px;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        background: #4f77af;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .story-nav {
+        position: relative;
+        z-index: 25;
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 10px;
+        padding: 11px 12px max(12px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(16, 32, 53, 0.1);
+        background: rgba(244, 247, 251, 0.94);
+        backdrop-filter: blur(16px);
+      }
+
+      .story-nav button {
+        min-width: 0;
+      }
+
+      .swipe-hint {
+        position: absolute;
+        top: -26px;
+        left: 50%;
+        color: #74849a;
+        font-size: 10px;
+        font-weight: 700;
+        transform: translateX(-50%);
+      }
+
+      .spoiler-gate {
+        position: absolute;
+        z-index: 40;
+        inset: 36px 0 0;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        padding: 28px 20px max(24px, env(safe-area-inset-bottom));
+        color: #fff;
+        background:
+          radial-gradient(circle at 90% 14%, rgba(80, 139, 223, 0.32), transparent 32%),
+          linear-gradient(165deg, #0b1d34 0%, #102a4d 55%, #17375d 100%);
+        transition: opacity 220ms ease, visibility 220ms ease;
+      }
+
+      .spoiler-gate[hidden] {
+        display: flex;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .gate-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: clamp(32px, 9vh, 78px);
+      }
+
+      .gate-top .brand-subtitle {
+        color: #9eb6d6;
+      }
+
+      .gate-language {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        padding: 0 13px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        color: #dce9f9;
+        background: rgba(255, 255, 255, 0.07);
+        font-size: 12px;
+      }
+
+      .gate-eyebrow {
+        margin: 0 0 12px;
+        color: #8ebaff;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .gate-title {
+        max-width: 360px;
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(38px, 11vw, 52px);
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: -0.05em;
+      }
+
+      .gate-copy {
+        max-width: 360px;
+        margin: 16px 0 24px;
+        color: #bac9dc;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .watch-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin: 0 0 14px;
+      }
+
+      .watch-option {
+        min-height: 54px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.17);
+        border-radius: 15px;
+        color: #d7e2f0;
+        background: rgba(255, 255, 255, 0.06);
+        text-align: left;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .watch-option.is-selected {
+        border-color: #86b6ff;
+        color: #fff;
+        background: rgba(95, 151, 231, 0.25);
+        box-shadow: inset 0 0 0 1px rgba(134, 182, 255, 0.3);
+      }
+
+      .gate-start {
+        width: 100%;
+        margin-top: auto;
+        border-color: #fff;
+        color: #0b1d34;
+        background: #fff;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .gate-note {
+        margin: 11px 0 0;
+        color: #93a8c2;
+        font-size: 10px;
+        line-height: 1.4;
+        text-align: center;
+      }
+
+      @media (min-height: 760px) {
+        .story-card {
+          margin-top: 4px;
+        }
+
+        .story-copy {
+          padding-bottom: 26px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone-app">
+      <div class="concept-bar">
+        <a href="./index.html">All concepts</a>
+        <span>01 · Guided story deck</span>
+      </div>
+
+      <div class="deck-shell" id="deck-shell" inert aria-hidden="true">
+        <header class="deck-header">
+          <a class="brand-lockup" href="./index.html" aria-label="Runner Unwound concepts">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <span class="brand-name">Runner Unwound</span>
+              <span class="brand-subtitle">Story mode</span>
+            </span>
+          </a>
+          <button class="episode-button" id="change-limit" type="button">Ep 2 ▾</button>
+        </header>
+
+        <section class="story-stage" aria-label="Episode story">
+          <div class="story-progress">
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="progress-copy">1 of 4</span>
+          </div>
+
+          <div class="story-scroll" id="story-scroll">
+            <article class="story-card" id="story-card">
+              <div class="story-image">
+                <img id="event-image" src="../../runner-data/images/reveal-17.jpg" alt="" />
+                <div class="image-meta">
+                  <span class="image-date" id="event-date">June 2, 2008</span>
+                  <span class="image-time" id="event-time">EP 2 · 12:28</span>
+                </div>
+              </div>
+              <div class="story-copy">
+                <div class="moment-label">
+                  <span id="moment-label">A new connection</span>
+                  <span class="story-actions">
+                    <button class="icon-button" id="save-button" type="button" aria-label="Save this moment" aria-pressed="false">♡</button>
+                    <button class="icon-button" id="share-button" type="button" aria-label="Share this moment">↗</button>
+                  </span>
+                </div>
+                <h1 class="story-title" id="event-title">Sol meets Kim Tae-seong</h1>
+                <p class="story-description" id="event-description">
+                  Sol confronts students smoking outside the gym. When more arrive,
+                  she runs—and realizes the boy beside her is Kim Tae-seong.
+                </p>
+              </div>
+            </article>
+
+            <aside class="story-context">
+              <span class="context-icon">i</span>
+              <span id="context-copy">
+                You are following events as Episode 2 reveals them. Later outcomes stay hidden.
+              </span>
+            </aside>
+          </div>
+
+          <nav class="story-nav" aria-label="Story navigation">
+            <span class="swipe-hint">Swipe the card, or use the buttons</span>
+            <button class="secondary-button" id="previous-button" type="button">← Earlier</button>
+            <button class="primary-button" id="next-button" type="button">Next moment →</button>
+          </nav>
+        </section>
+      </div>
+
+      <section class="spoiler-gate" id="spoiler-gate" aria-labelledby="gate-title">
+        <div class="gate-top">
+          <span class="brand-lockup">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <span class="brand-name">Runner Unwound</span>
+              <span class="brand-subtitle">Lovely Runner timeline</span>
+            </span>
+          </span>
+          <span class="gate-language">🇺🇸 EN</span>
+        </div>
+
+        <p class="gate-eyebrow">Your story, without unwanted spoilers</p>
+        <h1 class="gate-title" id="gate-title">How far have you watched?</h1>
+        <p class="gate-copy">
+          We’ll reveal the timeline only as far as you’ve seen. You can change this at any time.
+        </p>
+
+        <div class="watch-options" role="group" aria-label="Episodes watched">
+          <button class="watch-option" type="button" aria-pressed="false">Just starting</button>
+          <button class="watch-option is-selected" type="button" aria-pressed="true">Through Ep 2</button>
+          <button class="watch-option" type="button" aria-pressed="false">Through Ep 8</button>
+          <button class="watch-option" type="button" aria-pressed="false">Finished all 16</button>
+        </div>
+
+        <button class="primary-button gate-start" id="start-button" type="button">
+          Start with Episode 2 <span aria-hidden="true">→</span>
+        </button>
+        <p class="gate-note">This prototype uses four sample moments. No account needed.</p>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+      const events = [
+        {
+          image: "../../runner-data/images/reveal-17.jpg",
+          date: "June 2, 2008",
+          time: "EP 2 · 12:28",
+          label: "A new connection",
+          title: "Sol meets Kim Tae-seong",
+          description:
+            "Sol confronts students smoking outside the gym. When more arrive, she runs—and realizes the boy beside her is Kim Tae-seong.",
+        },
+        {
+          image: "../../runner-data/images/reveal-19.jpg",
+          date: "June 1, 2008",
+          time: "EP 2 · 21:03",
+          label: "The original memory",
+          title: "Sol’s first confession",
+          description:
+            "Before the time slip changed everything, Sol confessed to Tae-seong with a letter and a small gift bag.",
+        },
+        {
+          image: "../../runner-data/images/reveal-24.jpg",
+          date: "June 12, 2008",
+          time: "EP 2 · 49:09",
+          label: "Trying to change fate",
+          title: "Sol begs Sun-jae not to compete",
+          description:
+            "At the pool the night before the meet, Sol warns Sun-jae that he will be hurt. To him, her fear makes no sense.",
+        },
+        {
+          image: "../../runner-data/images/reveal-25.jpg",
+          date: "Late spring, 2008",
+          time: "EP 2 · 53:45",
+          label: "A memory surfaces",
+          title: "Sol freezes in traffic",
+          description:
+            "Headlights rush toward Sol as a buried memory takes hold. Sun-jae reaches her before the car does.",
+        },
+      ];
+
+      let currentIndex = 0;
+      let pointerStartX = null;
+      const gate = document.querySelector("#spoiler-gate");
+      const deckShell = document.querySelector("#deck-shell");
+      const card = document.querySelector("#story-card");
+      const toast = document.querySelector("#toast");
+
+      function renderEvent(direction = 1) {
+        const event = events[currentIndex];
+        const image = document.querySelector("#event-image");
+        image.style.opacity = "0.35";
+        image.style.transform = `translateX(${direction * 8}px) scale(1.02)`;
+        window.setTimeout(() => {
+          image.src = event.image;
+          image.alt = `Still from ${event.title}`;
+          document.querySelector("#event-date").textContent = event.date;
+          document.querySelector("#event-time").textContent = event.time;
+          document.querySelector("#moment-label").textContent = event.label;
+          document.querySelector("#event-title").textContent = event.title;
+          document.querySelector("#event-description").textContent = event.description;
+          document.querySelector("#progress-copy").textContent = `${currentIndex + 1} of ${events.length}`;
+          document.querySelector("#progress-fill").style.width =
+            `${((currentIndex + 1) / events.length) * 100}%`;
+          document.querySelector("#previous-button").disabled = currentIndex === 0;
+          document.querySelector("#next-button").textContent =
+            currentIndex === events.length - 1 ? "Replay episode ↻" : "Next moment →";
+          document.querySelector("#story-scroll").scrollTo({ top: 0, behavior: "smooth" });
+          image.style.opacity = "1";
+          image.style.transform = "none";
+        }, 100);
+      }
+
+      function move(direction) {
+        if (direction > 0 && currentIndex === events.length - 1) {
+          currentIndex = 0;
+        } else {
+          currentIndex = Math.max(0, Math.min(events.length - 1, currentIndex + direction));
+        }
+        renderEvent(direction);
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 1800);
+      }
+
+      document.querySelectorAll(".watch-option").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".watch-option").forEach((item) => {
+            item.classList.remove("is-selected");
+            item.setAttribute("aria-pressed", "false");
+          });
+          button.classList.add("is-selected");
+          button.setAttribute("aria-pressed", "true");
+          const label = button.textContent.replace("Through ", "");
+          document.querySelector("#start-button").firstChild.textContent =
+            button.textContent.includes("Finished") ? "Explore the full story " : `Start with ${label} `;
+        });
+      });
+
+      document.querySelector("#start-button").addEventListener("click", () => {
+        gate.hidden = true;
+        gate.inert = true;
+        deckShell.inert = false;
+        deckShell.setAttribute("aria-hidden", "false");
+      });
+      document.querySelector("#change-limit").addEventListener("click", () => {
+        gate.hidden = false;
+        gate.inert = false;
+        deckShell.inert = true;
+        deckShell.setAttribute("aria-hidden", "true");
+      });
+      document.querySelector("#previous-button").addEventListener("click", () => move(-1));
+      document.querySelector("#next-button").addEventListener("click", () => move(1));
+      document.querySelector("#save-button").addEventListener("click", (event) => {
+        event.currentTarget.textContent = event.currentTarget.textContent === "♥" ? "♡" : "♥";
+        const isSaved = event.currentTarget.textContent === "♥";
+        event.currentTarget.setAttribute("aria-pressed", String(isSaved));
+        showToast(isSaved ? "Moment saved" : "Removed from saved");
+      });
+      document.querySelector("#share-button").addEventListener("click", () => showToast("Share link ready"));
+
+      card.addEventListener("pointerdown", (event) => {
+        pointerStartX = event.clientX;
+      });
+      card.addEventListener("pointerup", (event) => {
+        if (pointerStartX === null) return;
+        const delta = event.clientX - pointerStartX;
+        if (Math.abs(delta) > 55) move(delta < 0 ? 1 : -1);
+        pointerStartX = null;
+      });
+
+      renderEvent();
+    </script>
+  </body>
+</html>

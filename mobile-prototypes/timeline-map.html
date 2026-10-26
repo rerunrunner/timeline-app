@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#071827" />
+    <title>Concept 3 — Branching Timeline Map</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      :root {
+        --map-bg: #071827;
+        --map-panel: #0d2438;
+        --map-text: #edf7ff;
+        --map-muted: #8fa9bf;
+        --original: #5bc4ff;
+        --changed: #f1bc5f;
+        --future: #eb748b;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        background: #020c14;
+      }
+
+      .phone-app {
+        height: 100dvh;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        color: var(--map-text);
+        background:
+          radial-gradient(circle at 15% 12%, rgba(36, 102, 142, 0.19), transparent 28%),
+          var(--map-bg);
+      }
+
+      .map-header {
+        position: relative;
+        z-index: 30;
+        flex: 0 0 auto;
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid rgba(211, 235, 251, 0.1);
+        background: rgba(7, 24, 39, 0.9);
+        backdrop-filter: blur(18px);
+      }
+
+      .map-topline {
+        display: flex;
+        min-height: 50px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .map-header .brand-subtitle {
+        color: #7fa4c1;
+      }
+
+      .map-menu {
+        color: #d8eafa;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .map-tools {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 8px 0 1px;
+        scrollbar-width: none;
+      }
+
+      .map-tools::-webkit-scrollbar {
+        display: none;
+      }
+
+      .map-filter {
+        min-height: 44px;
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        border: 1px solid rgba(202, 228, 247, 0.15);
+        border-radius: 999px;
+        color: #bcd0e0;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .map-filter.is-active {
+        border-color: rgba(91, 196, 255, 0.55);
+        color: #fff;
+        background: rgba(91, 196, 255, 0.14);
+      }
+
+      .map-shell {
+        position: relative;
+        min-height: 0;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .map-viewport {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+
+      .map-viewport::-webkit-scrollbar {
+        display: none;
+      }
+
+      .map-canvas {
+        position: relative;
+        width: 100%;
+        height: 1160px;
+        padding-bottom: 280px;
+        background-image:
+          linear-gradient(rgba(147, 190, 219, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(147, 190, 219, 0.035) 1px, transparent 1px);
+        background-size: 100% 56px, 33.333% 100%;
+        transition: height 220ms ease;
+      }
+
+      .map-canvas.is-compressed {
+        height: 940px;
+      }
+
+      .map-canvas.is-compressed .timeline-paths {
+        transform: scaleY(0.8);
+        transform-origin: top;
+      }
+
+      .map-canvas.is-compressed .date-two { top: 360px; }
+      .map-canvas.is-compressed .date-three { top: 610px; }
+      .map-canvas.is-compressed .n2 { top: 275px; }
+      .map-canvas.is-compressed .n3 { top: 390px; }
+      .map-canvas.is-compressed .n4 { top: 490px; }
+      .map-canvas.is-compressed .n5 { top: 610px; }
+      .map-canvas.is-compressed .n6 { top: 725px; }
+      .map-canvas.is-compressed .now-marker { top: 560px; }
+
+      .map-intro {
+        position: absolute;
+        z-index: 3;
+        top: 20px;
+        right: 18px;
+        left: 18px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .map-intro p {
+        max-width: 250px;
+        margin: 0;
+        color: var(--map-muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .map-intro strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #e8f5ff;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .map-zoom {
+        display: grid;
+        grid-template-columns: 40px 40px;
+        overflow: hidden;
+        flex: 0 0 auto;
+        border: 1px solid rgba(202, 228, 247, 0.16);
+        border-radius: 13px;
+      }
+
+      .map-zoom button {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-right: 1px solid rgba(202, 228, 247, 0.13);
+        color: #dcecf8;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .map-zoom button:last-child {
+        border-right: 0;
+      }
+
+      .lane-labels {
+        position: absolute;
+        z-index: 3;
+        top: 105px;
+        right: 10px;
+        left: 10px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        color: var(--map-muted);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .lane-labels span::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        margin-right: 5px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .lane-labels span:nth-child(1) { color: var(--original); }
+      .lane-labels span:nth-child(2) { color: var(--changed); }
+      .lane-labels span:nth-child(3) { color: var(--future); }
+
+      .timeline-paths {
+        position: absolute;
+        z-index: 1;
+        top: 135px;
+        left: 0;
+        width: 100%;
+        height: 850px;
+        overflow: visible;
+      }
+
+      .path-glow {
+        filter: drop-shadow(0 0 7px currentColor);
+      }
+
+      .date-line {
+        position: absolute;
+        z-index: 2;
+        right: 18px;
+        left: 18px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #66849d;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .date-line::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: linear-gradient(90deg, rgba(105, 144, 173, 0.3), transparent);
+      }
+
+      .date-one { top: 154px; }
+      .date-two { top: 430px; }
+      .date-three { top: 738px; }
+
+      .map-node {
+        position: absolute;
+        z-index: 5;
+        width: 68px;
+        min-height: 52px;
+        padding: 0;
+        border: 0;
+        color: var(--map-text);
+        background: transparent;
+        text-align: center;
+        cursor: pointer;
+        transform: translateX(-50%);
+      }
+
+      .map-node[hidden] {
+        display: none;
+      }
+
+      .node-dot {
+        position: relative;
+        display: grid;
+        width: 32px;
+        height: 32px;
+        margin: 0 auto 6px;
+        place-items: center;
+        border: 5px solid var(--map-bg);
+        border-radius: 50%;
+        color: #071827;
+        background: currentColor;
+        box-shadow: 0 0 0 2px currentColor, 0 0 18px rgba(91, 196, 255, 0.18);
+      }
+
+      .node-dot::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .node-label {
+        display: block;
+        overflow: hidden;
+        color: #b9cada;
+        font-size: 9px;
+        font-weight: 750;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+      }
+
+      .map-node.original { color: var(--original); }
+      .map-node.changed { color: var(--changed); }
+      .map-node.future { color: var(--future); }
+
+      .map-node.is-selected .node-dot {
+        animation: node-pulse 1.8s ease-out infinite;
+      }
+
+      .map-node.is-selected .node-label {
+        color: #fff;
+      }
+
+      @keyframes node-pulse {
+        0%, 100% { box-shadow: 0 0 0 2px currentColor, 0 0 0 0 currentColor; }
+        50% { box-shadow: 0 0 0 2px currentColor, 0 0 0 9px transparent; }
+      }
+
+      .n1 { top: 184px; left: 17%; }
+      .n2 { top: 310px; left: 17%; }
+      .n3 { top: 475px; left: 50%; }
+      .n4 { top: 595px; left: 82%; }
+      .n5 { top: 750px; left: 50%; }
+      .n6 { top: 890px; left: 50%; }
+
+      .now-marker {
+        position: absolute;
+        z-index: 4;
+        top: 690px;
+        right: 12px;
+        left: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .now-marker::before,
+      .now-marker::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: rgba(255, 255, 255, 0.36);
+      }
+
+      .map-sheet {
+        position: absolute;
+        z-index: 20;
+        right: 8px;
+        bottom: 8px;
+        left: 8px;
+        max-height: calc(100% - 16px);
+        overflow: hidden;
+        border: 1px solid rgba(192, 221, 242, 0.18);
+        border-radius: 25px;
+        color: #eaf6ff;
+        background: rgba(12, 35, 54, 0.97);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.46);
+        backdrop-filter: blur(20px);
+        transform: translateY(calc(100% - 66px));
+        transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .map-sheet.is-open {
+        transform: translateY(0);
+      }
+
+      .sheet-handle {
+        width: 100%;
+        min-height: 65px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px 10px 18px;
+        border: 0;
+        color: inherit;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .sheet-handle::before {
+        content: "";
+        position: absolute;
+        top: 7px;
+        left: 50%;
+        width: 38px;
+        height: 4px;
+        border-radius: 99px;
+        background: rgba(219, 238, 251, 0.26);
+        transform: translateX(-50%);
+      }
+
+      .sheet-handle small {
+        display: block;
+        color: #83a3bb;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .sheet-handle strong {
+        display: block;
+        overflow: hidden;
+        margin-top: 2px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 16px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .sheet-chevron {
+        display: grid;
+        width: 40px;
+        height: 40px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        transition: transform 220ms ease;
+      }
+
+      .map-sheet.is-open .sheet-chevron {
+        transform: rotate(180deg);
+      }
+
+      .sheet-content {
+        max-height: min(60dvh, 510px);
+        overflow-y: auto;
+        padding: 0 12px max(16px, env(safe-area-inset-bottom));
+      }
+
+      .sheet-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        background: #06121e;
+      }
+
+      .sheet-image img {
+        width: 100%;
+        aspect-ratio: 16 / 8;
+        display: block;
+        object-fit: cover;
+      }
+
+      .sheet-badge {
+        position: absolute;
+        right: 10px;
+        bottom: 9px;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        background: rgba(4, 16, 27, 0.68);
+        font-size: 9px;
+        font-weight: 850;
+      }
+
+      .sheet-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 15px 3px 0;
+        color: #8eb0c8;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .sheet-content h2 {
+        margin: 7px 3px 7px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+        font-weight: 500;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+
+      .sheet-description {
+        margin: 0 3px;
+        color: #b9cddd;
+        font-size: 13px;
+        line-height: 1.56;
+      }
+
+      .caused-by {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 11px 12px;
+        border: 1px solid rgba(241, 188, 95, 0.22);
+        border-radius: 13px;
+        color: #e8d9bb;
+        background: rgba(241, 188, 95, 0.08);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .caused-by span {
+        font-size: 17px;
+      }
+
+      @media (max-width: 520px) {
+        html,
+        body {
+          background: var(--map-bg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone-app">
+      <div class="concept-bar">
+        <a href="./index.html">All concepts</a>
+        <span>03 · Branching map</span>
+      </div>
+
+      <header class="map-header">
+        <div class="map-topline">
+          <a class="brand-lockup" href="./index.html" aria-label="Runner Unwound concepts">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <span class="brand-name">Runner Unwound</span>
+              <span class="brand-subtitle">Timeline map</span>
+            </span>
+          </a>
+          <button class="icon-button map-menu" type="button" id="map-info" aria-label="About this map">?</button>
+        </div>
+        <nav class="map-tools" aria-label="Map filters">
+          <button class="map-filter is-active" type="button" data-lane-filter="all" aria-pressed="true">All paths</button>
+          <button class="map-filter" type="button" data-lane-filter="original" aria-pressed="false">Original</button>
+          <button class="map-filter" type="button" data-lane-filter="changed" aria-pressed="false">Changed</button>
+          <button class="map-filter is-active" id="spoiler-filter" type="button" aria-pressed="true">Spoilers: Ep 2</button>
+        </nav>
+      </header>
+
+      <section class="map-shell" aria-label="Interactive timeline map">
+        <div class="map-viewport" id="map-viewport">
+          <div class="map-canvas" id="map-canvas">
+            <div class="map-intro">
+              <p>
+                <strong>Trace what changed</strong>
+                Tap a moment to see how it connects.
+              </p>
+              <div class="map-zoom" aria-label="Map density">
+                <button id="zoom-out" type="button" aria-label="Show a more compact map">−</button>
+                <button id="zoom-in" type="button" aria-label="Show a roomier map">＋</button>
+              </div>
+            </div>
+
+            <div class="lane-labels" aria-hidden="true">
+              <span>Original</span>
+              <span>Changed</span>
+              <span>Future</span>
+            </div>
+
+            <svg class="timeline-paths" viewBox="0 0 390 850" preserveAspectRatio="none" aria-hidden="true">
+              <path class="path-glow" d="M66 45 C66 180 66 190 66 255 C66 320 195 310 195 420" fill="none" stroke="#5bc4ff" stroke-width="3" />
+              <path class="path-glow" d="M195 420 C195 500 320 480 320 540 C320 600 195 600 195 700 L195 820" fill="none" stroke="#f1bc5f" stroke-width="3" />
+              <path d="M320 540 C340 610 335 690 320 780" fill="none" stroke="#eb748b" stroke-width="2" stroke-dasharray="5 7" opacity="0.72" />
+              <circle cx="66" cy="45" r="7" fill="#071827" stroke="#5bc4ff" stroke-width="3" />
+              <circle cx="195" cy="420" r="7" fill="#071827" stroke="#f1bc5f" stroke-width="3" />
+            </svg>
+
+            <div class="date-line date-one">July 2009</div>
+            <div class="date-line date-two">New Year 2023</div>
+            <div class="date-line date-three">Spring 2008</div>
+
+            <button class="map-node original n1" type="button" data-index="0" data-episode="1">
+              <span class="node-dot"></span>
+              <span class="node-label">The eclipse</span>
+            </button>
+            <button class="map-node original n2" type="button" data-index="1" data-episode="1">
+              <span class="node-dot"></span>
+              <span class="node-label">Concert night</span>
+            </button>
+            <button class="map-node changed n3" type="button" data-index="2" data-episode="1">
+              <span class="node-dot"></span>
+              <span class="node-label">First time slip</span>
+            </button>
+            <button class="map-node future n4" type="button" data-index="3" data-episode="2">
+              <span class="node-dot"></span>
+              <span class="node-label">Old memories</span>
+            </button>
+            <button class="map-node changed n5" type="button" data-index="4" data-episode="2">
+              <span class="node-dot"></span>
+              <span class="node-label">The warning</span>
+            </button>
+            <button class="map-node changed n6" type="button" data-index="5" data-episode="2">
+              <span class="node-dot"></span>
+              <span class="node-label">Roadside rescue</span>
+            </button>
+
+            <div class="now-marker">Episode 2 reaches here</div>
+          </div>
+        </div>
+
+        <aside class="map-sheet" id="map-sheet" aria-live="polite">
+          <button class="sheet-handle" id="sheet-handle" type="button" aria-expanded="false">
+            <span>
+              <small id="sheet-handle-label">Changed timeline · Episode 1</small>
+              <strong id="sheet-handle-title">Sol’s first time slip</strong>
+            </span>
+            <span class="sheet-chevron">⌄</span>
+          </button>
+          <div class="sheet-content">
+            <div class="sheet-image">
+              <img id="sheet-image" src="../../runner-data/images/reveal-10.jpg" alt="Sol reaches for the glowing watch" />
+              <span class="sheet-badge" id="sheet-time">41:35</span>
+            </div>
+            <div class="sheet-meta">
+              <span id="sheet-date">January 1, 2023 → 2008</span>
+              <span id="sheet-lane">Changed path</span>
+            </div>
+            <h2 id="sheet-title">Sol timeslips to 2008</h2>
+            <p class="sheet-description" id="sheet-description">
+              The watch glows in the stream. When Sol presses its button, she wakes at
+              her desk fifteen years earlier.
+            </p>
+            <div class="caused-by">
+              <span>↳</span>
+              <span id="sheet-connection">Creates a new branch from the original 2023 timeline.</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+      const moments = [
+        {
+          image: "../../runner-data/images/reveal-1.jpg",
+          alt: "The July 2009 solar eclipse",
+          label: "Original timeline · Episode 1",
+          date: "July 22, 2009",
+          time: "00:00",
+          lane: "Original path",
+          title: "The day of the eclipse",
+          description: "A total solar eclipse darkens Seoul while Sol lies in a hospital room.",
+          connection: "An anchor event: it remains fixed across the versions shown here.",
+        },
+        {
+          image: "../../runner-data/images/reveal-6.jpg",
+          alt: "Eclipse reunion concert",
+          label: "Original timeline · Episode 1",
+          date: "December 31, 2022",
+          time: "24:00",
+          lane: "Original path",
+          title: "Eclipse reunion concert",
+          description: "Sol listens from outside the arena before a chance encounter changes the night.",
+          connection: "Leads to the watch entering the stream at midnight.",
+        },
+        {
+          image: "../../runner-data/images/reveal-10.jpg",
+          alt: "Sol reaches for the glowing watch",
+          label: "Changed timeline · Episode 1",
+          date: "January 1, 2023 → 2008",
+          time: "41:35",
+          lane: "Changed path",
+          title: "Sol timeslips to 2008",
+          description: "The watch glows in the stream. When Sol presses its button, she wakes at her desk fifteen years earlier.",
+          connection: "Creates a new branch from the original 2023 timeline.",
+        },
+        {
+          image: "../../runner-data/images/reveal-15.jpg",
+          alt: "Sol reacts to a future memory",
+          label: "Future echo · Episode 2",
+          date: "Late spring 2008",
+          time: "06:53",
+          lane: "Future echo",
+          title: "A memory pushes through",
+          description: "Sol reacts to danger she remembers, even when she cannot explain what is going to happen.",
+          connection: "Future knowledge crosses into 2008, but time limits what she can say.",
+        },
+        {
+          image: "../../runner-data/images/reveal-24.jpg",
+          alt: "Sol warns Sun-jae at the pool",
+          label: "Changed timeline · Episode 2",
+          date: "June 12, 2008",
+          time: "49:09",
+          lane: "Changed path",
+          title: "Sol warns Sun-jae",
+          description: "Sol begs Sun-jae not to compete, trying to prevent the injury she knows is coming.",
+          connection: "A direct attempt to alter a known event in Sun-jae’s original history.",
+        },
+        {
+          image: "../../runner-data/images/reveal-25.jpg",
+          alt: "Sun-jae pulls Sol out of traffic",
+          label: "Changed timeline · Episode 2",
+          date: "Late spring 2008",
+          time: "53:45",
+          lane: "Changed path",
+          title: "Sun-jae pulls Sol from traffic",
+          description: "Sol freezes as headlights approach. Sun-jae runs into the road and reaches her first.",
+          connection: "Connects Sol’s present fear to the accident waiting in her original future.",
+        },
+      ];
+
+      const sheet = document.querySelector("#map-sheet");
+      const toast = document.querySelector("#toast");
+      let compressed = false;
+      let activeLane = "all";
+      let spoilerEpisode = 2;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 1800);
+      }
+
+      function openMoment(index) {
+        const moment = moments[index];
+        document.querySelectorAll(".map-node").forEach((node) => node.classList.remove("is-selected"));
+        document.querySelector(`.map-node[data-index="${index}"]`).classList.add("is-selected");
+        document.querySelector("#sheet-image").src = moment.image;
+        document.querySelector("#sheet-image").alt = moment.alt;
+        document.querySelector("#sheet-handle-label").textContent = moment.label;
+        document.querySelector("#sheet-handle-title").textContent = moment.title;
+        document.querySelector("#sheet-date").textContent = moment.date;
+        document.querySelector("#sheet-time").textContent = moment.time;
+        document.querySelector("#sheet-lane").textContent = moment.lane;
+        document.querySelector("#sheet-title").textContent = moment.title;
+        document.querySelector("#sheet-description").textContent = moment.description;
+        document.querySelector("#sheet-connection").textContent = moment.connection;
+        sheet.classList.add("is-open");
+        document.querySelector("#sheet-handle").setAttribute("aria-expanded", "true");
+      }
+
+      function applyMapFilters() {
+        document.querySelectorAll(".map-node").forEach((node) => {
+          const laneMatches =
+            activeLane === "all" ||
+            node.classList.contains(activeLane) ||
+            (activeLane === "changed" && node.classList.contains("future"));
+          const episodeMatches = Number(node.dataset.episode) <= spoilerEpisode;
+          node.hidden = !(laneMatches && episodeMatches);
+        });
+      }
+
+      document.querySelectorAll(".map-node").forEach((node) => {
+        node.addEventListener("click", () => openMoment(Number(node.dataset.index)));
+      });
+
+      document.querySelector("#sheet-handle").addEventListener("click", () => {
+        const isOpen = sheet.classList.toggle("is-open");
+        document.querySelector("#sheet-handle").setAttribute("aria-expanded", String(isOpen));
+      });
+
+      document.querySelectorAll("[data-lane-filter]").forEach((filter) => {
+        filter.addEventListener("click", () => {
+          activeLane = filter.dataset.laneFilter;
+          document.querySelectorAll("[data-lane-filter]").forEach((item) => {
+            const isActive = item === filter;
+            item.classList.toggle("is-active", isActive);
+            item.setAttribute("aria-pressed", String(isActive));
+          });
+          applyMapFilters();
+          showToast(`${filter.textContent} shown`);
+        });
+      });
+
+      document.querySelector("#spoiler-filter").addEventListener("click", (event) => {
+        spoilerEpisode = spoilerEpisode === 2 ? 1 : 2;
+        const button = event.currentTarget;
+        button.textContent = `Spoilers: Ep ${spoilerEpisode}`;
+        button.classList.toggle("is-active", spoilerEpisode === 2);
+        button.setAttribute("aria-pressed", String(spoilerEpisode === 2));
+        applyMapFilters();
+        showToast(`Showing moments through Episode ${spoilerEpisode}`);
+      });
+
+      document.querySelector("#map-info").addEventListener("click", () => {
+        showToast("Blue is the original path; gold shows events changed by Sol");
+      });
+
+      document.querySelector("#zoom-out").addEventListener("click", () => {
+        compressed = true;
+        document.querySelector("#map-canvas").classList.add("is-compressed");
+        showToast("Compact map");
+      });
+      document.querySelector("#zoom-in").addEventListener("click", () => {
+        compressed = false;
+        document.querySelector("#map-canvas").classList.remove("is-compressed");
+        showToast("Roomier map");
+      });
+
+      openMoment(0);
+      sheet.classList.remove("is-open");
+      document.querySelector("#sheet-handle").setAttribute("aria-expanded", "false");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#091a2b" />
+    <title>Recommended Direction — Timeline + Episodes</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <link rel="stylesheet" href="./full-explorer.css" />
+    <style>
+      :root {
+        --explorer-navy: #091a2b;
+        --explorer-panel: #10283c;
+        --explorer-line: rgba(197, 222, 240, 0.15);
+        --explorer-text: #ecf7ff;
+        --explorer-muted: #91a9bc;
+        --original: #62c8ff;
+        --changed: #f0bd64;
+        --echo: #ed7890;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        background: #030d16;
+      }
+
+      .phone-app {
+        height: 100dvh;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        color: var(--explorer-text);
+        background: var(--explorer-navy);
+      }
+
+      .explorer-header {
+        position: relative;
+        z-index: 30;
+        flex: 0 0 auto;
+        padding: 10px 14px 12px;
+        border-bottom: 1px solid var(--explorer-line);
+        background:
+          radial-gradient(circle at 100% 0, rgba(69, 130, 174, 0.15), transparent 38%),
+          var(--explorer-navy);
+      }
+
+      .explorer-topline {
+        display: flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .explorer-header .brand-subtitle {
+        color: #7899b2;
+      }
+
+      .header-action {
+        color: #dcecf8;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .view-switcher {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        margin-top: 8px;
+        padding: 4px;
+        border: 1px solid rgba(195, 221, 239, 0.12);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .view-switcher button {
+        min-height: 44px;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 10px;
+        color: #89a3b8;
+        background: transparent;
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .view-switcher button.is-active {
+        color: #092034;
+        background: #f2f8fc;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.18);
+      }
+
+      .explorer-stage {
+        position: relative;
+        min-height: 0;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .explorer-view {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+
+      .explorer-view::-webkit-scrollbar {
+        display: none;
+      }
+
+      .explorer-view[hidden] {
+        display: none;
+      }
+
+      .view-toolbar {
+        position: sticky;
+        z-index: 12;
+        top: 0;
+        left: 0;
+        display: flex;
+        min-height: 58px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 9px 13px;
+        border-bottom: 1px solid rgba(200, 224, 241, 0.09);
+        background: rgba(9, 26, 43, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      .view-toolbar-copy {
+        min-width: 0;
+      }
+
+      .view-toolbar-copy strong {
+        display: block;
+        overflow: hidden;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 16px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .view-toolbar-copy span {
+        display: block;
+        margin-top: 3px;
+        color: var(--explorer-muted);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .filter-button {
+        min-height: 44px;
+        flex: 0 0 auto;
+        padding: 8px 11px;
+        border: 1px solid rgba(198, 223, 241, 0.16);
+        border-radius: 999px;
+        color: #c0d3e2;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 10px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .map-canvas {
+        position: relative;
+        height: 920px;
+        padding-bottom: 160px;
+        background-image:
+          linear-gradient(rgba(154, 195, 222, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(154, 195, 222, 0.025) 1px, transparent 1px);
+        background-size: 100% 54px, 33.333% 100%;
+      }
+
+      .map-help {
+        position: absolute;
+        top: 18px;
+        right: 16px;
+        left: 16px;
+        margin: 0;
+        color: #90a9bd;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .map-help strong {
+        display: block;
+        margin-bottom: 3px;
+        color: #e9f6ff;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 21px;
+        font-weight: 500;
+      }
+
+      .lane-headings {
+        position: absolute;
+        top: 90px;
+        right: 9px;
+        left: 9px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .lane-headings span:nth-child(1) { color: var(--original); }
+      .lane-headings span:nth-child(2) { color: var(--changed); }
+      .lane-headings span:nth-child(3) { color: var(--echo); }
+
+      .explorer-paths {
+        position: absolute;
+        top: 112px;
+        left: 0;
+        width: 100%;
+        height: 700px;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .map-date {
+        position: absolute;
+        right: 14px;
+        left: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #627f95;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .map-date::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: linear-gradient(90deg, rgba(115, 153, 180, 0.34), transparent);
+      }
+
+      .map-date-one { top: 128px; }
+      .map-date-two { top: 348px; }
+      .map-date-three { top: 548px; }
+
+      .event-node {
+        position: absolute;
+        z-index: 5;
+        width: 88px;
+        min-height: 58px;
+        padding: 0;
+        border: 0;
+        color: var(--original);
+        background: transparent;
+        text-align: center;
+        cursor: pointer;
+        transform: translateX(-50%);
+      }
+
+      .event-node.changed { color: var(--changed); }
+      .event-node.echo { color: var(--echo); }
+
+      .event-node-dot {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        margin: 0 auto 5px;
+        place-items: center;
+        border: 5px solid var(--explorer-navy);
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 0 2px currentColor;
+      }
+
+      .event-node-dot::after {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .event-node-label {
+        display: block;
+        color: #aec2d2;
+        font-size: 9px;
+        font-weight: 750;
+        line-height: 1.2;
+      }
+
+      .event-node.is-selected .event-node-dot {
+        box-shadow:
+          0 0 0 2px currentColor,
+          0 0 0 8px color-mix(in srgb, currentColor 18%, transparent);
+      }
+
+      .event-node.is-selected .event-node-label {
+        color: #fff;
+      }
+
+      .node-eclipse { top: 160px; left: 17%; }
+      .node-concert { top: 270px; left: 17%; }
+      .node-slip { top: 390px; left: 50%; }
+      .node-meeting { top: 500px; left: 50%; }
+      .node-memory { top: 495px; left: 83%; }
+      .node-warning { top: 625px; left: 50%; }
+      .node-rescue { top: 755px; left: 50%; }
+
+      .episode-index {
+        padding: 0 13px 150px;
+        color: #172334;
+        background: #f3f1eb;
+      }
+
+      .episode-index .view-toolbar {
+        margin: 0 -13px;
+        color: #172334;
+        background: rgba(243, 241, 235, 0.94);
+        border-bottom-color: rgba(31, 43, 56, 0.1);
+      }
+
+      .episode-index .view-toolbar-copy span {
+        color: #78808a;
+      }
+
+      .episode-index .filter-button {
+        border-color: rgba(31, 43, 56, 0.12);
+        color: #445160;
+        background: #fff;
+      }
+
+      .episode-section {
+        scroll-margin-top: 70px;
+        padding: 22px 0 4px;
+      }
+
+      .episode-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 0 2px 11px;
+        border-bottom: 1px solid rgba(28, 40, 53, 0.13);
+      }
+
+      .episode-heading div {
+        min-width: 0;
+      }
+
+      .episode-heading span {
+        display: block;
+        color: #bd5e49;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .episode-heading h2 {
+        margin: 4px 0 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 24px;
+        font-weight: 500;
+        letter-spacing: -0.025em;
+      }
+
+      .episode-heading small {
+        flex: 0 0 auto;
+        color: #747d86;
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .episode-events {
+        display: grid;
+        gap: 9px;
+      }
+
+      .episode-event {
+        width: 100%;
+        min-height: 88px;
+        display: grid;
+        grid-template-columns: 100px minmax(0, 1fr);
+        gap: 12px;
+        overflow: hidden;
+        padding: 0;
+        border: 1px solid rgba(29, 42, 56, 0.1);
+        border-radius: 17px;
+        color: #1d2a39;
+        background: #fff;
+        box-shadow: 0 7px 20px rgba(51, 47, 39, 0.06);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .episode-event img {
+        width: 100%;
+        height: 100%;
+        min-height: 88px;
+        display: block;
+        object-fit: cover;
+      }
+
+      .episode-event-copy {
+        min-width: 0;
+        align-self: center;
+        padding: 10px 12px 10px 0;
+      }
+
+      .episode-event-copy small {
+        display: block;
+        color: #8a6b51;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .episode-event-copy strong {
+        display: block;
+        margin: 5px 0;
+        overflow: hidden;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+      }
+
+      .relationship-tag {
+        display: inline-flex;
+        min-height: 22px;
+        align-items: center;
+        padding: 3px 7px;
+        border-radius: 999px;
+        color: #557063;
+        background: #edf3ee;
+        font-size: 8px;
+        font-weight: 850;
+      }
+
+      .episode-event.is-selected {
+        border-color: #d39a4b;
+        box-shadow: 0 0 0 2px rgba(211, 154, 75, 0.18);
+      }
+
+      .detail-sheet {
+        position: absolute;
+        z-index: 50;
+        right: 8px;
+        bottom: 8px;
+        left: 8px;
+        max-height: calc(100% - 16px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid rgba(194, 222, 241, 0.18);
+        border-radius: 24px;
+        color: #edf7ff;
+        background: rgba(15, 38, 56, 0.98);
+        box-shadow: 0 24px 65px rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(20px);
+        transform: translateY(calc(100% - 68px));
+        transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .detail-sheet.is-open {
+        transform: translateY(0);
+      }
+
+      .detail-handle {
+        position: relative;
+        width: 100%;
+        min-height: 68px;
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 11px 9px 17px;
+        border: 0;
+        color: inherit;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .detail-handle::before {
+        content: "";
+        position: absolute;
+        top: 7px;
+        left: 50%;
+        width: 38px;
+        height: 4px;
+        border-radius: 99px;
+        background: rgba(220, 238, 250, 0.25);
+        transform: translateX(-50%);
+      }
+
+      .detail-handle-copy {
+        min-width: 0;
+      }
+
+      .detail-handle-copy small {
+        display: block;
+        color: #86a7be;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .detail-handle-copy strong {
+        display: block;
+        overflow: hidden;
+        margin-top: 3px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 16px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .detail-chevron {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        transition: transform 180ms ease;
+      }
+
+      .detail-sheet.is-open .detail-chevron {
+        transform: rotate(180deg);
+      }
+
+      .detail-content {
+        height: min(62dvh, 520px);
+        min-height: 0;
+        flex: 0 0 auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 0 12px max(14px, env(safe-area-inset-bottom));
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .detail-image {
+        position: relative;
+        min-height: 150px;
+        overflow: hidden;
+        border-radius: 17px;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(98, 200, 255, 0.22), transparent 34%),
+          #183247;
+      }
+
+      .detail-image img {
+        width: 100%;
+        aspect-ratio: 16 / 8;
+        display: block;
+        object-fit: cover;
+      }
+
+      .detail-time {
+        position: absolute;
+        z-index: 2;
+        right: 9px;
+        bottom: 9px;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+        background: rgba(5, 18, 29, 0.67);
+        font-size: 9px;
+        font-weight: 850;
+      }
+
+      .hero-event-nav {
+        position: absolute;
+        z-index: 3;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 9px;
+        pointer-events: none;
+      }
+
+      .hero-event-nav button {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        color: #ecf7ff;
+        background: rgba(5, 18, 29, 0.46);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        font-size: 30px;
+        font-weight: 400;
+        line-height: 1;
+        pointer-events: auto;
+      }
+
+      .hero-event-nav button:disabled {
+        opacity: 0.28;
+        cursor: default;
+      }
+
+      .detail-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 14px 2px 0;
+        color: #8cacc3;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .detail-content h2 {
+        margin: 7px 2px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+        font-weight: 500;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+
+      .detail-description {
+        margin: 0 2px 14px;
+        color: #bed0de;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 520px) {
+        html,
+        body {
+          background: var(--explorer-navy);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone-app">
+      <div class="concept-bar">
+        <a href="./index.html">All concepts</a>
+        <span>Recommended synthesis</span>
+      </div>
+
+      <header class="explorer-header">
+        <div class="explorer-topline">
+          <a class="brand-lockup" href="./index.html" aria-label="Runner Unwound concepts">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <span class="brand-name">Runner Unwound</span>
+              <span class="brand-subtitle">Full-series explorer</span>
+            </span>
+          </a>
+          <button class="icon-button header-action" id="share-explorer" type="button" aria-label="Share current moment">↗</button>
+        </div>
+
+        <div class="view-switcher" role="tablist" aria-label="Choose an exploration view">
+          <button class="is-active" id="map-tab" type="button" role="tab" aria-selected="true" aria-controls="map-view">
+            Timeline map
+          </button>
+          <button id="episodes-tab" type="button" role="tab" aria-selected="false" aria-controls="episodes-view">
+            By episode
+          </button>
+        </div>
+      </header>
+
+      <section class="explorer-stage">
+        <section class="explorer-view" id="map-view" role="tabpanel" aria-labelledby="map-tab">
+          <div class="view-toolbar">
+            <div class="view-toolbar-copy">
+              <strong>Every change, in story order</strong>
+              <span>Full-series spoilers · 3 visible paths</span>
+            </div>
+            <button class="filter-button" id="map-filter" type="button">All timelines ▾</button>
+          </div>
+
+          <div class="map-canvas" id="map-canvas">
+            <div class="map-loading">Loading the complete timeline…</div>
+          </div>
+        </section>
+
+        <section class="explorer-view episode-index" id="episodes-view" role="tabpanel" aria-labelledby="episodes-tab" hidden>
+          <div class="view-toolbar">
+            <div class="view-toolbar-copy">
+              <strong>Browse the reveals</strong>
+              <span>Same events, grouped by episode</span>
+            </div>
+            <button class="filter-button" id="episode-jump" type="button">Jump to episode ▾</button>
+          </div>
+          <div class="episode-loading">Loading all episodes…</div>
+        </section>
+
+        <aside class="detail-sheet" id="detail-sheet" aria-live="polite">
+          <button class="detail-handle" id="detail-handle" type="button" aria-expanded="false">
+            <span class="detail-handle-copy">
+              <small id="handle-meta">Changed timeline · Episode 1</small>
+              <strong id="handle-title">Sol timeslips to 2008</strong>
+            </span>
+            <span class="detail-chevron">⌄</span>
+          </button>
+          <div class="detail-content">
+            <div class="detail-image">
+              <img id="detail-image" src="../../runner-data/images/reveal-10.jpg" alt="Sol reaches for the glowing watch" />
+              <span class="detail-time" id="detail-time">41:35</span>
+              <div class="hero-event-nav" aria-label="Previous and next events">
+                <button id="previous-event" type="button">‹</button>
+                <button id="next-event" type="button">›</button>
+              </div>
+            </div>
+            <div class="detail-meta"><span id="detail-date">January 1, 2023 → 2008</span><span id="detail-episode">Episode 1</span></div>
+            <h2 id="detail-title">Sol timeslips to 2008</h2>
+            <p class="detail-description" id="detail-description">
+              The watch glows in the stream. When Sol presses its button, she wakes at her desk fifteen years earlier.
+            </p>
+            <div class="detail-tags" id="detail-tags"></div>
+            <a class="soundtrack-link" id="soundtrack-link" href="#" target="_blank" rel="noopener" hidden>
+              <span>♪ <span id="soundtrack-title">Soundtrack</span></span><span>↗</span>
+            </a>
+          </div>
+        </aside>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script src="./full-explorer.js"></script>
+  </body>
+</html>

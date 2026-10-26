@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f1e8dc" />
+    <title>Concept 2 — Episode Briefing</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <style>
+      :root {
+        --brief-paper: #f3ede4;
+        --brief-card: #fcfaf6;
+        --brief-ink: #30281f;
+        --brief-muted: #76695b;
+        --brief-coral: #c45c43;
+        --brief-green: #527367;
+      }
+
+      html,
+      body {
+        background: #d8cabb;
+      }
+
+      .phone-app {
+        overflow: visible;
+        color: var(--brief-ink);
+        background:
+          linear-gradient(rgba(63, 49, 35, 0.022) 1px, transparent 1px),
+          var(--brief-paper);
+        background-size: 100% 24px;
+      }
+
+      .concept-bar {
+        position: sticky;
+        top: 0;
+      }
+
+      .reading-progress {
+        position: sticky;
+        z-index: 51;
+        top: 36px;
+        height: 3px;
+        background: rgba(72, 55, 38, 0.12);
+      }
+
+      .reading-progress span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--brief-coral);
+        transition: width 80ms linear;
+      }
+
+      .brief-header {
+        position: sticky;
+        z-index: 30;
+        top: 39px;
+        padding: 11px 16px 10px;
+        border-bottom: 1px solid rgba(62, 47, 33, 0.12);
+        background: rgba(243, 237, 228, 0.92);
+        backdrop-filter: blur(18px);
+      }
+
+      .brief-topline {
+        display: flex;
+        min-height: 46px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brief-header .brand-mark {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+      }
+
+      .brief-header .brand-mark::before {
+        inset: 6px;
+      }
+
+      .brief-header .brand-mark::after {
+        top: 3px;
+        left: 13px;
+        transform-origin: 50% 12px;
+      }
+
+      .brief-header .brand-name {
+        font-size: 16px;
+      }
+
+      .spoiler-pill {
+        min-height: 38px;
+        color: #5b4b3e;
+        background: rgba(255, 255, 255, 0.55);
+        cursor: pointer;
+      }
+
+      .episode-rail {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 9px 0 3px;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+      }
+
+      .episode-rail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .episode-chip {
+        min-width: 48px;
+        min-height: 44px;
+        flex: 0 0 auto;
+        padding: 8px 13px;
+        border: 1px solid rgba(62, 47, 33, 0.14);
+        border-radius: 999px;
+        color: var(--brief-muted);
+        background: rgba(255, 255, 255, 0.46);
+        scroll-snap-align: center;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .episode-chip.is-active {
+        border-color: var(--brief-ink);
+        color: #fff;
+        background: var(--brief-ink);
+      }
+
+      .brief-main {
+        padding: 20px 14px calc(92px + env(safe-area-inset-bottom));
+      }
+
+      .episode-kicker {
+        margin: 0 0 8px;
+        color: var(--brief-coral);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .episode-title {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(38px, 11vw, 51px);
+        font-weight: 500;
+        line-height: 0.96;
+        letter-spacing: -0.055em;
+      }
+
+      .episode-intro {
+        margin: 16px 0 18px;
+        color: var(--brief-muted);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .episode-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 26px;
+        border-top: 1px solid rgba(62, 47, 33, 0.16);
+        border-bottom: 1px solid rgba(62, 47, 33, 0.16);
+      }
+
+      .stat {
+        padding: 13px 8px;
+        border-right: 1px solid rgba(62, 47, 33, 0.12);
+        text-align: center;
+      }
+
+      .stat:last-child {
+        border-right: 0;
+      }
+
+      .stat strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 22px;
+        font-weight: 500;
+      }
+
+      .stat span {
+        color: var(--brief-muted);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .thread-callout {
+        position: relative;
+        margin: 0 0 28px;
+        overflow: hidden;
+        border-radius: 22px;
+        color: #f6f2ea;
+        background: #49665e;
+        box-shadow: 0 16px 34px rgba(51, 70, 64, 0.17);
+      }
+
+      .thread-callout img {
+        width: 100%;
+        aspect-ratio: 16 / 8;
+        display: block;
+        object-fit: cover;
+        opacity: 0.72;
+        filter: saturate(0.85);
+      }
+
+      .thread-callout::after {
+        content: "";
+        position: absolute;
+        inset: 20% 0 0;
+        background: linear-gradient(transparent, #354d47 78%);
+        pointer-events: none;
+      }
+
+      .thread-copy {
+        position: relative;
+        z-index: 2;
+        margin-top: -50px;
+        padding: 16px 18px 19px;
+      }
+
+      .thread-copy span {
+        color: #bdd8ce;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .thread-copy h2 {
+        margin: 6px 0 7px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .thread-copy p {
+        margin: 0;
+        color: #d8e5df;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 3px 14px;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+        font-weight: 500;
+        letter-spacing: -0.035em;
+      }
+
+      .section-heading span {
+        color: var(--brief-muted);
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .moment-list {
+        position: relative;
+        display: grid;
+        gap: 15px;
+      }
+
+      .moment-list::before {
+        content: "";
+        position: absolute;
+        top: 22px;
+        bottom: 22px;
+        left: 18px;
+        width: 1px;
+        background: #c8b9a8;
+      }
+
+      .brief-moment {
+        position: relative;
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .moment-index {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border: 5px solid var(--brief-paper);
+        border-radius: 50%;
+        color: #fff;
+        background: var(--brief-coral);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 12px;
+      }
+
+      .brief-moment:nth-child(2) .moment-index,
+      .brief-moment:nth-child(4) .moment-index {
+        background: var(--brief-green);
+      }
+
+      .moment-card {
+        overflow: hidden;
+        border: 1px solid rgba(62, 47, 33, 0.1);
+        border-radius: 19px;
+        background: var(--brief-card);
+        box-shadow: 0 9px 24px rgba(73, 53, 35, 0.08);
+      }
+
+      .moment-card img {
+        width: 100%;
+        aspect-ratio: 16 / 7.5;
+        display: block;
+        object-fit: cover;
+      }
+
+      .moment-body {
+        padding: 15px 16px 14px;
+      }
+
+      .moment-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--brief-muted);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .moment-body h3 {
+        margin: 7px 0 7px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 21px;
+        font-weight: 500;
+        line-height: 1.14;
+      }
+
+      .moment-body p {
+        margin: 0;
+        color: var(--brief-muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .why-button {
+        width: 100%;
+        min-height: 46px;
+        margin-top: 11px;
+        padding: 9px 0 0;
+        border: 0;
+        border-top: 1px solid rgba(62, 47, 33, 0.11);
+        color: var(--brief-coral);
+        background: transparent;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .why-copy {
+        max-height: 0;
+        overflow: hidden;
+        color: #4d655e;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 13px;
+        font-style: italic;
+        line-height: 1.5;
+        opacity: 0;
+        transition: max-height 240ms ease, opacity 180ms ease, margin 180ms ease;
+      }
+
+      .why-copy.is-open {
+        max-height: 100px;
+        margin-top: 8px;
+        opacity: 1;
+      }
+
+      .brief-footer-nav {
+        position: fixed;
+        z-index: 40;
+        right: max(0px, calc((100vw - 480px) / 2));
+        bottom: 0;
+        left: max(0px, calc((100vw - 480px) / 2));
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
+        padding: 8px 10px max(9px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(62, 47, 33, 0.14);
+        background: rgba(252, 250, 246, 0.94);
+        backdrop-filter: blur(18px);
+      }
+
+      .brief-footer-nav button {
+        min-height: 48px;
+        padding: 6px;
+        border: 0;
+        border-radius: 12px;
+        color: #837467;
+        background: transparent;
+        font-size: 10px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .brief-footer-nav button span {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 17px;
+      }
+
+      .brief-footer-nav button.is-active {
+        color: var(--brief-ink);
+        background: #eee3d6;
+      }
+
+      @media (max-width: 520px) {
+        html,
+        body {
+          background: var(--brief-paper);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone-app">
+      <div class="concept-bar">
+        <a href="./index.html">All concepts</a>
+        <span>02 · Episode briefing</span>
+      </div>
+      <div class="reading-progress" aria-hidden="true"><span id="reading-progress"></span></div>
+
+      <header class="brief-header">
+        <div class="brief-topline">
+          <a class="brand-lockup" href="./index.html" aria-label="Runner Unwound concepts">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <span class="brand-name">Runner Unwound</span>
+            </span>
+          </a>
+          <button class="pill spoiler-pill" id="spoiler-button" type="button">Shield: Ep 2 ▾</button>
+        </div>
+        <nav class="episode-rail" aria-label="Choose an episode">
+          <button class="episode-chip" type="button">Ep 1</button>
+          <button class="episode-chip is-active" type="button" aria-current="true">Ep 2</button>
+          <button class="episode-chip" type="button">Ep 3</button>
+          <button class="episode-chip" type="button">Ep 4</button>
+          <button class="episode-chip" type="button">Ep 5</button>
+          <button class="episode-chip" type="button">Ep 6</button>
+        </nav>
+      </header>
+
+      <div class="brief-main">
+        <p class="episode-kicker">Episode 2 briefing · 6 min read</p>
+        <h1 class="episode-title">The past is already changing.</h1>
+        <p class="episode-intro">
+          Sol’s rescue mission collides with memories she doesn’t yet understand—and
+          with two boys whose histories are more tangled than they seem.
+        </p>
+
+        <div class="episode-stats" aria-label="Episode summary">
+          <div class="stat"><strong>8</strong><span>Key moments</span></div>
+          <div class="stat"><strong>3</strong><span>Dates</span></div>
+          <div class="stat"><strong>2</strong><span>Timelines</span></div>
+        </div>
+
+        <article class="thread-callout">
+          <img src="../../runner-data/images/reveal-24.jpg" alt="Sol and Sun-jae at the swimming pool" />
+          <div class="thread-copy">
+            <span>The thread to watch</span>
+            <h2>What Sol remembers, and when</h2>
+            <p>
+              Her body reacts to danger before her conscious memory catches up. Those flashes
+              are the episode’s clearest clue.
+            </p>
+          </div>
+        </article>
+
+        <div class="section-heading">
+          <h2>Moment by moment</h2>
+          <span>Tap “why it matters”</span>
+        </div>
+
+        <section class="moment-list" aria-label="Episode 2 key moments">
+          <article class="brief-moment">
+            <span class="moment-index">1</span>
+            <div class="moment-card">
+              <img src="../../runner-data/images/reveal-15.jpg" alt="A still from early in Episode 2" />
+              <div class="moment-body">
+                <div class="moment-meta"><span>06:53</span><span>Late spring 2008</span></div>
+                <h3>A future Sol can’t discuss</h3>
+                <p>Sol knows something terrible is ahead, but time itself prevents her from saying it plainly.</p>
+                <button class="why-button" type="button" aria-expanded="false">Why it matters ＋</button>
+                <div class="why-copy">
+                  The timeline has rules: intention alone is not enough to reveal future knowledge.
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="brief-moment">
+            <span class="moment-index">2</span>
+            <div class="moment-card">
+              <img src="../../runner-data/images/reveal-17.jpg" alt="Sol meets Kim Tae-seong outside the gym" />
+              <div class="moment-body">
+                <div class="moment-meta"><span>12:28</span><span>June 2, 2008</span></div>
+                <h3>Sol meets Kim Tae-seong</h3>
+                <p>A chaotic escape becomes a first meeting—but not the one Sol remembers from her original past.</p>
+                <button class="why-button" type="button" aria-expanded="false">Why it matters ＋</button>
+                <div class="why-copy">
+                  Sol is no longer observing her old life. Every choice begins to create a revised version of it.
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="brief-moment">
+            <span class="moment-index">3</span>
+            <div class="moment-card">
+              <img src="../../runner-data/images/reveal-24.jpg" alt="Sol warns Sun-jae at the pool" />
+              <div class="moment-body">
+                <div class="moment-meta"><span>49:09</span><span>June 12, 2008</span></div>
+                <h3>Sol begs Sun-jae not to compete</h3>
+                <p>She risks sounding irrational because preventing his injury matters more than being believed.</p>
+                <button class="why-button" type="button" aria-expanded="false">Why it matters ＋</button>
+                <div class="why-copy">
+                  This is the first direct attempt to break a known event—and a test of what time will permit.
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="brief-moment">
+            <span class="moment-index">4</span>
+            <div class="moment-card">
+              <img src="../../runner-data/images/reveal-25.jpg" alt="Sun-jae pulls Sol out of traffic" />
+              <div class="moment-body">
+                <div class="moment-meta"><span>53:45</span><span>Late spring 2008</span></div>
+                <h3>The road triggers a buried memory</h3>
+                <p>Sol freezes in approaching headlights. Sun-jae reaches her before she can move.</p>
+                <button class="why-button" type="button" aria-expanded="false">Why it matters ＋</button>
+                <div class="why-copy">
+                  Her fear belongs to the future she came from, connecting the rescue mission to her own accident.
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <nav class="brief-footer-nav" aria-label="Briefing sections">
+        <button class="is-active" id="brief-button" type="button" aria-current="page"><span>☰</span>Brief</button>
+        <button id="moments-button" type="button"><span>◉</span>Moments</button>
+        <button id="threads-button" type="button"><span>⌁</span>Threads</button>
+      </nav>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+      const toast = document.querySelector("#toast");
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 1800);
+      }
+
+      document.querySelectorAll(".episode-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          if (chip.textContent !== "Ep 2") {
+            showToast(`${chip.textContent} is represented by Episode 2 in this prototype`);
+          }
+          document.querySelectorAll(".episode-chip").forEach((item) => {
+            item.classList.remove("is-active");
+            item.removeAttribute("aria-current");
+          });
+          chip.classList.add("is-active");
+          chip.setAttribute("aria-current", "true");
+        });
+      });
+
+      document.querySelectorAll(".why-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const copy = button.nextElementSibling;
+          const isOpen = copy.classList.toggle("is-open");
+          button.setAttribute("aria-expanded", String(isOpen));
+          button.textContent = isOpen ? "Why it matters −" : "Why it matters ＋";
+        });
+      });
+
+      document.querySelector("#spoiler-button").addEventListener("click", () => {
+        showToast("Spoiler shield is set through Episode 2");
+      });
+
+      function activateFooter(button) {
+        document.querySelectorAll(".brief-footer-nav button").forEach((item) => {
+          item.classList.remove("is-active");
+          item.removeAttribute("aria-current");
+        });
+        button.classList.add("is-active");
+        button.setAttribute("aria-current", "page");
+      }
+
+      document.querySelector("#brief-button").addEventListener("click", (event) => {
+        activateFooter(event.currentTarget);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      document.querySelector("#moments-button").addEventListener("click", () => {
+        activateFooter(document.querySelector("#moments-button"));
+        document.querySelector(".section-heading").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      document.querySelector("#threads-button").addEventListener("click", () => {
+        activateFooter(document.querySelector("#threads-button"));
+        document.querySelector(".thread-callout").scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+
+      function updateReadingProgress() {
+        const root = document.documentElement;
+        const max = root.scrollHeight - root.clientHeight;
+        const percent = max > 0 ? (root.scrollTop / max) * 100 : 0;
+        document.querySelector("#reading-progress").style.width = `${percent}%`;
+      }
+
+      document.addEventListener("scroll", updateReadingProgress, { passive: true });
+      updateReadingProgress();
+    </script>
+  </body>
+</html>
