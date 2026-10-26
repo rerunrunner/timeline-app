@@ -260,7 +260,7 @@
   position: relative;
   min-height: 100%;
   overflow: visible;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y pinch-zoom;
   background-image:
     linear-gradient(rgba(154, 195, 222, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(154, 195, 222, 0.028) 1px, transparent 1px);
@@ -471,34 +471,48 @@
 .mobile-node-label {
   position: absolute;
   z-index: 12;
-  top: 36px;
+  top: 30px;
   left: 50%;
-  width: 136px;
+  width: var(--node-label-width, 64px);
   display: none;
-  padding: 7px 9px;
+  overflow: hidden;
+  padding: 4px;
   border: 1px solid color-mix(in srgb, var(--timeline-color) 34%, transparent);
-  border-radius: 10px;
+  border-radius: 7px;
   color: #e8f5ff;
-  background: rgba(12, 35, 53, 0.96);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(12, 35, 53, 0.9);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.15;
   pointer-events: none;
   transform: translateX(-50%);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mobile-event-node.has-label .mobile-node-label {
+  display: -webkit-box;
 }
 
 .mobile-event-node.is-selected .mobile-node-label {
+  top: 36px;
+  width: 136px;
   display: block;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(12, 35, 53, 0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  line-height: 1.2;
 }
 
-.mobile-event-node.edge-left .mobile-node-label {
+.mobile-event-node.is-selected.edge-left .mobile-node-label {
   left: -4px;
   transform: none;
 }
 
-.mobile-event-node.edge-right .mobile-node-label {
+.mobile-event-node.is-selected.edge-right .mobile-node-label {
   right: -4px;
   left: auto;
   transform: none;

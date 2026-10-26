@@ -277,13 +277,13 @@ export function layoutMobileTimeline(
 
       const maxStack = Math.max(...[...eventsByTimeline.values()].map(group => group.length));
       const top = cursorY;
-      const height = Math.max(74, 42 + maxStack * 38);
+      const height = Math.max(74, 42 + maxStack * 62);
       for (const [timelineId, timelineEventsForDate] of eventsByTimeline) {
         const timelineIndex = model.timelineIndexById.get(timelineId) ?? 0;
         timelineEventsForDate.forEach((event, index) => {
           eventPositions.set(event.id, {
             x: laneX[timelineIndex],
-            y: top + 40 + index * 38,
+            y: top + 40 + index * 62,
             timelineIndex,
             parallel: eventsByTimeline.size > 1,
           });

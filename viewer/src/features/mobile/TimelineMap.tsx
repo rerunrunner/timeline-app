@@ -299,6 +299,7 @@ export function TimelineMap({
                 selected ? 'is-selected' : '',
                 inherited ? 'is-inherited' : '',
                 erased ? 'is-erased' : '',
+                'has-label',
                 edgeClass,
               ].filter(Boolean).join(' ')}
               type="button"
@@ -306,6 +307,7 @@ export function TimelineMap({
               style={{
                 '--timeline-color':
                   MOBILE_TIMELINE_COLORS[timelineIndex % MOBILE_TIMELINE_COLORS.length],
+                '--node-label-width': `${Math.max(52, laneGap - 8)}px`,
                 left: `${position.x}px`,
                 top: `${position.y}px`,
               } as CSSProperties}
