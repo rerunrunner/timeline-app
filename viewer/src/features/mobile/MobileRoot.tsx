@@ -93,30 +93,49 @@ export default function MobileRoot({
     <main className="mobile-explorer">
       <header className="mobile-explorer-header">
         <div className="mobile-explorer-topline">
-          <span className="mobile-brand-lockup">
+          <a
+            className="mobile-brand-lockup"
+            href="/"
+            target="_top"
+            aria-label="Runner Unwound timeline"
+          >
             <span className="mobile-brand-mark" aria-hidden="true" />
-            <span className="mobile-brand-copy">
+            <div className="mobile-brand-copy">
               <span className="mobile-brand-name">Runner Unwound</span>
-              <span className="mobile-brand-subtitle">Full-series explorer</span>
-            </span>
-          </span>
-          {availableLanguages.length > 1 && (
-            <label className="mobile-language-picker">
-              <span className="sr-only">Language</span>
-              <select
-                aria-label="Language"
-                value={selectedLanguageCode}
-                onChange={event => onLanguageChange(event.target.value)}
-              >
-                {availableLanguages.map(language => (
-                  <option value={language.code} key={language.code}>
-                    {language.flagEmoji ? `${language.flagEmoji} ` : ''}
-                    {language.localizedName ?? language.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+              <div className="mobile-brand-subtitle">
+                <span className="mobile-brand-tagline">Full-series explorer</span>
+              </div>
+            </div>
+          </a>
+          <div className="mobile-header-actions">
+            {availableLanguages.length > 1 && (
+              <label className="mobile-language-picker">
+                <span className="sr-only">Language</span>
+                <select
+                  aria-label="Language"
+                  value={selectedLanguageCode}
+                  onChange={event => onLanguageChange(event.target.value)}
+                >
+                  {availableLanguages.map(language => (
+                    <option value={language.code} key={language.code}>
+                      {language.flagEmoji ? `${language.flagEmoji} ` : ''}
+                      {language.localizedName ?? language.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <details className="mobile-site-menu">
+              <summary aria-label="Open site menu">
+                <span aria-hidden="true" />
+              </summary>
+              <nav aria-label="Site pages">
+                <a href="/" target="_top" aria-current="page">Timeline</a>
+                <a href="/thoughts/" target="_top">Thoughts</a>
+                <a href="/about.html" target="_top">About</a>
+              </nav>
+            </details>
+          </div>
         </div>
         <div className="mobile-view-switcher" role="tablist" aria-label="Choose an exploration view">
           <button

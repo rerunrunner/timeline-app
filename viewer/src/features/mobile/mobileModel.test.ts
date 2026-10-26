@@ -61,6 +61,15 @@ function buildModel() {
             displayedDescription: 'Before the branch',
             displayedDate: 'January 2, 2008',
           },
+          {
+            id: 'reveal-before-final',
+            episodeId: 'ep2',
+            episodeTime: 30,
+            absolutePlayTime: 3630,
+            displayedTitle: 'Original before, fully revealed',
+            displayedDescription: 'The final reveal for this event',
+            displayedDate: 'January 2, 2008',
+          },
         ],
       },
       {
@@ -159,6 +168,7 @@ describe('mobile timeline model', () => {
     ]);
     expect(model.narrativeReveals.map(reveal => reveal.id)).toEqual([
       'reveal-before',
+      'reveal-before-final',
       'reveal-after',
       'reveal-out',
       'reveal-in',
@@ -181,7 +191,7 @@ describe('mobile timeline model', () => {
     expect(context.ancestorTimelineIds).toEqual(new Set(['tl1']));
   });
 
-  it('navigates through active events while retaining narrative order', () => {
+  it('navigates once per active event using its final reveal', () => {
     const model = buildModel();
 
     expect(getAdjacentNarrativeReveals(model, 'reveal-before', 'tl2')).toEqual({
@@ -189,7 +199,7 @@ describe('mobile timeline model', () => {
       next: model.revealById.get('reveal-in'),
     });
     expect(getAdjacentNarrativeReveals(model, 'reveal-in', 'tl2')).toEqual({
-      previous: model.revealById.get('reveal-before'),
+      previous: model.revealById.get('reveal-before-final'),
       next: model.revealById.get('reveal-changed'),
     });
   });

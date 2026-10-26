@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { IReveal } from '../../types/interfaces';
 import {
   formatEpisodeTime,
@@ -46,6 +47,19 @@ export function EventDetailSheet({
     selectedTimelineId
   );
   const imageSource = screenshotSource(selectedReveal);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [selectedReveal.id]);
+
+  useEffect(() => {
+    for (const reveal of [previous, next]) {
+      if (!reveal) continue;
+      const source = screenshotSource(reveal);
+      if (source) new Image().src = source;
+    }
+  }, [next, previous]);
 
   const selectAdjacent = (reveal: IReveal | null) => {
     if (reveal) onRevealSelect(reveal);
@@ -74,7 +88,7 @@ export function EventDetailSheet({
         <span className="mobile-detail-chevron" aria-hidden="true">⌄</span>
       </button>
 
-      <div className="mobile-detail-content">
+      <div className="mobile-detail-content" ref={contentRef}>
         <div className="mobile-detail-image">
           {imageSource ? (
             <img
@@ -106,11 +120,6 @@ export function EventDetailSheet({
             </button>
           </div>
         </div>
-        <div className="mobile-detail-meta">
-          <span>{selectedReveal.narrativeTimeframe}</span>
-          <span>Episode {episode?.episodeNumber ?? '?'}</span>
-        </div>
-        <h2>{selectedReveal.title}</h2>
         <p className="mobile-detail-description">
           {selectedReveal.description || 'No description has been added yet.'}
         </p>

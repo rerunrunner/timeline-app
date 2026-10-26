@@ -199,10 +199,12 @@ export function getAdjacentNarrativeReveals(
     selectedTimelineId === 'all'
       ? null
       : getMobileCanonContext(model, selectedTimelineId).activeEventIds;
-  const onPath = activeEventIds
-    ? model.narrativeReveals.filter(reveal => activeEventIds.has(reveal.event.id))
-    : model.narrativeReveals;
-  const index = onPath.findIndex(reveal => reveal.id === revealId);
+  const selectedEventId = model.revealById.get(revealId)?.event.id;
+  const onPath = model.events
+    .filter(event => !activeEventIds || activeEventIds.has(event.id))
+    .map(event => event.reveals.at(-1))
+    .filter((reveal): reveal is IReveal => Boolean(reveal));
+  const index = onPath.findIndex(reveal => reveal.event.id === selectedEventId);
 
   if (index >= 0) {
     return {
@@ -211,18 +213,18 @@ export function getAdjacentNarrativeReveals(
     };
   }
 
-  const onPathIds = new Set(onPath.map(reveal => reveal.id));
-  const globalIndex = model.narrativeReveals.findIndex(reveal => reveal.id === revealId);
+  const onPathEventIds = new Set(onPath.map(reveal => reveal.event.id));
+  const globalIndex = model.events.findIndex(event => event.id === selectedEventId);
+  const previousEvent = model.events
+    .slice(0, globalIndex)
+    .reverse()
+    .find(event => onPathEventIds.has(event.id));
+  const nextEvent = model.events
+    .slice(globalIndex + 1)
+    .find(event => onPathEventIds.has(event.id));
   return {
-    previous:
-      model.narrativeReveals
-        .slice(0, globalIndex)
-        .reverse()
-        .find(reveal => onPathIds.has(reveal.id)) ?? null,
-    next:
-      model.narrativeReveals
-        .slice(globalIndex + 1)
-        .find(reveal => onPathIds.has(reveal.id)) ?? null,
+    previous: previousEvent?.reveals.at(-1) ?? null,
+    next: nextEvent?.reveals.at(-1) ?? null,
   };
 }
 
