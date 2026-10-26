@@ -6,7 +6,6 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { EventType } from '../../types/timeline';
 import type { IEvent } from '../../types/interfaces';
 import {
   MOBILE_TIMELINE_COLORS,
@@ -25,9 +24,12 @@ interface TimelineMapProps {
   onEventSelect: (event: IEvent) => void;
 }
 
-function wavyPath(x: number, timelineIndex: number, height: number): string {
-  const top = 92;
-  const bottom = height - 70;
+function wavyPath(
+  x: number,
+  timelineIndex: number,
+  top: number,
+  bottom: number
+): string {
   const segmentHeight = 360;
   let y = top;
   let direction = timelineIndex % 2 === 0 ? 1 : -1;
@@ -44,22 +46,28 @@ function wavyPath(x: number, timelineIndex: number, height: number): string {
   return path;
 }
 
-function jumpPath(
-  departure: { x: number; y: number; timelineIndex: number },
-  arrival: { x: number; y: number },
-  laneGap: number
-): string {
-  const sameLane = departure.x === arrival.x;
-  const bendDirection = departure.timelineIndex % 2 === 0 ? 1 : -1;
-  const bendX = sameLane
-    ? departure.x + bendDirection * Math.min(28, laneGap * 0.34)
-    : (departure.x + arrival.x) / 2;
-  const verticalDirection = arrival.y < departure.y ? -1 : 1;
-  const turnRadius = Math.min(
-    90,
-    Math.max(40, Math.abs(arrival.y - departure.y) * 0.08)
-  );
-  return `M ${departure.x} ${departure.y} C ${bendX} ${departure.y + verticalDirection * turnRadius}, ${bendX} ${arrival.y - verticalDirection * turnRadius}, ${arrival.x} ${arrival.y}`;
+function timelinePathSegments(
+  top: number,
+  bottom: number,
+  skippedRanges: readonly { top: number; bottom: number }[]
+) {
+  const segments: { top: number; bottom: number; skipped: boolean }[] = [];
+  let cursor = top;
+
+  for (const skipped of skippedRanges) {
+    const skippedTop = Math.max(cursor, skipped.top);
+    const skippedBottom = Math.min(bottom, skipped.bottom);
+    if (skippedBottom <= skippedTop) continue;
+    if (skippedTop > cursor) {
+      segments.push({ top: cursor, bottom: skippedTop, skipped: false });
+    }
+    segments.push({ top: skippedTop, bottom: skippedBottom, skipped: true });
+    cursor = skippedBottom;
+  }
+  if (cursor < bottom) {
+    segments.push({ top: cursor, bottom, skipped: false });
+  }
+  return segments;
 }
 
 export function TimelineMap({
@@ -96,6 +104,23 @@ export function TimelineMap({
     () => getMobileCanonContext(model, selectedTimelineId),
     [model, selectedTimelineId]
   );
+  const activePathEndY = useMemo(() => {
+    const ends = new Map<string, number>();
+    if (selectedTimelineId === 'all') return ends;
+
+    ends.set(selectedTimelineId, layout.height - 70);
+    let childTimelineId = selectedTimelineId;
+    while (model.branchByTimelineId.has(childTimelineId)) {
+      const branch = model.branchByTimelineId.get(childTimelineId);
+      if (!branch) break;
+      const parentTimelineId = model.eventTimelineIds.get(branch.parent.id);
+      const entryPosition = layout.eventPositions.get(branch.entry.id);
+      if (!parentTimelineId || !entryPosition) break;
+      ends.set(parentTimelineId, entryPosition.y);
+      childTimelineId = parentTimelineId;
+    }
+    return ends;
+  }, [layout, model, selectedTimelineId]);
   const selectedEventId = selectedRevealId
     ? model.revealById.get(selectedRevealId)?.event.id
     : undefined;
@@ -194,50 +219,59 @@ export function TimelineMap({
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          {model.timelines.map((timeline, index) => {
-            const ancestor = canon.ancestorTimelineIds.has(timeline.id);
-            const muted =
-              selectedTimelineId !== 'all' &&
-              selectedTimelineId !== timeline.id &&
-              !ancestor;
-            return (
+          {model.timelines.flatMap((timeline, index) =>
+            timelinePathSegments(
+              layout.timelineStartY[index],
+              layout.timelineEndY[index],
+              layout.timelineSkippedRanges[index]
+            ).map((segment, segmentIndex) => (
               <path
                 className={[
                   'mobile-curve-path',
-                  ancestor ? 'is-ancestor' : '',
-                  muted ? 'is-muted' : '',
+                  selectedTimelineId !== 'all' ? 'is-muted' : '',
+                  segment.skipped ? 'is-skipped' : '',
                 ].filter(Boolean).join(' ')}
                 style={{ '--timeline-color': MOBILE_TIMELINE_COLORS[index % MOBILE_TIMELINE_COLORS.length] } as CSSProperties}
-                d={wavyPath(layout.laneX[index], index, layout.height)}
-                key={timeline.id}
+                d={wavyPath(
+                  layout.laneX[index],
+                  index,
+                  segment.top,
+                  segment.bottom
+                )}
+                key={`${timeline.id}-base-${segmentIndex}`}
               />
-            );
-          })}
-          {model.events
-            .filter(event => event.eventType === EventType.TIMESLIP_OUT)
-            .flatMap(departure =>
-              departure.correlatedEvents.slice(0, 1).map(arrival => {
-                const departurePosition = layout.eventPositions.get(departure.id);
-                const arrivalPosition = layout.eventPositions.get(arrival.id);
-                if (!departurePosition || !arrivalPosition) return null;
-                const arrivalTimelineId = model.eventTimelineIds.get(arrival.id) ?? '';
-                const arrivalTimelineIndex =
-                  model.timelineIndexById.get(arrivalTimelineId) ?? 0;
-                const muted =
-                  selectedTimelineId !== 'all' &&
-                  !canon.activeEventIds.has(arrival.id);
-                return (
-                  <path
-                    className={`mobile-curve-jump${muted ? ' is-muted' : ''}`}
-                    style={{ '--timeline-color': MOBILE_TIMELINE_COLORS[arrivalTimelineIndex % MOBILE_TIMELINE_COLORS.length] } as CSSProperties}
-                    d={jumpPath(departurePosition, arrivalPosition, laneGap)}
-                    data-jump-from={departure.id}
-                    data-jump-to={arrival.id}
-                    key={`${departure.id}-${arrival.id}`}
-                  />
-                );
-              })
-            )}
+            ))
+          )}
+          {selectedTimelineId !== 'all' &&
+            model.timelines.flatMap((timeline, index) => {
+              const top = layout.timelineStartY[index];
+              const activeBottom = activePathEndY.get(timeline.id);
+              const bottom =
+                activeBottom === undefined
+                  ? undefined
+                  : Math.min(activeBottom, layout.timelineEndY[index]);
+              if (bottom === undefined || bottom <= top) return null;
+              return timelinePathSegments(
+                top,
+                bottom,
+                layout.timelineSkippedRanges[index]
+              ).map((segment, segmentIndex) => (
+                <path
+                  className={[
+                    'mobile-curve-path',
+                    segment.skipped ? 'is-skipped' : '',
+                  ].filter(Boolean).join(' ')}
+                  style={{ '--timeline-color': MOBILE_TIMELINE_COLORS[index % MOBILE_TIMELINE_COLORS.length] } as CSSProperties}
+                  d={wavyPath(
+                    layout.laneX[index],
+                    index,
+                    segment.top,
+                    segment.bottom
+                  )}
+                  key={`${timeline.id}-active-${segmentIndex}`}
+                />
+              ));
+            })}
         </svg>
 
         {layout.dateGroups.map((group, index) => {

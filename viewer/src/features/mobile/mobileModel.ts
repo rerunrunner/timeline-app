@@ -53,9 +53,17 @@ interface MobileTimelineLayout {
   width: number;
   height: number;
   laneX: readonly number[];
+  timelineStartY: readonly number[];
+  timelineEndY: readonly number[];
+  timelineSkippedRanges: readonly (readonly {
+    top: number;
+    bottom: number;
+  }[])[];
   eventPositions: ReadonlyMap<string, MobileEventPosition>;
   dateGroups: readonly MobileDateGroup[];
 }
+
+const TIMELINE_PATH_TOP = 92;
 
 function timelineEvents(timeline: ITimeline): IEvent[] {
   return timeline.segments.flatMap(segment =>
@@ -294,11 +302,66 @@ export function layoutMobileTimeline(
       cursorY += height;
       return { key, timestamp, top, timelineCount: eventsByTimeline.size };
     });
+  const height = cursorY + 150;
+  const defaultEndY = height - 70;
+  const timelineStartY = model.timelines.map(timeline => {
+    const entry = model.branchByTimelineId.get(timeline.id)?.entry;
+    return entry
+      ? eventPositions.get(entry.id)?.y ?? TIMELINE_PATH_TOP
+      : TIMELINE_PATH_TOP;
+  });
+  const timelineEndY = model.timelines.map((timeline, index) => {
+    const crossTimelineDeparture = timeline.timeslipOutEvents
+      .filter(event =>
+        event.correlatedEvents.some(
+          linked => model.eventTimelineIds.get(linked.id) !== timeline.id
+        )
+      )
+      .map(event => eventPositions.get(event.id)?.y)
+      .filter((y): y is number => y !== undefined)
+      .sort((left, right) => left - right)[0];
+    return Math.max(
+      timelineStartY[index],
+      crossTimelineDeparture ?? defaultEndY
+    );
+  });
+  const timelineSkippedRanges = model.timelines.map((timeline, index) =>
+    timeline.timeslipOutEvents
+      .flatMap(departure =>
+        departure.correlatedEvents
+          .filter(
+            arrival => model.eventTimelineIds.get(arrival.id) === timeline.id
+          )
+          .map(arrival => {
+            const departureY = eventPositions.get(departure.id)?.y;
+            const arrivalY = eventPositions.get(arrival.id)?.y;
+            if (departureY === undefined || arrivalY === undefined) return null;
+            return {
+              top: Math.max(
+                timelineStartY[index],
+                Math.min(departureY, arrivalY)
+              ),
+              bottom: Math.min(
+                timelineEndY[index],
+                Math.max(departureY, arrivalY)
+              ),
+            };
+          })
+      )
+      .filter(
+        (range): range is { top: number; bottom: number } =>
+          range !== null && range.bottom > range.top
+      )
+      .sort((left, right) => left.top - right.top)
+  );
 
   return {
     width,
-    height: cursorY + 150,
+    height,
     laneX,
+    timelineStartY,
+    timelineEndY,
+    timelineSkippedRanges,
     eventPositions,
     dateGroups,
   };

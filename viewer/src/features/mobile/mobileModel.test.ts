@@ -1,5 +1,8 @@
+import { createElement } from 'react';
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { hydrate } from '../../utils/hydrate';
+import { TimelineMap } from './TimelineMap';
 import {
   buildMobileTimelineModel,
   getAdjacentNarrativeReveals,
@@ -148,6 +151,46 @@ function buildModel() {
           },
         ],
       },
+      {
+        id: 'same-jump-out',
+        timelineId: 'tl2',
+        shortDescription: 'Leave this timeline',
+        narrativeDate: '2008-01-07T00:00:00Z',
+        tags: [],
+        eventType: 'timeslip-out',
+        linkedEventId: 'same-jump-in',
+        reveals: [
+          {
+            id: 'reveal-same-out',
+            episodeId: 'ep2',
+            episodeTime: 240,
+            absolutePlayTime: 3840,
+            displayedTitle: 'Leave this timeline',
+            displayedDescription: 'Skips ahead without changing the timeline',
+            displayedDate: 'January 7, 2008',
+          },
+        ],
+      },
+      {
+        id: 'same-jump-in',
+        timelineId: 'tl2',
+        shortDescription: 'Return to this timeline',
+        narrativeDate: '2008-01-08T00:00:00Z',
+        tags: [],
+        eventType: 'timeslip-in',
+        linkedEventId: 'same-jump-out',
+        reveals: [
+          {
+            id: 'reveal-same-in',
+            episodeId: 'ep2',
+            episodeTime: 300,
+            absolutePlayTime: 3900,
+            displayedTitle: 'Return to this timeline',
+            displayedDescription: 'Arrives later on the same timeline',
+            displayedDate: 'January 8, 2008',
+          },
+        ],
+      },
     ],
     soundtracks: [],
   });
@@ -165,6 +208,8 @@ describe('mobile timeline model', () => {
       'jump-out',
       'jump-in',
       'changed-after',
+      'same-jump-out',
+      'same-jump-in',
     ]);
     expect(model.narrativeReveals.map(reveal => reveal.id)).toEqual([
       'reveal-before',
@@ -173,6 +218,8 @@ describe('mobile timeline model', () => {
       'reveal-out',
       'reveal-in',
       'reveal-changed',
+      'reveal-same-out',
+      'reveal-same-in',
     ]);
     expect(model.revealById.get('reveal-after')).toMatchObject({
       episodeId: 'ep2',
@@ -185,7 +232,13 @@ describe('mobile timeline model', () => {
     const context = getMobileCanonContext(model, 'tl2');
 
     expect(context.activeEventIds).toEqual(
-      new Set(['original-before', 'jump-in', 'changed-after'])
+      new Set([
+        'original-before',
+        'jump-in',
+        'changed-after',
+        'same-jump-out',
+        'same-jump-in',
+      ])
     );
     expect(context.erasedEventIds).toEqual(new Set(['original-after', 'jump-out']));
     expect(context.ancestorTimelineIds).toEqual(new Set(['tl1']));
@@ -215,5 +268,51 @@ describe('mobile timeline model', () => {
     expect(layout.laneX[1]).toBeLessThanOrEqual(347);
     expect(layout.eventPositions.has('jump-out')).toBe(true);
     expect(layout.eventPositions.has('jump-in')).toBe(true);
+    expect(layout.timelineStartY[0]).toBe(92);
+    expect(layout.timelineStartY[1]).toBe(
+      layout.eventPositions.get('jump-in')?.y
+    );
+    expect(layout.timelineEndY[0]).toBe(
+      layout.eventPositions.get('jump-out')?.y
+    );
+    expect(layout.timelineSkippedRanges[1]).toEqual([
+      {
+        top: layout.eventPositions.get('same-jump-out')?.y,
+        bottom: layout.eventPositions.get('same-jump-in')?.y,
+      },
+    ]);
+  });
+
+  it('highlights canon path segments and dims erased continuations', () => {
+    const model = buildModel();
+    const layout = layoutMobileTimeline(model, window.innerWidth);
+    const entryY = layout.eventPositions.get('jump-in')?.y;
+    const { container } = render(
+      createElement(TimelineMap, {
+        model,
+        selectedRevealId: null,
+        selectedTimelineId: 'tl2',
+        onTimelineChange: () => undefined,
+        onEventSelect: () => undefined,
+      })
+    );
+
+    const mutedPaths = container.querySelectorAll(
+      '.mobile-curve-path.is-muted'
+    );
+    const activePaths = container.querySelectorAll(
+      '.mobile-curve-path:not(.is-muted)'
+    );
+
+    expect(mutedPaths).toHaveLength(4);
+    expect(activePaths).toHaveLength(4);
+    expect(container.querySelectorAll('.mobile-curve-path.is-skipped')).toHaveLength(2);
+    expect(container.querySelector('.mobile-curve-jump')).toBeNull();
+    expect(activePaths[0].getAttribute('d')).toMatch(
+      new RegExp(` ${entryY}$`)
+    );
+    expect(activePaths[1].getAttribute('d')).toMatch(
+      new RegExp(`^M [^ ]+ ${entryY} `)
+    );
   });
 });
