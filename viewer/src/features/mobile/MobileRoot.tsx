@@ -99,7 +99,11 @@ export default function MobileRoot({
             target="_top"
             aria-label="Runner Unwound timeline"
           >
-            <span className="mobile-brand-mark" aria-hidden="true" />
+            <img
+              className="mobile-brand-mark"
+              src="/assets/images/favicon.svg"
+              alt=""
+            />
             <div className="mobile-brand-copy">
               <span className="mobile-brand-name">Runner Unwound</span>
               <div className="mobile-brand-subtitle">

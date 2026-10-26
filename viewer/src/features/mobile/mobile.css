@@ -77,34 +77,11 @@
 }
 
 .mobile-brand-mark {
-  position: relative;
   width: 34px;
   height: 34px;
+  display: block;
   flex: 0 0 34px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
-
-.mobile-brand-mark::before,
-.mobile-brand-mark::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-}
-
-.mobile-brand-mark::before {
-  inset: 7px;
-  border: 1px solid currentColor;
-}
-
-.mobile-brand-mark::after {
-  top: 4px;
-  left: 15px;
-  width: 3px;
-  height: 8px;
-  background: currentColor;
-  transform-origin: 50% 13px;
-  transform: rotate(45deg);
+  border-radius: 9px;
 }
 
 .mobile-brand-copy {
@@ -800,6 +777,10 @@
   transform: translateY(0);
 }
 
+.mobile-detail-sheet.is-dragging {
+  transition: none;
+}
+
 .mobile-detail-handle {
   position: relative;
   width: 100%;
@@ -814,7 +795,13 @@
   color: inherit;
   background: transparent;
   text-align: left;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.mobile-detail-handle:active {
+  cursor: grabbing;
 }
 
 .mobile-detail-handle::before {
