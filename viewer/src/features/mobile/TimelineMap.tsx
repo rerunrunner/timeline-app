@@ -108,7 +108,7 @@ export function TimelineMap({
     const node = [...view.querySelectorAll<HTMLElement>('[data-mobile-event-id]')]
       .find(candidate => candidate.dataset.mobileEventId === selectedEventId);
     if (!node) return;
-    const desiredTop = Math.max(0, node.offsetTop - view.clientHeight * 0.48);
+    const desiredTop = Math.max(0, node.offsetTop - view.clientHeight * 0.2);
     view.scrollTo({ top: desiredTop, behavior: 'smooth' });
   }, [selectedEventId]);
 

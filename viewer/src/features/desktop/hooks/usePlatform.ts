@@ -7,10 +7,25 @@ const MOBILE_MAX = 640;
 const TABLET_MAX = 1024;
 const COMPACT_LANDSCAPE_MAX_HEIGHT = 560;
 
-function getPlatform(width: number): Platform {
+function getPlatform(
+  width: number,
+  height: number,
+  coarsePointer: boolean
+): Platform {
   if (width <= MOBILE_MAX) return 'mobile';
+  if (
+    coarsePointer &&
+    height <= MOBILE_MAX &&
+    width <= TABLET_MAX
+  ) {
+    return 'mobile';
+  }
   if (width <= TABLET_MAX) return 'tablet';
   return 'computer';
+}
+
+function hasCoarsePointer(): boolean {
+  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
 }
 
 function getOrientation(width: number, height: number): Orientation {
@@ -28,7 +43,7 @@ export function usePlatform(): {
 } {
   const [platform, setPlatform] = useState<Platform>(() =>
     typeof window !== 'undefined'
-      ? getPlatform(window.innerWidth)
+      ? getPlatform(window.innerWidth, window.innerHeight, hasCoarsePointer())
       : 'computer'
   );
   const [orientation, setOrientation] = useState<Orientation>(() =>
@@ -46,7 +61,7 @@ export function usePlatform(): {
     const update = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      setPlatform(getPlatform(w));
+      setPlatform(getPlatform(w, h, hasCoarsePointer()));
       setOrientation(getOrientation(w, h));
       setIsCompactLandscape(getIsCompactLandscape(w, h));
     };
