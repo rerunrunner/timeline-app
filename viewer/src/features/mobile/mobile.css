@@ -541,10 +541,6 @@
   opacity: 0.42;
 }
 
-.mobile-event-node.is-erased.is-selected {
-  opacity: 1;
-}
-
 .mobile-node-label {
   position: absolute;
   z-index: 12;

@@ -33,6 +33,7 @@ interface MobileCanonContext {
   activeEventIds: ReadonlySet<string>;
   erasedEventIds: ReadonlySet<string>;
   ancestorTimelineIds: ReadonlySet<string>;
+  ancestorPathCutoffEventIds: ReadonlyMap<string, string>;
 }
 
 interface MobileEventPosition {
@@ -157,6 +158,7 @@ export function getMobileCanonContext(
       activeEventIds: new Set(model.events.map(event => event.id)),
       erasedEventIds: new Set(),
       ancestorTimelineIds: new Set(),
+      ancestorPathCutoffEventIds: new Map(),
     };
   }
 
@@ -166,25 +168,32 @@ export function getMobileCanonContext(
       .map(event => event.id)
   );
   const ancestorTimelineIds = new Set<string>();
+  const ancestorPathCutoffEventIds = new Map<string, string>();
   let childTimelineId = selectedTimelineId;
   let cutoff = Number.POSITIVE_INFINITY;
+  let cutoffEventId: string | undefined;
 
   while (model.branchByTimelineId.has(childTimelineId)) {
     const branch = model.branchByTimelineId.get(childTimelineId);
     if (!branch) break;
 
-    cutoff = Math.min(cutoff, branch.entry.narrativeTimestamp.getTime());
+    const branchTimestamp = branch.entry.narrativeTimestamp.getTime();
+    if (branchTimestamp < cutoff) {
+      cutoff = branchTimestamp;
+      cutoffEventId = branch.entry.id;
+    }
     const parentTimelineId = model.eventTimelineIds.get(branch.parent.id);
     if (!parentTimelineId) break;
 
-    ancestorTimelineIds.add(parentTimelineId);
-    for (const event of model.events) {
-      if (
+    const activeParentEvents = model.events.filter(
+      event =>
         model.eventTimelineIds.get(event.id) === parentTimelineId &&
         event.narrativeTimestamp.getTime() <= cutoff
-      ) {
-        activeEventIds.add(event.id);
-      }
+    );
+    if (activeParentEvents.length > 0 && cutoffEventId) {
+      ancestorTimelineIds.add(parentTimelineId);
+      ancestorPathCutoffEventIds.set(parentTimelineId, cutoffEventId);
+      activeParentEvents.forEach(event => activeEventIds.add(event.id));
     }
     childTimelineId = parentTimelineId;
   }
@@ -195,6 +204,7 @@ export function getMobileCanonContext(
       model.events.filter(event => !activeEventIds.has(event.id)).map(event => event.id)
     ),
     ancestorTimelineIds,
+    ancestorPathCutoffEventIds,
   };
 }
 

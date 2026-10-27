@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { IEvent, IReveal, ITimeline } from '../../types/interfaces';
 import { hydrate } from '../../utils/hydrate';
 import { EventDetailSheet } from './EventDetailSheet';
 import { TimelineMap } from './TimelineMap';
@@ -200,6 +201,143 @@ function buildModel() {
   return buildMobileTimelineModel(timelines, episodes);
 }
 
+function buildRewoundBranchModel(): MobileTimelineModel {
+  function timeline(id: string, name: string): ITimeline {
+    return {
+      id,
+      name,
+      segments: [],
+      timeslipInEvents: [],
+      timeslipOutEvents: [],
+    } as unknown as ITimeline;
+  }
+
+  function event(
+    id: string,
+    timelineValue: ITimeline,
+    narrativeDate: string,
+    eventType?: string
+  ): IEvent {
+    const reveals: IReveal[] = [];
+    const correlatedEvents: IEvent[] = [];
+    const value = {
+      id,
+      narrativeTimestamp: new Date(narrativeDate),
+      reveals,
+      correlatedEvents,
+      tags: [],
+      eventType,
+      eventGroup: {
+        subSegment: {
+          segment: {
+            timeline: timelineValue,
+          },
+        },
+      },
+    } as unknown as IEvent;
+    reveals.push({
+      id: `reveal-${id}`,
+      title: id,
+      narrativeTimeframe: narrativeDate,
+      event: value,
+    } as unknown as IReveal);
+    return value;
+  }
+
+  const original = timeline('tl1', 'Original Timeline');
+  const middle = timeline('tl2', 'First Jump');
+  const final = timeline('tl3', 'Final Jump');
+  const originalBefore = event(
+    'original-before-rewind',
+    original,
+    '2008-01-01T00:00:00Z'
+  );
+  const originalDeparture = event(
+    'original-departure',
+    original,
+    '2023-01-01T00:00:00Z',
+    'timeslip-out'
+  );
+  const middleEntry = event(
+    'middle-entry',
+    middle,
+    '2008-06-01T00:00:00Z',
+    'timeslip-in'
+  );
+  const middleEvent = event(
+    'middle-event',
+    middle,
+    '2008-06-02T00:00:00Z'
+  );
+  const middleDeparture = event(
+    'middle-departure',
+    middle,
+    '2023-01-02T00:00:00Z',
+    'timeslip-out'
+  );
+  const finalEntry = event(
+    'final-entry',
+    final,
+    '2008-01-02T00:00:00Z',
+    'timeslip-in'
+  );
+  const finalEvent = event(
+    'final-event',
+    final,
+    '2008-01-03T00:00:00Z'
+  );
+
+  (originalDeparture.correlatedEvents as IEvent[]).push(middleEntry);
+  (middleEntry.correlatedEvents as IEvent[]).push(originalDeparture);
+  (middleDeparture.correlatedEvents as IEvent[]).push(finalEntry);
+  (finalEntry.correlatedEvents as IEvent[]).push(middleDeparture);
+  (original.timeslipOutEvents as IEvent[]).push(originalDeparture);
+  (middle.timeslipInEvents as IEvent[]).push(middleEntry);
+  (middle.timeslipOutEvents as IEvent[]).push(middleDeparture);
+  (final.timeslipInEvents as IEvent[]).push(finalEntry);
+
+  const events = [
+    originalBefore,
+    originalDeparture,
+    middleEntry,
+    middleEvent,
+    middleDeparture,
+    finalEntry,
+    finalEvent,
+  ];
+  const eventTimelineIds = new Map(
+    events.map(value => [
+      value.id,
+      value.eventGroup.subSegment.segment.timeline.id,
+    ])
+  );
+  const reveals = events.flatMap(value => value.reveals);
+
+  return {
+    timelines: [original, middle, final],
+    episodes: [],
+    events,
+    narrativeReveals: reveals,
+    playbackReveals: reveals,
+    eventTimelineIds,
+    eventById: new Map(events.map(value => [value.id, value])),
+    revealById: new Map(reveals.map(value => [value.id, value])),
+    episodeById: new Map(),
+    timelineById: new Map(
+      [original, middle, final].map(value => [value.id, value])
+    ),
+    timelineIndexById: new Map([
+      ['tl1', 0],
+      ['tl2', 1],
+      ['tl3', 2],
+    ]),
+    branchByTimelineId: new Map([
+      ['tl2', { entry: middleEntry, parent: originalDeparture }],
+      ['tl3', { entry: finalEntry, parent: middleDeparture }],
+    ]),
+  };
+}
+
 describe('mobile timeline model', () => {
   it('orders the story by timeline, narrative time, then reveal order', () => {
     const model = buildModel();
@@ -244,6 +382,19 @@ describe('mobile timeline model', () => {
     );
     expect(context.erasedEventIds).toEqual(new Set(['original-after', 'jump-out']));
     expect(context.ancestorTimelineIds).toEqual(new Set(['tl1']));
+  });
+
+  it('skips intermediate ancestors when a later jump rewinds before they begin', () => {
+    const model = buildRewoundBranchModel();
+    const context = getMobileCanonContext(model, 'tl3');
+
+    expect(context.activeEventIds).toEqual(
+      new Set(['original-before-rewind', 'final-entry', 'final-event'])
+    );
+    expect(context.ancestorTimelineIds).toEqual(new Set(['tl1']));
+    expect(context.ancestorPathCutoffEventIds).toEqual(
+      new Map([['tl1', 'final-entry']])
+    );
   });
 
   it('navigates once per active event using its final reveal', () => {
@@ -358,6 +509,47 @@ describe('mobile timeline model', () => {
     expect(activePaths[1].getAttribute('d')).toMatch(
       new RegExp(`^M [^ ]+ ${entryY} `)
     );
+  });
+
+  it('highlights only contributing ancestor paths after an earlier rewind', () => {
+    const model = buildRewoundBranchModel();
+    const layout = layoutMobileTimeline(model, window.innerWidth);
+    const finalEntryY = layout.eventPositions.get('final-entry')?.y;
+    const scrollTo = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+    const { container } = render(
+      createElement(TimelineMap, {
+        model,
+        selectedRevealId: 'reveal-middle-event',
+        selectedTimelineId: 'tl3',
+        onTimelineChange: () => undefined,
+        onEventSelect: () => undefined,
+      })
+    );
+
+    const headings = container.querySelectorAll('.mobile-lane-heading');
+    const activePaths = container.querySelectorAll(
+      '.mobile-curve-path:not(.is-muted)'
+    );
+    const selectedErasedEvent = container.querySelector(
+      '[data-mobile-event-id="middle-event"]'
+    );
+
+    expect(headings[0].classList).toContain('is-ancestor');
+    expect(headings[1].classList).toContain('is-muted');
+    expect(headings[1].classList).not.toContain('is-ancestor');
+    expect(headings[2].classList).not.toContain('is-muted');
+    expect(activePaths).toHaveLength(2);
+    expect(activePaths[0].getAttribute('d')).toMatch(
+      new RegExp(` ${finalEntryY}$`)
+    );
+    expect(activePaths[1].getAttribute('d')).toMatch(
+      new RegExp(`^M [^ ]+ ${finalEntryY} `)
+    );
+    expect(selectedErasedEvent?.classList).toContain('is-selected');
+    expect(selectedErasedEvent?.classList).toContain('is-erased');
+    scrollTo.mockRestore();
   });
 
   it('shows the narrative date beside the detail title', () => {

@@ -109,18 +109,14 @@ export function TimelineMap({
     if (selectedTimelineId === 'all') return ends;
 
     ends.set(selectedTimelineId, layout.height - 70);
-    let childTimelineId = selectedTimelineId;
-    while (model.branchByTimelineId.has(childTimelineId)) {
-      const branch = model.branchByTimelineId.get(childTimelineId);
-      if (!branch) break;
-      const parentTimelineId = model.eventTimelineIds.get(branch.parent.id);
-      const entryPosition = layout.eventPositions.get(branch.entry.id);
-      if (!parentTimelineId || !entryPosition) break;
-      ends.set(parentTimelineId, entryPosition.y);
-      childTimelineId = parentTimelineId;
+    for (const [timelineId, cutoffEventId] of canon.ancestorPathCutoffEventIds) {
+      const cutoffPosition = layout.eventPositions.get(cutoffEventId);
+      if (cutoffPosition) {
+        ends.set(timelineId, cutoffPosition.y);
+      }
     }
     return ends;
-  }, [layout, model, selectedTimelineId]);
+  }, [canon, layout, selectedTimelineId]);
   const selectedEventId = selectedRevealId
     ? model.revealById.get(selectedRevealId)?.event.id
     : undefined;
