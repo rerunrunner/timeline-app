@@ -518,13 +518,20 @@ describe('mobile timeline model', () => {
     const scrollTo = vi
       .spyOn(window, 'scrollTo')
       .mockImplementation(() => undefined);
-    const { container } = render(
+    const props = {
+      model,
+      selectedRevealId: null,
+      selectedTimelineId: 'tl3',
+      onTimelineChange: () => undefined,
+      onEventSelect: () => undefined,
+    };
+    const { container, rerender } = render(createElement(TimelineMap, props));
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    rerender(
       createElement(TimelineMap, {
-        model,
+        ...props,
         selectedRevealId: 'reveal-middle-event',
-        selectedTimelineId: 'tl3',
-        onTimelineChange: () => undefined,
-        onEventSelect: () => undefined,
       })
     );
 
@@ -549,6 +556,15 @@ describe('mobile timeline model', () => {
     );
     expect(selectedErasedEvent?.classList).toContain('is-selected');
     expect(selectedErasedEvent?.classList).toContain('is-erased');
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    rerender(
+      createElement(TimelineMap, {
+        ...props,
+        selectedRevealId: 'reveal-final-event',
+      })
+    );
+    expect(scrollTo).toHaveBeenCalledOnce();
     scrollTo.mockRestore();
   });
 

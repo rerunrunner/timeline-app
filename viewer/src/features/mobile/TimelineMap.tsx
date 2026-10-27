@@ -120,12 +120,22 @@ export function TimelineMap({
   const selectedEventId = selectedRevealId
     ? model.revealById.get(selectedRevealId)?.event.id
     : undefined;
+  const hasInitialSelectionRef = useRef(false);
+  const previousSelectedEventIdRef = useRef(selectedEventId);
   const laneGap =
     layout.laneX.length > 1 ? layout.laneX[1] - layout.laneX[0] : layout.width;
 
   useEffect(() => {
+    if (!selectedEventId) return;
+    if (!hasInitialSelectionRef.current) {
+      hasInitialSelectionRef.current = true;
+      previousSelectedEventIdRef.current = selectedEventId;
+      return;
+    }
+    if (previousSelectedEventIdRef.current === selectedEventId) return;
+    previousSelectedEventIdRef.current = selectedEventId;
     const view = viewRef.current;
-    if (!view || !selectedEventId) return;
+    if (!view) return;
     const node = [...view.querySelectorAll<HTMLElement>('[data-mobile-event-id]')]
       .find(candidate => candidate.dataset.mobileEventId === selectedEventId);
     if (!node) return;
