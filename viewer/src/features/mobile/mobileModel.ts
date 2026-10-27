@@ -277,30 +277,52 @@ export function layoutMobileTimeline(
     }))
     .sort((left, right) => left.timestamp - right.timestamp)
     .map(({ key, events, timestamp }) => {
-      const eventsByTimeline = new Map<string, IEvent[]>();
+      const eventsByTimestamp = new Map<number, IEvent[]>();
       for (const event of events) {
-        const timelineId = model.eventTimelineIds.get(event.id) ?? '';
-        const timelineEventsForDate = eventsByTimeline.get(timelineId) ?? [];
-        timelineEventsForDate.push(event);
-        eventsByTimeline.set(timelineId, timelineEventsForDate);
+        const eventTimestamp = event.narrativeTimestamp.getTime();
+        const simultaneousEvents = eventsByTimestamp.get(eventTimestamp) ?? [];
+        simultaneousEvents.push(event);
+        eventsByTimestamp.set(eventTimestamp, simultaneousEvents);
       }
 
-      const maxStack = Math.max(...[...eventsByTimeline.values()].map(group => group.length));
       const top = cursorY;
-      const height = Math.max(74, 42 + maxStack * 62);
-      for (const [timelineId, timelineEventsForDate] of eventsByTimeline) {
-        const timelineIndex = model.timelineIndexById.get(timelineId) ?? 0;
-        timelineEventsForDate.forEach((event, index) => {
-          eventPositions.set(event.id, {
-            x: laneX[timelineIndex],
-            y: top + 40 + index * 62,
-            timelineIndex,
-            parallel: eventsByTimeline.size > 1,
+      let rowTop = top + 40;
+      for (const [, simultaneousEvents] of [...eventsByTimestamp.entries()].sort(
+        ([left], [right]) => left - right
+      )) {
+        const eventsByTimeline = new Map<string, IEvent[]>();
+        for (const event of simultaneousEvents) {
+          const timelineId = model.eventTimelineIds.get(event.id) ?? '';
+          const timelineEvents = eventsByTimeline.get(timelineId) ?? [];
+          timelineEvents.push(event);
+          eventsByTimeline.set(timelineId, timelineEvents);
+        }
+        const rowStack = Math.max(
+          ...[...eventsByTimeline.values()].map(group => group.length)
+        );
+        for (const [timelineId, timelineEvents] of eventsByTimeline) {
+          const timelineIndex = model.timelineIndexById.get(timelineId) ?? 0;
+          timelineEvents.forEach((event, index) => {
+            eventPositions.set(event.id, {
+              x: laneX[timelineIndex],
+              y: rowTop + index * 62,
+              timelineIndex,
+              parallel: eventsByTimeline.size > 1,
+            });
           });
-        });
+        }
+        rowTop += rowStack * 62;
       }
+      const height = Math.max(74, 42 + rowTop - (top + 40));
       cursorY += height;
-      return { key, timestamp, top, timelineCount: eventsByTimeline.size };
+      return {
+        key,
+        timestamp,
+        top,
+        timelineCount: new Set(
+          events.map(event => model.eventTimelineIds.get(event.id))
+        ).size,
+      };
     });
   const height = cursorY + 150;
   const defaultEndY = height - 70;

@@ -9,6 +9,7 @@ import {
   getAdjacentNarrativeReveals,
   getMobileCanonContext,
   layoutMobileTimeline,
+  type MobileTimelineModel,
 } from './mobileModel';
 
 function buildModel() {
@@ -282,6 +283,48 @@ describe('mobile timeline model', () => {
         bottom: layout.eventPositions.get('same-jump-in')?.y,
       },
     ]);
+  });
+
+  it('aligns simultaneous events across timelines despite earlier same-day events', () => {
+    const earlier = {
+      id: 'earlier',
+      narrativeTimestamp: new Date('2022-12-31T22:00:00Z'),
+    };
+    const timelineOneDeath = {
+      id: 'timeline-one-death',
+      narrativeTimestamp: new Date('2022-12-31T23:00:00Z'),
+    };
+    const timelineTwoDeath = {
+      id: 'timeline-two-death',
+      narrativeTimestamp: new Date('2022-12-31T23:00:00Z'),
+    };
+    const model = {
+      timelines: [
+        { id: 'tl1', timeslipOutEvents: [] },
+        { id: 'tl2', timeslipOutEvents: [] },
+      ],
+      events: [earlier, timelineOneDeath, timelineTwoDeath],
+      eventTimelineIds: new Map([
+        [earlier.id, 'tl1'],
+        [timelineOneDeath.id, 'tl1'],
+        [timelineTwoDeath.id, 'tl2'],
+      ]),
+      timelineIndexById: new Map([
+        ['tl1', 0],
+        ['tl2', 1],
+      ]),
+      branchByTimelineId: new Map(),
+    } as unknown as MobileTimelineModel;
+
+    const layout = layoutMobileTimeline(model, 375);
+    const earlierPosition = layout.eventPositions.get(earlier.id);
+    const timelineOnePosition = layout.eventPositions.get(timelineOneDeath.id);
+    const timelineTwoPosition = layout.eventPositions.get(timelineTwoDeath.id);
+
+    expect(earlierPosition?.y).toBeLessThan(timelineOnePosition?.y ?? 0);
+    expect(timelineOnePosition?.y).toBe(timelineTwoPosition?.y);
+    expect(timelineOnePosition?.parallel).toBe(true);
+    expect(timelineTwoPosition?.parallel).toBe(true);
   });
 
   it('highlights canon path segments and dims erased continuations', () => {
