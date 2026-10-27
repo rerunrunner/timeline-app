@@ -1,11 +1,11 @@
-import type { IEventGroup } from '../../types/interfaces';
+import type { IEvent } from '../../types/interfaces';
 import { NarrativeStatus } from '../../types/timeline';
 
 export function getNarrativeDateLabel(
-  eventGroup: IEventGroup,
+  events: readonly IEvent[],
   playbackTime: number
 ): string {
-  const visibleReveals = eventGroup.events
+  const visibleReveals = events
     .filter(
       event =>
         event.getNarrativeState(playbackTime) !== NarrativeStatus.NOT_REACHED
@@ -15,7 +15,7 @@ export function getNarrativeDateLabel(
     );
 
   if (visibleReveals.length === 0) {
-    return eventGroup.events[0].narrativeTimestamp.toLocaleDateString();
+    return events[0]?.narrativeTimestamp.toLocaleDateString() ?? '';
   }
 
   return visibleReveals.reduce((mostSpecific, reveal) =>

@@ -43,7 +43,8 @@ describe('HydratedEvent title inheritance', () => {
               absolutePlayTime: 0,
               displayedTitle: 'The day of the eclipse',
               displayedDescription: 'First reveal',
-              displayedDate: 'July 22, 2009',
+            displayedDate: 'Late Spring 2009',
+            narrativeTimeframeSpecificityLevel: 6,
             },
             {
               id: 'reveal-2',
@@ -53,6 +54,7 @@ describe('HydratedEvent title inheritance', () => {
               displayedTitle: null,
               displayedDescription: 'Second reveal',
               displayedDate: null,
+              narrativeTimeframeSpecificityLevel: 9,
             },
             {
               id: 'reveal-3',
@@ -62,6 +64,7 @@ describe('HydratedEvent title inheritance', () => {
               displayedTitle: null,
               displayedDescription: 'Third reveal',
               displayedDate: null,
+              narrativeTimeframeSpecificityLevel: 9,
             },
             {
               id: 'reveal-4',
@@ -71,6 +74,7 @@ describe('HydratedEvent title inheritance', () => {
               displayedTitle: null,
               displayedDescription: 'Fourth reveal',
               displayedDate: null,
+              narrativeTimeframeSpecificityLevel: 9,
             },
           ],
         },
@@ -89,5 +93,16 @@ describe('HydratedEvent title inheritance', () => {
     expect(event.getTitle(10)).toBe('The day of the eclipse');
     expect(event.getTitle(20)).toBe('The day of the eclipse');
     expect(event.getTitle(30)).toBe('The day of the eclipse');
+    expect(event.reveals.map((reveal) => reveal.narrativeTimeframe)).toEqual([
+      'Late Spring 2009',
+      'Late Spring 2009',
+      'Late Spring 2009',
+      'Late Spring 2009',
+    ]);
+    expect(
+      event.reveals.map(
+        (reveal) => reveal.narrativeTimeframeSpecificityLevel
+      )
+    ).toEqual([6, 6, 6, 6]);
   });
 });

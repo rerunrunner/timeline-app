@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { IEventGroup } from '../../types/interfaces';
+import type { IEvent } from '../../types/interfaces';
 import { NarrativeStatus } from '../../types/timeline';
 import { getNarrativeDateLabel } from './narrativeDate';
 
-function eventGroupWithProgressivelySpecificDates(): IEventGroup {
+function eventsWithProgressivelySpecificDates(): readonly IEvent[] {
   const event = (
     playtimeTimestamp: number,
     narrativeTimeframe: string,
@@ -20,20 +20,18 @@ function eventGroupWithProgressivelySpecificDates(): IEventGroup {
     ],
   });
 
-  return {
-    events: [
-      event(100, 'Late Spring 2008', 6),
-      event(200, 'June 1, 2008', 9),
-    ],
-  } as unknown as IEventGroup;
+  return [
+    event(100, 'Late Spring 2008', 6),
+    event(200, 'June 1, 2008', 9),
+  ] as unknown as readonly IEvent[];
 }
 
 describe('narrative date labels', () => {
   it('uses the most-specific date revealed in the day group', () => {
-    const eventGroup = eventGroupWithProgressivelySpecificDates();
+    const events = eventsWithProgressivelySpecificDates();
 
-    expect(getNarrativeDateLabel(eventGroup, 150)).toBe('Late Spring 2008');
-    expect(getNarrativeDateLabel(eventGroup, Number.POSITIVE_INFINITY)).toBe(
+    expect(getNarrativeDateLabel(events, 150)).toBe('Late Spring 2008');
+    expect(getNarrativeDateLabel(events, Number.POSITIVE_INFINITY)).toBe(
       'June 1, 2008'
     );
   });

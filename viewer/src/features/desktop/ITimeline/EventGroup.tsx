@@ -127,7 +127,7 @@ export default function EventGroup({
           }}
         >
           <span className="date">
-            {getNarrativeDateLabel(eventGroup, currentTime)}
+            {getNarrativeDateLabel(eventGroup.events, currentTime)}
           </span>
           <span className="event-count">{visibleEvents.length} events</span>
         </div>

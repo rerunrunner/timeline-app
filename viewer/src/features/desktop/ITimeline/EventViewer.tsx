@@ -295,7 +295,7 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
           <div className="grid max-w-[34rem] grid-cols-[max-content_1fr] items-baseline gap-x-4 gap-y-3">
             <p className={`${detailLabelClassName} mb-0 whitespace-nowrap`}>Narrative Date</p>
             <p className="text-[0.875rem] text-slate-700">
-              {getNarrativeDateLabel(event.eventGroup, currentTime)}
+              {getNarrativeDateLabel(event.eventGroup.events, currentTime)}
             </p>
             {visibleReveal && (
               <>

@@ -4,6 +4,7 @@ import { assert } from './assert';
 import { HydratedReveal } from './HydratedReveal';
 import type { RawEvent, RawSoundtrack } from './types';
 import type { NarrativeTransition } from './narrativeTransitions';
+import { calculateNarrativeTimeframeSpecificity } from '../dateSpecificity';
 
 type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]];
 
@@ -57,7 +58,7 @@ export class HydratedEvent implements IEvent {
     assert(Array.isArray(rawEvent.tags), 
       `Invalid event tags: ${rawEvent.tags}. Must be an array.`);
     
-    assert(rawEvent.tags.every((tag: any) => typeof tag === 'string'), 
+    assert(rawEvent.tags.every(tag => typeof tag === 'string'),
       `Invalid event tags: ${rawEvent.tags}. All tags must be strings.`);
     
     // Validate reveals array
@@ -83,7 +84,9 @@ export class HydratedEvent implements IEvent {
     this.eventGroup = eventGroup;
 
     // Sort reveals by playtime and resolve inheritance
-    const sortedReveals = [...rawEvent.reveals].sort((a: any, b: any) => a.absolutePlayTime - b.absolutePlayTime);
+    const sortedReveals = [...rawEvent.reveals].sort(
+      (left, right) => left.absolutePlayTime - right.absolutePlayTime
+    );
     
     // Initialize with first reveal's values, then update as we process each reveal
     let currentTitle = hasNonEmptyString(sortedReveals[0].displayedTitle)
@@ -91,10 +94,14 @@ export class HydratedEvent implements IEvent {
       : rawEvent.shortDescription;
     let currentDescription = sortedReveals[0].displayedDescription || '';
     let currentDate = sortedReveals[0].displayedDate || (rawEvent.narrativeDate ? new Date(rawEvent.narrativeDate).toLocaleDateString() : '');
+    let currentDateSpecificity =
+      typeof sortedReveals[0].narrativeTimeframeSpecificityLevel === 'number'
+        ? sortedReveals[0].narrativeTimeframeSpecificityLevel
+        : calculateNarrativeTimeframeSpecificity(currentDate);
     let currentScreenshotFilename = sortedReveals[0].screenshotFilename || null;
     
     // Process each reveal and update values
-    const resolvedReveals = sortedReveals.map((reveal: any) => {
+    const resolvedReveals = sortedReveals.map(reveal => {
       // Update current values if this reveal has non-null values
       if (hasNonEmptyString(reveal.displayedTitle)) {
         currentTitle = reveal.displayedTitle;
@@ -104,6 +111,10 @@ export class HydratedEvent implements IEvent {
       }
       if (hasValue(reveal.displayedDate)) {
         currentDate = reveal.displayedDate;
+        currentDateSpecificity =
+          typeof reveal.narrativeTimeframeSpecificityLevel === 'number'
+            ? reveal.narrativeTimeframeSpecificityLevel
+            : calculateNarrativeTimeframeSpecificity(currentDate);
       }
       if (hasValue(reveal.screenshotFilename)) {
         currentScreenshotFilename = reveal.screenshotFilename;
@@ -115,12 +126,15 @@ export class HydratedEvent implements IEvent {
         displayedTitle: currentTitle,
         displayedDescription: currentDescription,
         displayedDate: currentDate,
+        narrativeTimeframeSpecificityLevel: currentDateSpecificity,
         screenshotFilename: currentScreenshotFilename
       };
     });
     
     // Create reveals with 'this' as the event reference
-    const reveals = resolvedReveals.map((reveal: any) => new HydratedReveal(reveal, this));
+    const reveals = resolvedReveals.map(
+      reveal => new HydratedReveal(reveal, this)
+    );
     // We know reveals is non-empty because we validated it above
     this.reveals = reveals as unknown as ReadonlyNonEmptyArray<IReveal>;
     

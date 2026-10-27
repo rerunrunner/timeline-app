@@ -40,6 +40,14 @@ function maximumSheetOffset(
   return Math.max(0, (sheet?.clientHeight ?? 0) - (handle?.clientHeight ?? 0));
 }
 
+function sameNarrativeDay(left: Date, right: Date): boolean {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
 export function EventDetailSheet({
   model,
   selectedReveal,
@@ -50,8 +58,14 @@ export function EventDetailSheet({
 }: EventDetailSheetProps) {
   const event = selectedReveal.event;
   const timeline = event.eventGroup.subSegment.segment.timeline;
+  const eventTimelineId = model.eventTimelineIds.get(event.id);
+  const dateGroupEvents = model.events.filter(
+    candidate =>
+      model.eventTimelineIds.get(candidate.id) === eventTimelineId &&
+      sameNarrativeDay(candidate.narrativeTimestamp, event.narrativeTimestamp)
+  );
   const narrativeDate = getNarrativeDateLabel(
-    event.eventGroup,
+    dateGroupEvents,
     Number.POSITIVE_INFINITY
   );
   const episode = model.episodeById.get(selectedReveal.episodeId);
