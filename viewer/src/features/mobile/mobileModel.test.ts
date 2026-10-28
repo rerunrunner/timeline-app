@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { IEvent, IReveal, ITimeline } from '../../types/interfaces';
 import { hydrate } from '../../utils/hydrate';
@@ -66,6 +66,7 @@ function buildModel() {
             displayedTitle: 'Original before',
             displayedDescription: 'Before the branch',
             displayedDate: 'January 2, 2008',
+            screenshotFilename: 'original-before-1.jpg',
           },
           {
             id: 'reveal-before-final',
@@ -75,6 +76,7 @@ function buildModel() {
             displayedTitle: 'Original before, fully revealed',
             displayedDescription: 'The final reveal for this event',
             displayedDate: 'January 2, 2008',
+            screenshotFilename: 'original-before-2.jpg',
           },
         ],
       },
@@ -574,7 +576,7 @@ describe('mobile timeline model', () => {
     scrollTo.mockRestore();
   });
 
-  it('shows the narrative date beside the detail title', () => {
+  it('shows the narrative date and image episode time in the detail header', () => {
     const model = buildModel();
     const selectedReveal = model.revealById.get('reveal-before');
     expect(selectedReveal).toBeDefined();
@@ -599,6 +601,45 @@ describe('mobile timeline model', () => {
     expect(container.querySelector('.mobile-detail-date')?.textContent).toBe(
       'January 2, 2008'
     );
+    expect(
+      container.querySelector('.mobile-detail-handle-copy small')?.textContent
+    ).toContain('Episode 1 · 1:00');
+    expect(container.querySelector('.mobile-detail-time')).toBeNull();
+    const imageDots = container.querySelectorAll('.mobile-image-dot');
+    expect(imageDots).toHaveLength(2);
+    expect(
+      container.querySelector<HTMLImageElement>('.mobile-detail-image img')?.src
+    ).toContain('original-before-1.jpg');
+    fireEvent.click(imageDots[1]);
+    expect(
+      container.querySelector<HTMLImageElement>('.mobile-detail-image img')?.src
+    ).toContain('original-before-2.jpg');
+    expect(
+      container.querySelector('.mobile-detail-handle-copy small')?.textContent
+    ).toContain('Episode 2 · 0:30');
+    fireEvent.click(imageDots[0]);
+    const carousel = container.querySelector<HTMLElement>('.mobile-detail-image');
+    expect(carousel).not.toBeNull();
+    if (carousel) {
+      Object.defineProperties(carousel, {
+        setPointerCapture: { value: () => undefined },
+        hasPointerCapture: { value: () => false },
+      });
+      const pointerEvent = (type: string, clientX: number, clientY: number) => {
+        const value = new MouseEvent(type, {
+          bubbles: true,
+          clientX,
+          clientY,
+        });
+        Object.defineProperty(value, 'pointerId', { value: 1 });
+        fireEvent(carousel, value);
+      };
+      pointerEvent('pointerdown', 180, 80);
+      pointerEvent('pointerup', 100, 82);
+      expect(
+        container.querySelector<HTMLImageElement>('.mobile-detail-image img')?.src
+      ).toContain('original-before-2.jpg');
+    }
     expect(container.querySelector('.mobile-detail-chevron')).toBeNull();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,

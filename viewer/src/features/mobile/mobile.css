@@ -879,6 +879,8 @@
   background:
     radial-gradient(circle at 30% 20%, rgba(98, 200, 255, 0.22), transparent 34%),
     #183247;
+  touch-action: pan-y;
+  user-select: none;
 }
 
 .mobile-detail-image img,
@@ -896,17 +898,41 @@
   font-size: 28px;
 }
 
-.mobile-detail-time {
+.mobile-image-dots {
   position: absolute;
-  z-index: 2;
-  right: 9px;
-  bottom: 9px;
-  padding: 5px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-  background: rgba(5, 18, 29, 0.67);
-  font-size: 9px;
-  font-weight: 850;
+  z-index: 4;
+  bottom: 5px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+}
+
+.mobile-image-dot {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mobile-image-dot::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(236, 247, 255, 0.58);
+  box-shadow: 0 0 0 1px rgba(5, 18, 29, 0.45);
+  transition: width 140ms ease, background-color 140ms ease;
+}
+
+.mobile-image-dot.is-active::before {
+  width: 16px;
+  background: #ecf7ff;
 }
 
 .mobile-hero-event-nav {

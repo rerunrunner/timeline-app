@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -87,7 +88,6 @@ export function EventDetailSheet({
     dateGroupEvents,
     Number.POSITIVE_INFINITY
   );
-  const episode = model.episodeById.get(selectedReveal.episodeId);
   const erased =
     selectedTimelineId !== 'all' &&
     getMobileCanonContext(model, selectedTimelineId).erasedEventIds.has(event.id);
@@ -96,10 +96,41 @@ export function EventDetailSheet({
     selectedReveal.id,
     selectedTimelineId
   );
-  const imageSource = screenshotSource(selectedReveal);
+  const imageReveals = useMemo(() => {
+    const filenames = new Set<string>();
+    return event.reveals.filter(reveal => {
+      if (!reveal.screenshotFilename || filenames.has(reveal.screenshotFilename)) {
+        return false;
+      }
+      filenames.add(reveal.screenshotFilename);
+      return true;
+    });
+  }, [event]);
+  const matchingImageIndex = imageReveals.findIndex(
+    reveal =>
+      reveal.id === selectedReveal.id ||
+      reveal.screenshotFilename === selectedReveal.screenshotFilename
+  );
+  const selectedImageIndex =
+    matchingImageIndex >= 0
+      ? matchingImageIndex
+      : Math.max(0, imageReveals.length - 1);
+  const [activeImageIndex, setActiveImageIndex] = useState(selectedImageIndex);
+  const activeImageReveal =
+    imageReveals[activeImageIndex] ?? imageReveals.at(-1);
+  const displayedReveal = activeImageReveal ?? selectedReveal;
+  const episode = model.episodeById.get(displayedReveal.episodeId);
+  const imageSource = activeImageReveal
+    ? screenshotSource(activeImageReveal)
+    : undefined;
   const sheetRef = useRef<HTMLElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const imageSwipeRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null>(null);
   const dragRef = useRef<{
     pointerId: number;
     horizontal: boolean;
@@ -118,12 +149,16 @@ export function EventDetailSheet({
   }, [selectedReveal.id]);
 
   useEffect(() => {
-    for (const reveal of [previous, next]) {
+    setActiveImageIndex(selectedImageIndex);
+  }, [event.id, imageReveals.length, selectedImageIndex]);
+
+  useEffect(() => {
+    for (const reveal of [...imageReveals, previous, next]) {
       if (!reveal) continue;
       const source = screenshotSource(reveal);
       if (source) new Image().src = source;
     }
-  }, [next, previous]);
+  }, [imageReveals, next, previous]);
 
   useEffect(() => {
     if (previousOpenRef.current === open) return;
@@ -247,6 +282,54 @@ export function EventDetailSheet({
     if (reveal) onRevealSelect(reveal);
   };
 
+  const handleImagePointerDown = (
+    pointerEvent: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (
+      imageReveals.length < 2 ||
+      (pointerEvent.target as HTMLElement).closest('button')
+    ) {
+      return;
+    }
+    imageSwipeRef.current = {
+      pointerId: pointerEvent.pointerId,
+      startX: pointerEvent.clientX,
+      startY: pointerEvent.clientY,
+    };
+    pointerEvent.currentTarget.setPointerCapture(pointerEvent.pointerId);
+  };
+
+  const handleImagePointerUp = (
+    pointerEvent: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    const swipe = imageSwipeRef.current;
+    if (!swipe || swipe.pointerId !== pointerEvent.pointerId) return;
+    const deltaX = pointerEvent.clientX - swipe.startX;
+    const deltaY = pointerEvent.clientY - swipe.startY;
+    if (Math.abs(deltaX) >= 36 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      setActiveImageIndex(current =>
+        Math.min(
+          imageReveals.length - 1,
+          Math.max(0, current + (deltaX < 0 ? 1 : -1))
+        )
+      );
+    }
+    imageSwipeRef.current = null;
+    if (pointerEvent.currentTarget.hasPointerCapture(pointerEvent.pointerId)) {
+      pointerEvent.currentTarget.releasePointerCapture(pointerEvent.pointerId);
+    }
+  };
+
+  const handleImagePointerCancel = (
+    pointerEvent: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (imageSwipeRef.current?.pointerId !== pointerEvent.pointerId) return;
+    imageSwipeRef.current = null;
+    if (pointerEvent.currentTarget.hasPointerCapture(pointerEvent.pointerId)) {
+      pointerEvent.currentTarget.releasePointerCapture(pointerEvent.pointerId);
+    }
+  };
+
   return (
     <aside
       className={`mobile-detail-sheet${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}`}
@@ -277,6 +360,7 @@ export function EventDetailSheet({
               ? `Erased on ${timelineShortName(model.timelineById.get(selectedTimelineId)?.name ?? '')}`
               : timelineDisplayName(timeline.name)}
             {' · '}Episode {episode?.episodeNumber ?? '?'}
+            {' · '}{formatEpisodeTime(displayedReveal.episodeTime)}
           </small>
           <span className="mobile-detail-title-line">
             <strong>{selectedReveal.title}</strong>
@@ -303,18 +387,48 @@ export function EventDetailSheet({
       />
 
       <div className="mobile-detail-content" ref={contentRef}>
-        <div className="mobile-detail-image">
+        <div
+          className="mobile-detail-image"
+          role={imageReveals.length > 1 ? 'group' : undefined}
+          aria-roledescription={
+            imageReveals.length > 1 ? 'image carousel' : undefined
+          }
+          aria-label={
+            imageReveals.length > 1
+              ? `Image ${activeImageIndex + 1} of ${imageReveals.length}`
+              : undefined
+          }
+          onPointerDown={handleImagePointerDown}
+          onPointerUp={handleImagePointerUp}
+          onPointerCancel={handleImagePointerCancel}
+        >
           {imageSource ? (
             <img
+              key={activeImageReveal?.id}
               src={imageSource}
-              alt={`Still from ${selectedReveal.title}`}
+              alt={`Still from ${activeImageReveal?.title ?? selectedReveal.title}`}
             />
           ) : (
             <span className="mobile-detail-image-placeholder" aria-hidden="true">⌁</span>
           )}
-          <span className="mobile-detail-time">
-            {formatEpisodeTime(selectedReveal.episodeTime)}
-          </span>
+          {imageReveals.length > 1 && (
+            <div
+              className="mobile-image-dots"
+              role="group"
+              aria-label="Choose event image"
+            >
+              {imageReveals.map((reveal, index) => (
+                <button
+                  className={`mobile-image-dot${index === activeImageIndex ? ' is-active' : ''}`}
+                  type="button"
+                  aria-label={`Show image ${index + 1} of ${imageReveals.length}`}
+                  aria-pressed={index === activeImageIndex}
+                  onClick={() => setActiveImageIndex(index)}
+                  key={reveal.id}
+                />
+              ))}
+            </div>
+          )}
           <div className="mobile-hero-event-nav" aria-label="Previous and next story moments">
             <button
               type="button"
