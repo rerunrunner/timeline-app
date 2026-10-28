@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import type { IEvent, IReveal } from '../../types/interfaces';
 import type { MobileRootProps } from './contract';
 import { EpisodeBrowser } from './EpisodeBrowser';
@@ -38,6 +45,40 @@ export default function MobileRoot({
       )?.id ?? null
   );
   const [detailOpen, setDetailOpen] = useState(false);
+  const [landscapeDetailWidth, setLandscapeDetailWidth] = useState(0);
+  const siteMenuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeMenuOnOutsidePointer = (event: PointerEvent) => {
+      const menu = siteMenuRef.current;
+      if (
+        menu?.open &&
+        event.target instanceof Node &&
+        !menu.contains(event.target)
+      ) {
+        menu.open = false;
+      }
+    };
+    const closeMenuOnEscape = (event: KeyboardEvent) => {
+      const menu = siteMenuRef.current;
+      if (event.key !== 'Escape' || !menu?.open) return;
+      menu.open = false;
+      menu.querySelector<HTMLElement>('summary')?.focus();
+    };
+    document.addEventListener('pointerdown', closeMenuOnOutsidePointer);
+    document.addEventListener('keydown', closeMenuOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeMenuOnOutsidePointer);
+      document.removeEventListener('keydown', closeMenuOnEscape);
+    };
+  }, []);
+
+  const updateLandscapeDetailWidth = useCallback((width: number) => {
+    const roundedWidth = Math.round(width);
+    setLandscapeDetailWidth(current =>
+      current === roundedWidth ? current : roundedWidth
+    );
+  }, []);
 
   useEffect(() => {
     const currentSelection = selectedRevealId
@@ -90,7 +131,14 @@ export default function MobileRoot({
   }
 
   return (
-    <main className={`mobile-explorer${detailOpen ? ' has-open-detail' : ''}`}>
+    <main
+      className="mobile-explorer"
+      style={
+        {
+          '--landscape-detail-visible-width': `${landscapeDetailWidth}px`,
+        } as CSSProperties
+      }
+    >
       <header className="mobile-explorer-header">
         <div className="mobile-explorer-topline">
           <a
@@ -129,8 +177,8 @@ export default function MobileRoot({
                 </select>
               </label>
             )}
-            <details className="mobile-site-menu">
-              <summary aria-label="Open site menu">
+            <details className="mobile-site-menu" ref={siteMenuRef}>
+              <summary aria-label="Site menu">
                 <span aria-hidden="true" />
               </summary>
               <nav aria-label="Site pages">
@@ -192,6 +240,7 @@ export default function MobileRoot({
             selectedTimelineId={selectedTimelineId}
             open={detailOpen}
             onOpenChange={setDetailOpen}
+            onLandscapeVisibleWidthChange={updateLandscapeDetailWidth}
             onRevealSelect={selectReveal}
           />
         )}

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { IEvent, IReveal, ITimeline } from '../../types/interfaces';
 import { hydrate } from '../../utils/hydrate';
 import { EventDetailSheet } from './EventDetailSheet';
+import MobileRoot from './MobileRoot';
 import { TimelineMap } from './TimelineMap';
 import {
   buildMobileTimelineModel,
@@ -594,6 +595,7 @@ describe('mobile timeline model', () => {
         selectedTimelineId: 'all',
         open: true,
         onOpenChange: () => undefined,
+        onLandscapeVisibleWidthChange: () => undefined,
         onRevealSelect: () => undefined,
       })
     );
@@ -641,6 +643,122 @@ describe('mobile timeline model', () => {
       ).toContain('original-before-2.jpg');
     }
     expect(container.querySelector('.mobile-detail-chevron')).toBeNull();
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: originalScrollTo,
+    });
+  });
+
+  it('keeps the landscape drawer control accessible while resizing the map', () => {
+    const originalScrollTo = HTMLElement.prototype.scrollTo;
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: () => undefined,
+    });
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        media: '(orientation: landscape) and (max-height: 560px)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+    );
+    const model = buildModel();
+    const selectedReveal = model.revealById.get('reveal-before');
+    expect(selectedReveal).toBeDefined();
+    if (!selectedReveal) return;
+    const onLandscapeVisibleWidthChange = vi.fn();
+    const { container, getByRole, unmount } = render(
+      createElement(EventDetailSheet, {
+        model,
+        selectedReveal,
+        selectedTimelineId: 'all',
+        open: true,
+        onOpenChange: () => undefined,
+        onLandscapeVisibleWidthChange,
+        onRevealSelect: () => undefined,
+      })
+    );
+    const sheet = container.querySelector<HTMLElement>('.mobile-detail-sheet');
+    const sideHandle = getByRole('button', {
+      name: 'Collapse event details',
+    });
+    expect(sheet).not.toBeNull();
+    expect(sideHandle).toHaveAttribute('aria-expanded', 'true');
+    if (sheet) {
+      Object.defineProperty(sheet, 'clientWidth', {
+        configurable: true,
+        value: 250,
+      });
+      Object.defineProperties(sideHandle, {
+        setPointerCapture: { value: () => undefined },
+        hasPointerCapture: { value: () => false },
+      });
+      const pointerEvent = (type: string, clientX: number) => {
+        const value = new MouseEvent(type, {
+          bubbles: true,
+          clientX,
+        });
+        Object.defineProperty(value, 'pointerId', { value: 1 });
+        fireEvent(sideHandle, value);
+      };
+      pointerEvent('pointerdown', 0);
+      pointerEvent('pointermove', 100);
+      expect(onLandscapeVisibleWidthChange).toHaveBeenLastCalledWith(150);
+    }
+    unmount();
+    vi.unstubAllGlobals();
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: originalScrollTo,
+    });
+  });
+
+  it('dismisses the site menu outside and with Escape', () => {
+    const originalScrollTo = HTMLElement.prototype.scrollTo;
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: () => undefined,
+    });
+    const model = buildModel();
+    const { container, getByLabelText, getByRole, unmount } = render(
+      createElement(MobileRoot, {
+        timelines: [...model.timelines],
+        currentTime: 0,
+        hasTimeDeepLink: false,
+        onTimeChange: () => undefined,
+        totalDuration: 7200,
+        episodes: [...model.episodes],
+        datasetId: 'test',
+        platform: 'mobile',
+        availableLanguages: [{ code: 'en', name: 'English' }],
+        selectedLanguageCode: 'en',
+        onLanguageChange: () => undefined,
+        isLoadingDatasets: false,
+        hasDatasets: true,
+      })
+    );
+    const menu = container.querySelector<HTMLDetailsElement>('.mobile-site-menu');
+    const summary = getByLabelText('Site menu');
+    const mapTab = getByRole('tab', { name: 'Timeline map' });
+    expect(menu).not.toBeNull();
+    if (!menu) return;
+
+    fireEvent.click(summary);
+    expect(menu.open).toBe(true);
+    fireEvent.pointerDown(mapTab);
+    expect(menu.open).toBe(false);
+
+    fireEvent.click(summary);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(menu.open).toBe(false);
+    expect(summary).toHaveFocus();
+    unmount();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
       value: originalScrollTo,

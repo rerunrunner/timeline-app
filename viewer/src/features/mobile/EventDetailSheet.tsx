@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,12 +24,13 @@ interface EventDetailSheetProps {
   selectedTimelineId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLandscapeVisibleWidthChange: (width: number) => void;
   onRevealSelect: (reveal: IReveal) => void;
 }
 
 const COMPACT_LANDSCAPE_QUERY =
   '(orientation: landscape) and (max-height: 560px)';
-const LANDSCAPE_COLLAPSED_WIDTH = 32;
+const LANDSCAPE_COLLAPSED_WIDTH = 44;
 
 function screenshotSource(reveal: IReveal): string | undefined {
   if (!reveal.screenshotFilename) return undefined;
@@ -56,6 +58,7 @@ function maximumSheetOffset(
 function isCompactLandscape(): boolean {
   return (
     typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
     window.matchMedia(COMPACT_LANDSCAPE_QUERY).matches
   );
 }
@@ -74,6 +77,7 @@ export function EventDetailSheet({
   selectedTimelineId,
   open,
   onOpenChange,
+  onLandscapeVisibleWidthChange,
   onRevealSelect,
 }: EventDetailSheetProps) {
   const event = selectedReveal.event;
@@ -142,7 +146,25 @@ export function EventDetailSheet({
   const internalOpenChangeRef = useRef(false);
   const previousOpenRef = useRef(open);
   const [sheetOffset, setSheetOffset] = useState<number | null>(null);
+  const [sheetWidth, setSheetWidth] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [compactLandscape, setCompactLandscape] = useState(isCompactLandscape);
+  const previousCompactLandscapeRef = useRef(compactLandscape);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const mediaQuery = window.matchMedia(COMPACT_LANDSCAPE_QUERY);
+    const updateOrientation = () => setCompactLandscape(mediaQuery.matches);
+    updateOrientation();
+    mediaQuery.addEventListener('change', updateOrientation);
+    return () => mediaQuery.removeEventListener('change', updateOrientation);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (previousCompactLandscapeRef.current === compactLandscape) return;
+    previousCompactLandscapeRef.current = compactLandscape;
+    setSheetOffset(null);
+  }, [compactLandscape]);
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
@@ -174,6 +196,7 @@ export function EventDetailSheet({
     const sheet = sheetRef.current;
     if (!sheet || typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(() => {
+      setSheetWidth(sheet.clientWidth);
       setSheetOffset(current =>
         current === null
           ? null
@@ -183,6 +206,25 @@ export function EventDetailSheet({
     observer.observe(sheet);
     return () => observer.disconnect();
   }, []);
+
+  useLayoutEffect(() => {
+    const sheet = sheetRef.current;
+    if (!compactLandscape || !sheet) {
+      onLandscapeVisibleWidthChange(0);
+      return;
+    }
+    const maximumOffset = maximumSheetOffset(sheet, handleRef.current, true);
+    const offset = sheetOffset ?? (open ? 0 : maximumOffset);
+    onLandscapeVisibleWidthChange(
+      Math.max(LANDSCAPE_COLLAPSED_WIDTH, sheet.clientWidth - offset)
+    );
+  }, [
+    compactLandscape,
+    onLandscapeVisibleWidthChange,
+    open,
+    sheetOffset,
+    sheetWidth,
+  ]);
 
   const notifyOpenChange = (nextOpen: boolean) => {
     if (nextOpen === open) return;
@@ -347,6 +389,9 @@ export function EventDetailSheet({
         className="mobile-detail-handle"
         type="button"
         aria-expanded={open}
+        aria-controls="mobile-event-detail-content"
+        aria-hidden={compactLandscape || undefined}
+        tabIndex={compactLandscape ? -1 : 0}
         ref={handleRef}
         onClick={handleToggle}
         onPointerDown={handlePointerDown}
@@ -377,8 +422,10 @@ export function EventDetailSheet({
         className="mobile-detail-side-handle"
         type="button"
         aria-label={open ? 'Collapse event details' : 'Expand event details'}
-        aria-hidden="true"
-        tabIndex={-1}
+        aria-controls="mobile-event-detail-content"
+        aria-expanded={open}
+        aria-hidden={!compactLandscape || undefined}
+        tabIndex={compactLandscape ? 0 : -1}
         onClick={handleToggle}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -386,7 +433,11 @@ export function EventDetailSheet({
         onPointerCancel={handlePointerCancel}
       />
 
-      <div className="mobile-detail-content" ref={contentRef}>
+      <div
+        className="mobile-detail-content"
+        id="mobile-event-detail-content"
+        ref={contentRef}
+      >
         <div
           className="mobile-detail-image"
           role={imageReveals.length > 1 ? 'group' : undefined}
