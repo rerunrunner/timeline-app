@@ -498,9 +498,15 @@ describe('mobile timeline model', () => {
     const activePaths = container.querySelectorAll(
       '.mobile-curve-path:not(.is-muted)'
     );
+    const headings = container.querySelectorAll<HTMLElement>(
+      '.mobile-lane-heading'
+    );
 
     expect(mutedPaths).toHaveLength(4);
     expect(activePaths).toHaveLength(4);
+    expect([...headings].map(heading => heading.style.left)).toEqual(
+      layout.laneX.map(x => `${x}px`)
+    );
     expect(container.querySelectorAll('.mobile-curve-path.is-skipped')).toHaveLength(2);
     expect(container.querySelector('.mobile-curve-jump')).toBeNull();
     expect(activePaths[0].getAttribute('d')).toMatch(

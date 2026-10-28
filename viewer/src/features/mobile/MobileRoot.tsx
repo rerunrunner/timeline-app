@@ -90,7 +90,7 @@ export default function MobileRoot({
   }
 
   return (
-    <main className="mobile-explorer">
+    <main className={`mobile-explorer${detailOpen ? ' has-open-detail' : ''}`}>
       <header className="mobile-explorer-header">
         <div className="mobile-explorer-topline">
           <a

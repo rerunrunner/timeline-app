@@ -193,9 +193,6 @@ export function TimelineMap({
       >
         <div
           className="mobile-lane-headings"
-          style={{
-            gridTemplateColumns: `repeat(${model.timelines.length}, minmax(0, 1fr))`,
-          }}
         >
           {model.timelines.map((timeline, index) => {
             const ancestor = canon.ancestorTimelineIds.has(timeline.id);
@@ -203,6 +200,16 @@ export function TimelineMap({
               selectedTimelineId !== 'all' &&
               selectedTimelineId !== timeline.id &&
               !ancestor;
+            const headingWidth = Math.max(
+              52,
+              Math.min(
+                laneGap - 8,
+                Math.min(
+                  layout.laneX[index],
+                  layout.width - layout.laneX[index]
+                ) * 2 - 8
+              )
+            );
             return (
               <span
                 className={[
@@ -210,7 +217,12 @@ export function TimelineMap({
                   ancestor ? 'is-ancestor' : '',
                   muted ? 'is-muted' : '',
                 ].filter(Boolean).join(' ')}
-                style={{ '--timeline-color': MOBILE_TIMELINE_COLORS[index % MOBILE_TIMELINE_COLORS.length] } as CSSProperties}
+                style={{
+                  '--timeline-color':
+                    MOBILE_TIMELINE_COLORS[index % MOBILE_TIMELINE_COLORS.length],
+                  left: `${layout.laneX[index]}px`,
+                  width: `${headingWidth}px`,
+                } as CSSProperties}
                 key={timeline.id}
               >
                 {timelineDisplayName(timeline.name)}
