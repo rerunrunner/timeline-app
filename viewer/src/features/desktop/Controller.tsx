@@ -54,7 +54,7 @@ const Controller: React.FC<ControllerProps> = ({
   const [scrubbingLocation, setScrubbingLocation] = useState<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [overlayAwake, setOverlayAwake] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const startTimeRef = useRef<number>(0);
   const startPositionRef = useRef<number>(0);
   const onTimeChangeRef = useRef(onTimeChange);
@@ -168,6 +168,9 @@ const Controller: React.FC<ControllerProps> = ({
         clearInterval(intervalRef.current);
       }
     };
+    // `currentTime` is sampled when playback starts; adding it here would
+    // restart the interval on every playback tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, totalDuration, playbackSpeed]);
 
   // One-shot autoStart application: when a new autoStart reference comes in,
@@ -247,7 +250,6 @@ const Controller: React.FC<ControllerProps> = ({
             <Playbar
               currentTime={currentTime}
               totalDuration={totalDuration}
-              onTimeChange={onTimeChange}
               updateScrubbingLocation={updateScrubbingLocation}
               isScrubbing={isScrubbing}
               episodes={episodes}

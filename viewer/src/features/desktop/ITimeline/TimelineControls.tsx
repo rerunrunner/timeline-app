@@ -1,7 +1,8 @@
+import type React from 'react';
 import type { Platform } from '../hooks/usePlatform';
 
 interface TimelineControlsProps {
-  dataSelector: JSX.Element;
+  dataSelector: React.JSX.Element;
   platform: Platform;
   compact: boolean;
   timelineWidth: number;
@@ -40,27 +41,64 @@ export default function TimelineControls({
   return (
     <div className="timeline-width-control">
       <div className="timeline-data-selector">{dataSelector}</div>
-      {widthLabel ? (
-        <label
-          htmlFor="timeline-width-slider"
-          className={`width-control-label${compact ? ' width-control-label--compact' : ''}`}
-        >
-          {widthLabel}
-        </label>
-      ) : null}
-      <input
-        id="timeline-width-slider"
-        type="range"
-        min="100"
-        max={String(maxTimelineWidth)}
-        value={timelineWidth}
-        onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
-        className="width-control-slider"
-      />
+      {platform === 'computer' ? (
+        <div className="desktop-zoom-controls" aria-label="Timeline zoom">
+          <button
+            type="button"
+            aria-label="Zoom out"
+            disabled={timelineWidth <= 100}
+            onClick={() =>
+              onTimelineWidthChange(Math.max(100, timelineWidth - 25))
+            }
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className="desktop-zoom-fit"
+            onClick={() => onTimelineWidthChange(100)}
+          >
+            Fit
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            disabled={timelineWidth >= maxTimelineWidth}
+            onClick={() =>
+              onTimelineWidthChange(
+                Math.min(maxTimelineWidth, timelineWidth + 25)
+              )
+            }
+          >
+            +
+          </button>
+          <span aria-live="polite">{timelineWidth}%</span>
+        </div>
+      ) : (
+        <>
+          {widthLabel ? (
+            <label
+              htmlFor="timeline-width-slider"
+              className={`width-control-label${compact ? ' width-control-label--compact' : ''}`}
+            >
+              {widthLabel}
+            </label>
+          ) : null}
+          <input
+            id="timeline-width-slider"
+            type="range"
+            min="100"
+            max={String(maxTimelineWidth)}
+            value={timelineWidth}
+            onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
+            className="width-control-slider"
+          />
+        </>
+      )}
       <label
         className={compact ? 'auto-scroll-label' : 'auto-scroll-control'}
         htmlFor="jump-to-event-checkbox"
-        title="Jump to event"
+        title="Follow new reveals"
       >
         <input
           type="checkbox"
@@ -68,9 +106,9 @@ export default function TimelineControls({
           checked={autoScrollEnabled}
           onChange={(e) => onAutoScrollEnabledChange(e.target.checked)}
           className="auto-scroll-checkbox"
-          aria-label="Jump to event"
+          aria-label="Follow new reveals"
         />
-        {showAutoScrollText ? 'Jump to event' : null}
+        {showAutoScrollText ? 'Follow new reveals' : null}
       </label>
     </div>
   );

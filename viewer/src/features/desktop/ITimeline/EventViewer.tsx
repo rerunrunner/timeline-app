@@ -1,7 +1,21 @@
-import React, { useState, useCallback } from 'react';
-import { ShareIcon, CheckIcon, LockClosedIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
-import type { IEvent } from '../../../types/interfaces';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ShareIcon,
+  CheckIcon,
+  MapPinIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
+import type { IEvent, IReveal } from '../../../types/interfaces';
 import { getNarrativeDateLabel } from '../../shared';
+
+function screenshotSource(reveal: IReveal): string | undefined {
+  if (!reveal.screenshotFilename) return undefined;
+  const editorApiUrl =
+    (import.meta.env.VITE_EDITOR_API_URL as string | undefined) ??
+    (import.meta.env.DEV ? 'http://localhost:5001/api/export/dataset' : '');
+  if (!editorApiUrl) return `/images/screenshots/${reveal.screenshotFilename}`;
+  return `${new URL(editorApiUrl).origin}/api/tables/reveal/${reveal.id}/image/${reveal.screenshotFilename}`;
+}
 
 /**
  * Build a shareable link to the current moment.
@@ -83,12 +97,45 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
   onSoundtrackOutboundClick,
 }) => {
   const [linkCopied, setLinkCopied] = useState(false);
-  const headerActionClassName =
-    'inline-flex h-7 w-7 items-center justify-center rounded-lg border shadow-sm transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98]';
-  const sectionLabelClassName =
-    'mb-3 text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-slate-400';
-  const detailLabelClassName =
-    'text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400';
+  const [selectedRevealId, setSelectedRevealId] = useState<string | null>(null);
+  const reachedReveals = useMemo(
+    () =>
+      event?.reveals.filter(
+        reveal => reveal.playtimeTimestamp <= currentTime
+      ) ?? [],
+    [currentTime, event]
+  );
+  const latestReachedReveal = reachedReveals.at(-1);
+  const displayedReveal =
+    reachedReveals.find(reveal => reveal.id === selectedRevealId) ??
+    latestReachedReveal;
+  const imageReveals = useMemo(() => {
+    const filenames = new Set<string>();
+    return reachedReveals.filter(reveal => {
+      if (!reveal.screenshotFilename || filenames.has(reveal.screenshotFilename)) {
+        return false;
+      }
+      filenames.add(reveal.screenshotFilename);
+      return true;
+    });
+  }, [reachedReveals]);
+  const screenshotReveal = displayedReveal?.screenshotFilename
+    ? displayedReveal
+    : imageReveals.at(-1);
+  const screenshotSrc = screenshotReveal
+    ? screenshotSource(screenshotReveal)
+    : undefined;
+
+  useEffect(() => {
+    setSelectedRevealId(null);
+  }, [currentTime, event?.id]);
+
+  useEffect(() => {
+    for (const reveal of imageReveals) {
+      const source = screenshotSource(reveal);
+      if (source) new Image().src = source;
+    }
+  }, [imageReveals]);
 
   /** Playtime (seconds) for this event’s current beat: visible reveal, else first reveal. */
   const copyLinkToMoment = useCallback(async () => {
@@ -180,168 +227,137 @@ const IEventViewer: React.FC<IEventViewerProps> = ({
   };
 
 
-  // Get the visible reveal using the immutable event interface
-  const visibleReveal = event.reveals
-    .filter(reveal => reveal.playtimeTimestamp <= currentTime)
-    .at(-1);
-
-  // Screenshot: in dev use editor API (images from data dir); otherwise use static /images/screenshots/
-  const screenshotFilename = event.getScreenshotFilename(currentTime);
-  const editorApiUrl = (import.meta.env.VITE_EDITOR_API_URL as string | undefined) ?? (import.meta.env.DEV ? 'http://localhost:5001/api/export/dataset' : '');
-  const editorApiBase = editorApiUrl ? new URL(editorApiUrl).origin : '';
-  const screenshotSrc = screenshotFilename && visibleReveal
-    ? (editorApiBase
-        ? `${editorApiBase}/api/tables/reveal/${visibleReveal.id}/image/${screenshotFilename}`
-        : `/images/screenshots/${screenshotFilename}`)
-    : undefined;
+  const visibleReveal = displayedReveal;
+  const narrativeDate = getNarrativeDateLabel(
+    event.eventGroup.events,
+    currentTime
+  );
+  const timelineName =
+    event.eventGroup.subSegment.segment.timeline.name;
+  const reachedRevealPosition = visibleReveal
+    ? reachedReveals.findIndex(reveal => reveal.id === visibleReveal.id) + 1
+    : 0;
 
   return (
     <div id="event-viewer" className="event-viewer">
-      <div className="mb-3 w-full flex-shrink-0">
-        <h2
-          className="event-viewer-title min-w-0 truncate whitespace-nowrap text-[1rem] font-bold uppercase leading-none tracking-[0.18em] text-sky-800"
-          title={visibleReveal?.title || event.getTitle(currentTime)}
-        >
-          {visibleReveal?.title || event.getTitle(currentTime)}
-        </h2>
+      <div className="event-viewer-heading">
+        <small>
+          {timelineName}
+          {visibleReveal && (
+            <> · {formatRevealTime(visibleReveal.playtimeTimestamp)}</>
+          )}
+          {reachedReveals.length > 1 && (
+            <> · Reveal {reachedRevealPosition} of {reachedReveals.length}</>
+          )}
+        </small>
+        <div className="event-viewer-title-line">
+          <h2 className="event-viewer-title">
+            {visibleReveal?.title || event.getTitle(currentTime) || 'Unrevealed event'}
+          </h2>
+          <span>{narrativeDate}</span>
+        </div>
+        {!hideHeaderActions && (
+          <div className="event-viewer-actions">
+            <button
+              type="button"
+              onClick={() => void copyLinkToMoment()}
+              className={`event-viewer-action${linkCopied ? ' is-confirmed' : ''}`}
+              aria-label={
+                linkCopied
+                  ? 'Link copied to clipboard'
+                  : 'Copy link to this moment in the show'
+              }
+              title="Copy link to this moment in the show"
+            >
+              {linkCopied ? (
+                <CheckIcon aria-hidden="true" />
+              ) : (
+                <ShareIcon aria-hidden="true" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleLock}
+              className={`event-viewer-action${isLocked ? ' is-pinned' : ''}`}
+              aria-label={isLocked ? 'Unpin event' : 'Pin event'}
+              title={isLocked ? 'Unpin event' : 'Pin event'}
+              disabled={!onToggleLock}
+            >
+              <MapPinIcon aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Scrollable content area */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-        <div className="space-y-8">
-        {/* Screenshot and actions share one block to preserve the original spacing. */}
-        {(visibleReveal && screenshotSrc) || !hideHeaderActions ? (
-          <section className="flex-shrink-0">
-            {visibleReveal && screenshotSrc && (
-              <img 
-                src={screenshotSrc} 
-                alt={`Screenshot for ${visibleReveal.title}`}
-                className="mb-3 h-auto w-full rounded-2xl border border-slate-200/80 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.35)]"
-              />
-            )}
-            {!hideHeaderActions && (
-              <div className="flex w-full items-center justify-end gap-2 border-b border-slate-100 pb-4">
-              <button
-                type="button"
-                onClick={() => void copyLinkToMoment()}
-                className={`${headerActionClassName} ${
-                  linkCopied
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 focus-visible:ring-emerald-400'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-800 hover:shadow-md focus-visible:ring-sky-400'
-                }`}
-                aria-label={
-                  linkCopied
-                    ? 'Link copied to clipboard'
-                    : 'Copy link to this moment in the show'
-                }
-                title="Copy link to this moment in the show"
-              >
-                <span
-                  className={`inline-flex h-4 w-4 items-center justify-center transition-transform duration-300 ${
-                    linkCopied ? 'scale-110' : ''
-                  }`}
-                  aria-hidden="true"
-                >
-                  {linkCopied ? (
-                    <CheckIcon className="h-4 w-4 text-emerald-600" strokeWidth={2.25} />
-                  ) : (
-                    <ShareIcon className="h-4 w-4 text-sky-600/90" strokeWidth={1.75} />
-                  )}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={onToggleLock}
-                className={`${headerActionClassName} ${
-                  isLocked
-                    ? 'border-rose-200/80 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100'
-                    : 'border-gray-200 bg-white text-gray-400 hover:border-sky-200 hover:bg-sky-50/90 hover:text-sky-700 hover:shadow-md'
-                }`}
-                aria-label={isLocked ? 'Unlock event' : 'Lock event'}
-                title={isLocked ? 'Unlock event' : 'Lock event'}
-                disabled={!onToggleLock}
-              >
-                <span aria-hidden="true">
-                  <LockClosedIcon className="h-4 w-4" strokeWidth={1.9} />
-                </span>
-              </button>
+      <div className="event-viewer-scroll">
+        {screenshotSrc && screenshotReveal && (
+          <section className="event-viewer-image">
+            <img
+              src={screenshotSrc}
+              alt={`Screenshot for ${screenshotReveal.title}`}
+            />
+            {imageReveals.length > 1 && (
+              <div className="event-viewer-image-dots" aria-label="Reached event reveals">
+                {imageReveals.map((reveal, index) => (
+                  <button
+                    type="button"
+                    className={reveal.id === screenshotReveal.id ? 'is-active' : ''}
+                    aria-label={`Show reached reveal ${index + 1} of ${imageReveals.length}`}
+                    aria-pressed={reveal.id === screenshotReveal.id}
+                    onClick={() => setSelectedRevealId(reveal.id)}
+                    key={reveal.id}
+                  />
+                ))}
               </div>
             )}
           </section>
-        ) : null}
+        )}
 
-        {/* Reveal content - shown when event has been revealed */}
         {visibleReveal && (
-          <section className="flex-shrink-0">
-            <p className="max-w-[34rem] whitespace-pre-wrap text-[1rem] leading-6 text-slate-700">
-              {visibleReveal.description}
-            </p>
+          <section className="event-viewer-description">
+            <p>{visibleReveal.description}</p>
           </section>
         )}
 
-        {/* Fallback content - shown when event hasn't been revealed yet */}
         {!visibleReveal && (
-          <section className="flex-shrink-0">
-            <p className="max-w-[34rem] text-[0.92rem] italic leading-6 text-slate-500">
+          <section className="event-viewer-unrevealed">
+            <p>
               This event hasn&apos;t been revealed yet.
               {' '}First reveal at {formatRevealTime(Math.min(...event.reveals.map(r => r.playtimeTimestamp)))}.
             </p>
           </section>
         )}
 
-        {/* Event metadata */}
-        <section className="flex-shrink-0">
-          <h3 className={sectionLabelClassName}>Event Details</h3>
-          <div className="grid max-w-[34rem] grid-cols-[max-content_1fr] items-baseline gap-x-4 gap-y-3">
-            <p className={`${detailLabelClassName} mb-0 whitespace-nowrap`}>Narrative Date</p>
-            <p className="text-[0.875rem] text-slate-700">
-              {getNarrativeDateLabel(event.eventGroup.events, currentTime)}
-            </p>
-            {visibleReveal && (
-              <>
-                <p className={`${detailLabelClassName} mb-0 whitespace-nowrap`}>Reveal Time</p>
-                <p className="text-[0.875rem] text-slate-700">
-                  {formatRevealTime(visibleReveal.playtimeTimestamp)}
-                </p>
-              </>
-            )}
-            {event.soundtrack && (
-              <>
-                <p className={`${detailLabelClassName} mb-0 whitespace-nowrap`}>OST</p>
-                <p className="text-[0.875rem] text-slate-700">
-                  <a 
-                    href={event.soundtrack.mediaUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={onSoundtrackOutboundClick}
-                    className="inline-flex items-center gap-1 text-slate-700 underline decoration-slate-300 underline-offset-4 transition-colors hover:text-sky-700 hover:decoration-sky-300"
-                  >
-                    {event.soundtrack.title}
-                    <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} />
-                  </a>
-                </p>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* Event tags */}
         {event.tags.length > 0 && (
-          <section className="flex-shrink-0">
-            <h3 className={sectionLabelClassName}>Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {event.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-slate-100 px-3 py-1.5 text-[0.875rem] font-medium text-slate-600 ring-1 ring-slate-200/80"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+          <section className="event-viewer-tags" aria-label="Event tags">
+            {event.tags.map(tag => (
+              <span key={tag}>{tag}</span>
+            ))}
           </section>
         )}
-        </div>
+
+        {event.soundtrack && (
+          <a
+            className="event-viewer-soundtrack"
+            href={event.soundtrack.mediaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onSoundtrackOutboundClick}
+          >
+            <span>♪ {event.soundtrack.title}</span>
+            <ArrowTopRightOnSquareIcon aria-hidden="true" />
+          </a>
+        )}
+
+        {reachedReveals.length > 1 && selectedRevealId && (
+          <button
+            type="button"
+            className="event-viewer-latest-reveal"
+            onClick={() => setSelectedRevealId(null)}
+          >
+            Return to latest reached reveal
+          </button>
+        )}
       </div>
     </div>
   );

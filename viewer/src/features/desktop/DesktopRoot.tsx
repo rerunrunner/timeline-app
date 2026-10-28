@@ -128,7 +128,24 @@ const DesktopRoot: React.FC<DesktopRootProps> = ({
     onTimeChange,
   });
 
-  const dataSelector: JSX.Element = isLoadingDatasets ? (
+  const storyPosition = useMemo(() => {
+    let episodeStart = 0;
+    for (const episode of episodes ?? []) {
+      const episodeEnd = episodeStart + episode.duration;
+      if (currentTime < episodeEnd) {
+        const episodeTime = Math.max(0, currentTime - episodeStart);
+        const minutes = Math.floor(episodeTime / 60);
+        const seconds = Math.floor(episodeTime % 60);
+        return `Episode ${episode.episodeNumber} · ${minutes}:${seconds
+          .toString()
+          .padStart(2, '0')}`;
+      }
+      episodeStart = episodeEnd;
+    }
+    return 'Story position';
+  }, [currentTime, episodes]);
+
+  const dataSelector: React.JSX.Element = isLoadingDatasets ? (
     <div className="text-sm text-gray-500">Loading languages...</div>
   ) : !hasDatasets ? (
     <div className="text-sm text-amber-600 max-w-md">
@@ -146,7 +163,34 @@ const DesktopRoot: React.FC<DesktopRootProps> = ({
   );
 
   return (
-    <div className={`app${compactLandscape ? ' app--compact-landscape' : ''}`}>
+    <div
+      className={`app app--${platform}${compactLandscape ? ' app--compact-landscape' : ''}`}
+    >
+      {platform === 'computer' && (
+        <header className="desktop-explorer-header">
+          <a
+            className="desktop-brand-lockup"
+            href="/"
+            target="_top"
+            aria-label="Runner Unwound timeline"
+          >
+            <img src="/assets/images/favicon.svg" alt="" />
+            <span>
+              <strong>Runner Unwound</strong>
+              <small>Full-series explorer</small>
+            </span>
+          </a>
+          <div className="desktop-story-position" aria-live="polite">
+            <span>Story position</span>
+            <strong>{storyPosition}</strong>
+          </div>
+          <nav className="desktop-site-nav" aria-label="Site pages">
+            <a href="/" target="_top" aria-current="page">Timeline</a>
+            <a href="/thoughts/" target="_top">Thoughts</a>
+            <a href="/about.html" target="_top">About</a>
+          </nav>
+        </header>
+      )}
       <ITimelineContainer
         timelines={timelines}
         currentTime={currentTime}

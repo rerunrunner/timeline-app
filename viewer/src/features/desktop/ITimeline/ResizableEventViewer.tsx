@@ -123,6 +123,25 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
     e.currentTarget.setPointerCapture(e.pointerId);
   }, [isNarrowLayout, sizePercent]);
 
+  const handleResizeKeyDown = useCallback(
+    (keyboardEvent: React.KeyboardEvent<HTMLDivElement>) => {
+      const growKey = isNarrowLayout ? 'ArrowUp' : 'ArrowLeft';
+      const shrinkKey = isNarrowLayout ? 'ArrowDown' : 'ArrowRight';
+      if (keyboardEvent.key !== growKey && keyboardEvent.key !== shrinkKey) {
+        return;
+      }
+      keyboardEvent.preventDefault();
+      const direction = keyboardEvent.key === growKey ? 1 : -1;
+      setSizePercent(current =>
+        Math.max(
+          minWidthPercentRef.current,
+          Math.min(maxWidthPercentRef.current, current + direction * 2)
+        )
+      );
+    },
+    [isNarrowLayout]
+  );
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -222,8 +241,14 @@ const ResizableEventViewer: React.FC<ResizableEventViewerProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        onKeyDown={handleResizeKeyDown}
         role="separator"
         aria-orientation={isNarrowLayout ? 'horizontal' : 'vertical'}
+        aria-label="Resize event details"
+        aria-valuemin={minWidthPercentRef.current}
+        aria-valuemax={maxWidthPercentRef.current}
+        aria-valuenow={Math.round(sizePercent)}
+        tabIndex={0}
       >
         <div className="resize-handle-line"></div>
       </div>

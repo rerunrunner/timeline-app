@@ -4,7 +4,6 @@ import './controller.css';
 interface PlaybarProps {
   currentTime: number;
   totalDuration: number;
-  onTimeChange: (newTime: number) => void;
   updateScrubbingLocation: (newLocation: number) => void;
   isScrubbing: boolean;
   onDragChange?: (isDragging: boolean) => void;
@@ -25,7 +24,6 @@ interface PlaybarProps {
 const Playbar: React.FC<PlaybarProps> = ({
   currentTime,
   totalDuration,
-  onTimeChange,
   updateScrubbingLocation,
   isScrubbing,
   onDragChange,
@@ -117,13 +115,22 @@ const Playbar: React.FC<PlaybarProps> = ({
       {/* Episode Markers - positioned above */}
       <div className={`episode-markers-container${showEpisodeMarkers ? '' : ' episode-markers-container--hidden'}`}>
         {episodeMarkers.map((episode) => (
-          <div
+          <button
+            type="button"
             key={episode.id}
-            className={`episode-marker ${episode.position === 0 ? '' : 'shifted'}`}
+            className={[
+              'episode-marker',
+              episode.position === 0 ? '' : 'shifted',
+              currentTime >= episode.startTime &&
+              currentTime < episode.startTime + episode.duration
+                ? 'is-current'
+                : '',
+            ].filter(Boolean).join(' ')}
             style={{ 
               left: episode.position === 0 ? '0%' : `${episode.position}%`
             }}
             onClick={() => handleEpisodeClick(episode)}
+            aria-label={`Jump to episode ${episode.episodeNumber}`}
           >
             <div className="episode-marker-label">
               <div className="episode-marker-badge">
@@ -132,11 +139,12 @@ const Playbar: React.FC<PlaybarProps> = ({
               {/* Connecting line */}
               <div className="episode-marker-line"></div>
             </div>
-          </div>
+          </button>
         ))}
         
         {/* End marker - right aligned */}
-        <div 
+        <button
+          type="button"
           className="end-marker"
           onClick={() => {
             updateScrubbingLocation(totalDuration);
@@ -145,6 +153,7 @@ const Playbar: React.FC<PlaybarProps> = ({
               start_time_seconds: totalDuration,
             });
           }}
+          aria-label="Jump to end"
         >
           <div className="end-marker-label">
             <div className="end-marker-badge">
@@ -153,7 +162,7 @@ const Playbar: React.FC<PlaybarProps> = ({
             {/* Connecting line */}
             <div className="end-marker-line"></div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Playbar - centered with other controls */}

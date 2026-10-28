@@ -90,12 +90,31 @@ export default function EventGroup({
   const handleGroupClick = useCallback(() => {
     onEventClick(eventGroup.primaryEvent);
   }, [onEventClick, eventGroup.primaryEvent]);
+
+  const handleGroupKeyDown = useCallback(
+    (keyboardEvent: React.KeyboardEvent<HTMLDivElement>) => {
+      if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return;
+      keyboardEvent.preventDefault();
+      handleGroupClick();
+    },
+    [handleGroupClick]
+  );
   
   // Handle individual event interactions
   const handleEventClick = useCallback((event: IEvent, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent group click
     onEventClick(event);
   }, [onEventClick]);
+
+  const handleEventKeyDown = useCallback(
+    (event: IEvent, keyboardEvent: React.KeyboardEvent<HTMLDivElement>) => {
+      if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return;
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopPropagation();
+      onEventClick(event);
+    },
+    [onEventClick]
+  );
   
   const handleEventHover = useCallback((event: IEvent) => {
     onEventHover(event);
@@ -110,6 +129,11 @@ export default function EventGroup({
       onMouseEnter={handleGroupMouseEnter}
       onMouseLeave={handleGroupMouseLeave}
       onClick={handleGroupClick}
+      onKeyDown={handleGroupKeyDown}
+      role={visibleEvents.length === 1 ? 'button' : undefined}
+      tabIndex={visibleEvents.length === 1 ? 0 : -1}
+      aria-label={`${eventGroup.primaryEvent.getTitle(currentTime)}, ${getNarrativeDateLabel(eventGroup.events, currentTime)}`}
+      aria-pressed={visibleEvents.length === 1 ? Boolean(isLocked) : undefined}
     >
       {/* Main marker */}
       <div className="event-group-marker">
@@ -157,17 +181,22 @@ export default function EventGroup({
                 key={event.id}
                 className={`expanded-event ${eventAuraClass} ${statusClass} ${isPrimary ? 'latest' : ''}`}
                 onClick={(e) => handleEventClick(event, e)}
+                onKeyDown={(keyboardEvent) =>
+                  handleEventKeyDown(event, keyboardEvent)
+                }
                 onMouseEnter={() => handleEventHover(event)}
                 onMouseLeave={() => {
                   // Only clear if we're leaving the entire expanded area
                   // This prevents clearing when moving between header and events
                 }}
+                role={visibleEvents.length > 1 ? 'button' : undefined}
+                tabIndex={visibleEvents.length > 1 ? 0 : -1}
               >
                 <div className="event-title">
                   {event.getTitle(currentTime) || `Event ${event.id}`}
                 </div>
                 {eventIsLocked && (
-                  <div className="locked-indicator">🔒</div>
+                  <div className="locked-indicator" aria-label="Pinned">Pinned</div>
                 )}
               </div>
             );
