@@ -480,7 +480,13 @@ describe('hydrate', () => {
           {
             id: 'tl1',
             name: 'Main Timeline',
-            slices: []
+            slices: [{
+              id: 'slice1',
+              timelineId: 'tl1',
+              shortDescription: 'Test timeline',
+              startTimestamp: '2024-01-01T00:00:00Z',
+              endTimestamp: '2024-01-02T00:00:00Z'
+            }]
           }
         ],
         events: [
@@ -586,7 +592,13 @@ describe('hydrate', () => {
           {
             id: 'tl1',
             name: 'Main Timeline',
-            slices: []
+            slices: [{
+              id: 'slice1',
+              timelineId: 'tl1',
+              shortDescription: 'Test timeline',
+              startTimestamp: '2024-01-01T00:00:00Z',
+              endTimestamp: '2024-01-02T00:00:00Z'
+            }]
           }
         ],
         events: [
@@ -620,7 +632,13 @@ describe('hydrate', () => {
           {
             id: 'tl1',
             name: 'Main Timeline',
-            slices: []
+            slices: [{
+              id: 'slice1',
+              timelineId: 'tl1',
+              shortDescription: 'Test timeline',
+              startTimestamp: '2024-01-01T00:00:00Z',
+              endTimestamp: '2024-01-02T00:00:00Z'
+            }]
           }
         ],
         events: [
