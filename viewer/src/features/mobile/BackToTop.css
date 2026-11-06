@@ -1,0 +1,61 @@
+.mobile-back-to-top {
+  position: fixed;
+  z-index: 49;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: clamp(150px, 18vh, 220px);
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(190, 220, 241, 0.3);
+  border-radius: 50%;
+  color: #f1f8ff;
+  background: rgba(31, 66, 94, 0.94);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  animation: mobile-back-to-top-enter 160ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-back-to-top:hover {
+  background: rgba(43, 82, 112, 0.98);
+}
+
+.mobile-back-to-top:active {
+  transform: scale(0.96);
+}
+
+.mobile-back-to-top:focus-visible {
+  outline: 3px solid rgba(98, 200, 255, 0.65);
+  outline-offset: 3px;
+}
+
+.mobile-back-to-top svg {
+  width: 27px;
+  height: 27px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes mobile-back-to-top-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-back-to-top {
+    animation: none;
+  }
+}
