@@ -1,0 +1,64 @@
+name: Viewer CI
+
+on:
+  push:
+    branches:
+      - main
+      - ci/viewer-workflow-on-main
+      - analytics/mobile-story-navigation
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: viewer-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  viewer:
+    name: Build, lint, and test viewer
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (includes TypeScript checks)
+        run: npm run build
+
+      - name: Lint changed JavaScript and TypeScript files
+        shell: bash
+        run: |
+          changed_files="$(git -C .. diff --name-only --diff-filter=ACMR origin/main...HEAD -- viewer | sed 's#^viewer/##' | grep -E '\\.(js|jsx|ts|tsx)$' || true)"
+          if [ -z "$changed_files" ]; then
+            echo "No changed JavaScript or TypeScript files to lint."
+          else
+            printf '%s\\n' "$changed_files" | xargs -r npx eslint --report-unused-disable-directives --max-warnings 0
+          fi
+
+      - name: Run tests
+        run: npm test -- --run
