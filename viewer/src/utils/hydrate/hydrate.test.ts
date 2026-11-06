@@ -518,7 +518,7 @@ describe('hydrate', () => {
 
     it('should reject reveal with invalid episodeTime', () => {
       const invalidData = {
-        episodes: [],
+        episodes: [{ id: 'ep1', episodeNumber: 1, title: 'Episode 1', duration: 3600 }],
         timelines: [
           {
             id: 'tl1',
@@ -553,7 +553,7 @@ describe('hydrate', () => {
 
     it('should reject reveal with non-existent apparentTimeline', () => {
       const invalidData = {
-        episodes: [],
+        episodes: [{ id: 'ep1', episodeNumber: 1, title: 'Episode 1', duration: 3600 }],
         timelines: [
           {
             id: 'tl1',
