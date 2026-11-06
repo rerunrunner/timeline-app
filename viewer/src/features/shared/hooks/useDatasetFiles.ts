@@ -37,7 +37,7 @@ export function useDatasetFiles(): UseDatasetFilesResult {
       try {
         setIsLoading(true);
         const discoveredFiles: DatasetFile[] = [];
-      let failureReason = 'no_dataset_found';
+        let failureReason = 'no_dataset_found';
 
         if (import.meta.env.DEV) {
           const apiUrl =
