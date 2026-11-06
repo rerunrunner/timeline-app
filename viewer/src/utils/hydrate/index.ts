@@ -223,6 +223,9 @@ function parseRawData(rawData: any): { timelines: RawTimeline[], events: RawEven
       
       assert(reveal.episodeId && typeof reveal.episodeId === 'string', 
         `Reveal at index ${revealIndex} in event ${event.id} must have a valid string episodeId`);
+
+      assert(episodes.some((episode: any) => episode.id === reveal.episodeId),
+        `Episode ${reveal.episodeId} not found`);
       
       assert(typeof reveal.episodeTime === 'number' && Number.isInteger(reveal.episodeTime) && reveal.episodeTime >= 0, 
         `Reveal at index ${revealIndex} in event ${event.id} must have a valid non-negative integer episodeTime`);
