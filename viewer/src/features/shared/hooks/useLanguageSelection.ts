@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePostHog } from '@posthog/react';
+import { isPosthogActive } from '../../../utils/posthogEnabled';
 import {
   getAvailableLanguages,
   getDefaultLanguageCode,
@@ -29,6 +31,19 @@ export function useLanguageSelection(
   currentDataFile: DatasetFile | undefined
 ): UseLanguageSelectionResult {
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>('');
+  const posthog = usePostHog();
+  const analyticsEnabled = isPosthogActive;
+
+  const changeLanguage = useCallback((code: string) => {
+    if (code === selectedLanguageCode) return;
+    if (analyticsEnabled) {
+      posthog.capture('timeline_language_changed', {
+        previous_language: selectedLanguageCode || undefined,
+        language: code,
+      });
+    }
+    setSelectedLanguageCode(code);
+  }, [analyticsEnabled, posthog, selectedLanguageCode]);
 
   const availableLanguages = useMemo(
     () => getAvailableLanguages(currentDataFile?.data),
@@ -66,6 +81,6 @@ export function useLanguageSelection(
     availableLanguages,
     defaultLanguageCode,
     selectedLanguageCode,
-    setSelectedLanguageCode,
+    setSelectedLanguageCode: changeLanguage,
   };
 }
