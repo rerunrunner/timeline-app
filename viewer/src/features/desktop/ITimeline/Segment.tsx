@@ -66,6 +66,7 @@ const Segment: React.FC<SegmentProps> = ({
     segment.isFirst ? 'leftmost' : '',
     segment.isLast ? 'rightmost' : '',
     transformY !== 0 ? 'apparent-timeline' : '',
+    Math.floor(segmentIndex / 2) % 2 === 1 ? 'event-card-lower' : '',
     narrativeStatus
   ].filter(Boolean).join(' ');
 
