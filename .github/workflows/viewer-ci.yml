@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - ci/viewer-workflow-on-main
+      - fix/hydration-test-suite
       - analytics/mobile-story-navigation
   pull_request:
     branches:
