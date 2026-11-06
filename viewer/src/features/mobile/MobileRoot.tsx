@@ -10,6 +10,7 @@ import { usePostHog } from '@posthog/react';
 import type { IEvent, IReveal } from '../../types/interfaces';
 import { isPosthogActive } from '../../utils/posthogEnabled';
 import type { MobileRootProps } from './contract';
+import { BackToTop } from './BackToTop';
 import { EpisodeBrowser } from './EpisodeBrowser';
 import { EventDetailSheet } from './EventDetailSheet';
 import { TimelineMap } from './TimelineMap';
@@ -340,6 +341,7 @@ export default function MobileRoot({
           />
         )}
       </div>
+      <BackToTop />
     </main>
   );
 }
