@@ -166,8 +166,8 @@ const DesktopRoot: React.FC<DesktopRootProps> = ({
     <div
       className={`app app--${platform}${compactLandscape ? ' app--compact-landscape' : ''}`}
     >
-      {platform === 'computer' && (
-        <header className="desktop-explorer-header">
+      {platform !== 'mobile' && (
+        <header className={`desktop-explorer-header desktop-explorer-header--${platform}`}>
           <a
             className="desktop-brand-lockup"
             href="/"

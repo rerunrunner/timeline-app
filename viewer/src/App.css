@@ -1158,8 +1158,8 @@
   z-index: 1000;
 }
 
-/* Desktop explorer */
-.app--computer {
+/* Shared desktop and tablet explorer theme */
+:is(.app--tablet, .app--computer) {
   --desktop-navy: #091a2b;
   --desktop-panel: #10283c;
   --desktop-panel-strong: #0d2235;
@@ -1262,13 +1262,13 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
-.app--computer .timeline-container {
+:is(.app--tablet, .app--computer) .timeline-container {
   gap: 8px;
   padding: 10px 10px 0;
   background: var(--desktop-navy);
 }
 
-.app--computer .timeline-controls {
+:is(.app--tablet, .app--computer) .timeline-controls {
   min-height: 50px;
   padding: 7px 12px;
   border: 1px solid var(--desktop-line);
@@ -1279,18 +1279,18 @@
   box-shadow: none;
 }
 
-.app--computer .timeline-width-control {
+:is(.app--tablet, .app--computer) .timeline-width-control {
   flex-wrap: nowrap;
   gap: 14px;
 }
 
-.app--computer .timeline-data-selector {
+:is(.app--tablet, .app--computer) .timeline-data-selector {
   margin: 0;
   padding-right: 14px;
   border-right-color: var(--desktop-line);
 }
 
-.app--computer .data-selector select {
+:is(.app--tablet, .app--computer) .data-selector select {
   min-height: 34px;
   padding: 6px 28px 6px 10px;
   border-color: rgba(198, 223, 241, 0.16);
@@ -1345,7 +1345,7 @@
   text-align: right;
 }
 
-.app--computer .auto-scroll-control {
+:is(.app--tablet, .app--computer) .auto-scroll-control {
   gap: 7px;
   margin-left: auto;
   color: #adc3d4;
@@ -1354,11 +1354,11 @@
   white-space: nowrap;
 }
 
-.app--computer .auto-scroll-checkbox {
+:is(.app--tablet, .app--computer) .auto-scroll-checkbox {
   accent-color: #62c8ff;
 }
 
-.app--computer .timeline-viewer {
+:is(.app--tablet, .app--computer) .timeline-viewer {
   gap: 0;
   padding: 0 14px 30px;
   border: 1px solid var(--desktop-line);
@@ -1372,7 +1372,7 @@
   box-shadow: none;
 }
 
-.app--computer .i-time-ruler {
+:is(.app--tablet, .app--computer) .i-time-ruler {
   height: 54px;
   margin: 0 -14px 18px;
   padding: 7px 14px;
@@ -1382,25 +1382,25 @@
   backdrop-filter: blur(16px);
 }
 
-.app--computer .i-time-ruler .i-timeline-segment.with-markers {
+:is(.app--tablet, .app--computer) .i-time-ruler .i-timeline-segment.with-markers {
   border-bottom-color: rgba(145, 169, 188, 0.42);
 }
 
-.app--computer .i-date-label .year {
+:is(.app--tablet, .app--computer) .i-date-label .year {
   color: #b9cddd;
 }
 
-.app--computer .i-date-label .month-day {
+:is(.app--tablet, .app--computer) .i-date-label .month-day {
   color: #708da3;
 }
 
-.app--computer .i-timeline {
+:is(.app--tablet, .app--computer) .i-timeline {
   min-height: 48px;
   margin-bottom: 88px;
   padding: 24px 0;
 }
 
-.app--computer .desktop-timeline-label {
+:is(.app--tablet, .app--computer) .desktop-timeline-label {
   position: absolute;
   top: -3px;
   left: 2px;
@@ -1412,21 +1412,21 @@
   text-transform: uppercase;
 }
 
-.app--computer .i-timeline-subsegment,
-.app--computer .i-timeline-subsegment.canonical {
+:is(.app--tablet, .app--computer) .i-timeline-subsegment,
+:is(.app--tablet, .app--computer) .i-timeline-subsegment.canonical {
   background-color: var(--timeline-color);
 }
 
-.app--computer .i-timeline-subsegment.erased {
+:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased {
   opacity: 0.24;
   background-color: #7f96a8;
 }
 
-.app--computer .i-timeline-segment.apparent-timeline {
+:is(.app--tablet, .app--computer) .i-timeline-segment.apparent-timeline {
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--timeline-color) 34%, transparent));
 }
 
-.app--computer .i-event-group-container .marker-dot {
+:is(.app--tablet, .app--computer) .i-event-group-container .marker-dot {
   width: 12px;
   height: 12px;
   border-color: var(--desktop-navy);
@@ -1434,7 +1434,7 @@
   box-shadow: 0 0 0 2px var(--timeline-color);
 }
 
-.app--computer .i-event-group-container .event-group-expanded {
+:is(.app--tablet, .app--computer) .i-event-group-container .event-group-expanded {
   width: 184px;
   border-color: color-mix(in srgb, var(--timeline-color) 30%, transparent);
   border-radius: 10px;
@@ -1443,52 +1443,52 @@
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26);
 }
 
-.app--computer .i-event-group-container:hover .event-group-expanded,
-.app--computer .i-event-group-container:focus-within .event-group-expanded {
+:is(.app--tablet, .app--computer) .i-event-group-container:hover .event-group-expanded,
+:is(.app--tablet, .app--computer) .i-event-group-container:focus-within .event-group-expanded {
   width: 270px;
 }
 
-.app--computer .i-timeline-segment.event-card-lower .event-group-expanded {
+:is(.app--tablet, .app--computer) .i-timeline-segment.event-card-lower .event-group-expanded {
   top: 65px;
 }
 
-.app--computer .i-event-group-container .expanded-header,
-.app--computer .i-event-group-container.canonical .expanded-header {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-header,
+:is(.app--tablet, .app--computer) .i-event-group-container.canonical .expanded-header {
   min-height: 27px;
   border-bottom-color: color-mix(in srgb, var(--timeline-color) 38%, transparent);
   color: var(--desktop-text);
   background: color-mix(in srgb, var(--timeline-color) 14%, #10283c);
 }
 
-.app--computer .i-event-group-container .expanded-header .date {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-header .date {
   color: #dceaf4;
   font-size: 10px;
 }
 
-.app--computer .i-event-group-container .expanded-header .event-count {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-header .event-count {
   color: #92adbf;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.app--computer .i-event-group-container .expanded-event {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event {
   min-height: 34px;
   border-bottom-color: rgba(194, 220, 238, 0.08);
   color: var(--desktop-text);
 }
 
-.app--computer .i-event-group-container .expanded-event:hover,
-.app--computer .i-event-group-container .expanded-event:focus-visible {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event:hover,
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event:focus-visible {
   outline: none;
   background: rgba(255, 255, 255, 0.07);
 }
 
-.app--computer .i-event-group-container .expanded-event .event-title {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event .event-title {
   color: #e7f3fb;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 12px;
 }
 
-.app--computer .i-event-group-container .locked-indicator {
+:is(.app--tablet, .app--computer) .i-event-group-container .locked-indicator {
   color: #f0bd64;
   font-size: 8px;
   font-weight: 900;
@@ -1496,7 +1496,7 @@
   text-transform: uppercase;
 }
 
-.app--computer .i-event-group-container.aura-active .marker-dot {
+:is(.app--tablet, .app--computer) .i-event-group-container.aura-active .marker-dot {
   background: var(--timeline-color);
   box-shadow:
     0 0 0 2px var(--timeline-color),
@@ -1504,7 +1504,7 @@
   animation: none;
 }
 
-.app--computer .i-event-group-container.aura-locked .marker-dot {
+:is(.app--tablet, .app--computer) .i-event-group-container.aura-locked .marker-dot {
   background: #f0bd64;
   box-shadow:
     0 0 0 2px #f0bd64,
@@ -1512,39 +1512,39 @@
   animation: none;
 }
 
-.app--computer .i-event-group-container .expanded-event.aura-active,
-.app--computer .i-event-group-container .expanded-event.aura-locked {
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event.aura-active,
+:is(.app--tablet, .app--computer) .i-event-group-container .expanded-event.aura-locked {
   border-left-color: var(--timeline-color);
   background: color-mix(in srgb, var(--timeline-color) 11%, transparent);
 }
 
-.app--computer .i-timeline-subsegment.erased .i-event-group-container {
+:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container {
   opacity: 0.42;
 }
 
-.app--computer .resize-handle-between {
+:is(.app--tablet, .app--computer) .resize-handle-between {
   width: 12px;
   border-radius: 8px;
 }
 
-.app--computer .resize-handle-between:hover,
-.app--computer .resize-handle-between:focus-visible,
-.app--computer .resize-handle-between.resizing {
+:is(.app--tablet, .app--computer) .resize-handle-between:hover,
+:is(.app--tablet, .app--computer) .resize-handle-between:focus-visible,
+:is(.app--tablet, .app--computer) .resize-handle-between.resizing {
   outline: none;
   background: rgba(98, 200, 255, 0.1);
 }
 
-.app--computer .resize-handle-between .resize-handle-line {
+:is(.app--tablet, .app--computer) .resize-handle-between .resize-handle-line {
   width: 3px;
   height: 42px;
   background: rgba(220, 238, 250, 0.25);
 }
 
-.app--computer .resizable-event-viewer {
+:is(.app--tablet, .app--computer) .resizable-event-viewer {
   border-left: 0;
 }
 
-.app--computer .event-viewer {
+:is(.app--tablet, .app--computer) .event-viewer {
   padding: 14px;
   border-color: var(--desktop-line);
   border-radius: 16px 16px 0 0;
@@ -1554,13 +1554,13 @@
   font-family: Inter, ui-sans-serif, sans-serif;
 }
 
-.app--computer .event-viewer-heading {
+:is(.app--tablet, .app--computer) .event-viewer-heading {
   position: relative;
   flex: 0 0 auto;
   padding-right: 70px;
 }
 
-.app--computer .event-viewer-heading small {
+:is(.app--tablet, .app--computer) .event-viewer-heading small {
   display: block;
   overflow: hidden;
   color: #86a7be;
@@ -1572,7 +1572,7 @@
   white-space: nowrap;
 }
 
-.app--computer .event-viewer-title-line {
+:is(.app--tablet, .app--computer) .event-viewer-title-line {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: baseline;
@@ -1580,7 +1580,7 @@
   margin-top: 4px;
 }
 
-.app--computer .event-viewer-title {
+:is(.app--tablet, .app--computer) .event-viewer-title {
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -1595,14 +1595,14 @@
   white-space: normal;
 }
 
-.app--computer .event-viewer-title-line > span {
+:is(.app--tablet, .app--computer) .event-viewer-title-line > span {
   color: #91a9bc;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 13px;
   white-space: nowrap;
 }
 
-.app--computer .event-viewer-actions {
+:is(.app--tablet, .app--computer) .event-viewer-actions {
   position: absolute;
   top: 0;
   right: 0;
@@ -1610,7 +1610,7 @@
   gap: 5px;
 }
 
-.app--computer .event-viewer-action {
+:is(.app--tablet, .app--computer) .event-viewer-action {
   width: 30px;
   height: 30px;
   display: grid;
@@ -1622,30 +1622,30 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.app--computer .event-viewer-action:hover,
-.app--computer .event-viewer-action:focus-visible {
+:is(.app--tablet, .app--computer) .event-viewer-action:hover,
+:is(.app--tablet, .app--computer) .event-viewer-action:focus-visible {
   outline: none;
   border-color: rgba(98, 200, 255, 0.42);
   color: #dff3ff;
   background: rgba(98, 200, 255, 0.1);
 }
 
-.app--computer .event-viewer-action.is-pinned {
+:is(.app--tablet, .app--computer) .event-viewer-action.is-pinned {
   border-color: rgba(240, 189, 100, 0.42);
   color: #f0bd64;
   background: rgba(240, 189, 100, 0.1);
 }
 
-.app--computer .event-viewer-action.is-confirmed {
+:is(.app--tablet, .app--computer) .event-viewer-action.is-confirmed {
   color: #67d2a0;
 }
 
-.app--computer .event-viewer-action svg {
+:is(.app--tablet, .app--computer) .event-viewer-action svg {
   width: 16px;
   height: 16px;
 }
 
-.app--computer .event-viewer-scroll {
+:is(.app--tablet, .app--computer) .event-viewer-scroll {
   min-height: 0;
   flex: 1;
   overflow-y: auto;
@@ -1655,21 +1655,21 @@
   scrollbar-color: rgba(145, 169, 188, 0.35) transparent;
 }
 
-.app--computer .event-viewer-image {
+:is(.app--tablet, .app--computer) .event-viewer-image {
   position: relative;
   overflow: hidden;
   border-radius: 13px;
   background: #183247;
 }
 
-.app--computer .event-viewer-image img {
+:is(.app--tablet, .app--computer) .event-viewer-image img {
   width: 100%;
   display: block;
   aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 
-.app--computer .event-viewer-image-dots {
+:is(.app--tablet, .app--computer) .event-viewer-image-dots {
   position: absolute;
   bottom: 4px;
   left: 50%;
@@ -1677,7 +1677,7 @@
   transform: translateX(-50%);
 }
 
-.app--computer .event-viewer-image-dots button {
+:is(.app--tablet, .app--computer) .event-viewer-image-dots button {
   width: 24px;
   height: 24px;
   padding: 0;
@@ -1685,7 +1685,7 @@
   background: transparent;
 }
 
-.app--computer .event-viewer-image-dots button::before {
+:is(.app--tablet, .app--computer) .event-viewer-image-dots button::before {
   content: "";
   width: 6px;
   height: 6px;
@@ -1695,13 +1695,13 @@
   background: rgba(236, 247, 255, 0.56);
 }
 
-.app--computer .event-viewer-image-dots button.is-active::before {
+:is(.app--tablet, .app--computer) .event-viewer-image-dots button.is-active::before {
   width: 14px;
   background: #ecf7ff;
 }
 
-.app--computer .event-viewer-description p,
-.app--computer .event-viewer-unrevealed p {
+:is(.app--tablet, .app--computer) .event-viewer-description p,
+:is(.app--tablet, .app--computer) .event-viewer-unrevealed p {
   margin: 14px 2px;
   color: #bed0de;
   font-size: 13px;
@@ -1709,19 +1709,19 @@
   white-space: pre-wrap;
 }
 
-.app--computer .event-viewer-unrevealed p {
+:is(.app--tablet, .app--computer) .event-viewer-unrevealed p {
   color: #829bad;
   font-style: italic;
 }
 
-.app--computer .event-viewer-tags {
+:is(.app--tablet, .app--computer) .event-viewer-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin: 12px 2px;
 }
 
-.app--computer .event-viewer-tags span {
+:is(.app--tablet, .app--computer) .event-viewer-tags span {
   min-height: 25px;
   display: inline-flex;
   align-items: center;
@@ -1734,7 +1734,7 @@
   font-weight: 750;
 }
 
-.app--computer .event-viewer-soundtrack {
+:is(.app--tablet, .app--computer) .event-viewer-soundtrack {
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -1750,17 +1750,17 @@
   text-decoration: none;
 }
 
-.app--computer .event-viewer-soundtrack:hover {
+:is(.app--tablet, .app--computer) .event-viewer-soundtrack:hover {
   color: #e7f7ff;
   background: rgba(98, 200, 255, 0.1);
 }
 
-.app--computer .event-viewer-soundtrack svg {
+:is(.app--tablet, .app--computer) .event-viewer-soundtrack svg {
   width: 15px;
   height: 15px;
 }
 
-.app--computer .event-viewer-latest-reveal {
+:is(.app--tablet, .app--computer) .event-viewer-latest-reveal {
   width: 100%;
   min-height: 36px;
   margin-top: 10px;
@@ -1771,11 +1771,11 @@
   font-size: 10px;
 }
 
-.app--computer .event-viewer > p {
+:is(.app--tablet, .app--computer) .event-viewer > p {
   color: var(--desktop-muted);
 }
 
-.app--computer .player-controls {
+:is(.app--tablet, .app--computer) .player-controls {
   min-height: 78px;
   gap: 0;
   padding: 12px 16px max(12px, env(safe-area-inset-bottom, 0px));
@@ -1786,7 +1786,7 @@
   box-shadow: none;
 }
 
-.app--computer .player-controls .player-controls-play {
+:is(.app--tablet, .app--computer) .player-controls .player-controls-play {
   width: 38px;
   height: 34px;
   border-radius: 10px;
@@ -1794,11 +1794,11 @@
   background: #dcecf8;
 }
 
-.app--computer .player-controls .player-controls-play:hover {
+:is(.app--tablet, .app--computer) .player-controls .player-controls-play:hover {
   background: #ffffff;
 }
 
-.app--computer .player-controls .player-controls-speed-select {
+:is(.app--tablet, .app--computer) .player-controls .player-controls-speed-select {
   height: 34px;
   border-color: rgba(198, 223, 241, 0.16);
   border-radius: 9px;
@@ -1806,22 +1806,22 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.app--computer .playbar-track::before {
+:is(.app--tablet, .app--computer) .playbar-track::before {
   background: rgba(145, 169, 188, 0.25);
 }
 
-.app--computer .playbar-progress {
+:is(.app--tablet, .app--computer) .playbar-progress {
   background: #62c8ff;
 }
 
-.app--computer .playbar-range::-webkit-slider-thumb {
+:is(.app--tablet, .app--computer) .playbar-range::-webkit-slider-thumb {
   border-color: #0b1f32;
   background: #ecf7ff;
   box-shadow: 0 0 0 3px rgba(98, 200, 255, 0.2);
 }
 
-.app--computer .episode-marker,
-.app--computer .end-marker {
+:is(.app--tablet, .app--computer) .episode-marker,
+:is(.app--tablet, .app--computer) .end-marker {
   width: 1px;
   height: 20px;
   padding: 0;
@@ -1831,8 +1831,8 @@
   background: transparent;
 }
 
-.app--computer .episode-marker-badge,
-.app--computer .end-marker-badge {
+:is(.app--tablet, .app--computer) .episode-marker-badge,
+:is(.app--tablet, .app--computer) .end-marker-badge {
   position: absolute;
   bottom: 18px;
   left: 50%;
@@ -1847,49 +1847,131 @@
   transition: opacity 120ms ease;
 }
 
-.app--computer .episode-marker:hover .episode-marker-badge,
-.app--computer .episode-marker:focus-visible .episode-marker-badge,
-.app--computer .end-marker:hover .end-marker-badge,
-.app--computer .end-marker:focus-visible .end-marker-badge,
-.app--computer .episode-marker.is-current .episode-marker-badge {
+:is(.app--tablet, .app--computer) .episode-marker:hover .episode-marker-badge,
+:is(.app--tablet, .app--computer) .episode-marker:focus-visible .episode-marker-badge,
+:is(.app--tablet, .app--computer) .end-marker:hover .end-marker-badge,
+:is(.app--tablet, .app--computer) .end-marker:focus-visible .end-marker-badge,
+:is(.app--tablet, .app--computer) .episode-marker.is-current .episode-marker-badge {
   opacity: 1;
 }
 
-.app--computer .episode-marker-line,
-.app--computer .end-marker-line {
+:is(.app--tablet, .app--computer) .episode-marker-line,
+:is(.app--tablet, .app--computer) .end-marker-line {
   height: 12px;
   margin-top: 9px;
   background: rgba(145, 169, 188, 0.34);
 }
 
-.app--computer .episode-marker.is-current .episode-marker-line {
+:is(.app--tablet, .app--computer) .episode-marker.is-current .episode-marker-line {
   width: 2px;
   background: #62c8ff;
 }
 
-.app--computer .episode-time-selector-container {
+:is(.app--tablet, .app--computer) .episode-time-selector-container {
   border-color: rgba(198, 223, 241, 0.16);
   color: #c4d8e7;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: none;
 }
 
-.app--computer .episode-select,
-.app--computer .episode-time-input {
+:is(.app--tablet, .app--computer) .episode-select,
+:is(.app--tablet, .app--computer) .episode-time-input {
   color: #c4d8e7;
 }
 
-.app--computer .episode-time-divider {
+:is(.app--tablet, .app--computer) .episode-time-divider {
   background: var(--desktop-line);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app--computer *,
-  .app--computer *::before,
-  .app--computer *::after {
+  :is(.app--tablet, .app--computer) *,
+  :is(.app--tablet, .app--computer) *::before,
+  :is(.app--tablet, .app--computer) *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
 }
 
+
+
+/* Tablet adaptation: retain the desktop explorer language with proportions
+   designed for narrower touch-first screens. */
+.app--tablet .desktop-explorer-header {
+  min-height: 54px;
+  gap: 12px;
+  padding: 7px 12px;
+}
+
+.app--tablet .desktop-brand-lockup {
+  min-width: 0;
+  gap: 8px;
+}
+
+.app--tablet .desktop-brand-lockup img {
+  width: 30px;
+  height: 30px;
+}
+
+.app--tablet .desktop-brand-lockup strong {
+  font-size: 14px;
+}
+
+.app--tablet .desktop-brand-lockup small {
+  display: none;
+}
+
+.app--tablet .desktop-story-position {
+  flex: 1 1 auto;
+  margin-right: 0;
+  text-align: center;
+}
+
+.app--tablet .desktop-story-position span {
+  font-size: 8px;
+}
+
+.app--tablet .desktop-story-position strong {
+  font-size: 12px;
+}
+
+.app--tablet .desktop-site-nav {
+  gap: 2px;
+}
+
+.app--tablet .desktop-site-nav a {
+  min-height: 40px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+
+.app--tablet .i-event-group-container .event-group-expanded {
+  width: 224px;
+  max-width: min(280px, calc(100vw - 32px));
+}
+
+.app--tablet .i-event-group-container .expanded-event {
+  min-height: 42px;
+}
+
+@media (max-width: 760px) {
+  .app--tablet .desktop-explorer-header {
+    gap: 8px;
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .app--tablet .desktop-brand-lockup strong {
+    font-size: 12px;
+  }
+
+  .app--tablet .desktop-site-nav a {
+    padding-right: 7px;
+    padding-left: 7px;
+    font-size: 10px;
+  }
+
+  .app--tablet .desktop-story-position strong {
+    font-size: 11px;
+  }
+}
