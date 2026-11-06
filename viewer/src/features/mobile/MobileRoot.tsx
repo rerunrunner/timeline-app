@@ -6,7 +6,9 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
+import { usePostHog } from '@posthog/react';
 import type { IEvent, IReveal } from '../../types/interfaces';
+import { isPosthogActive } from '../../utils/posthogEnabled';
 import type { MobileRootProps } from './contract';
 import { EpisodeBrowser } from './EpisodeBrowser';
 import { EventDetailSheet } from './EventDetailSheet';
@@ -28,9 +30,15 @@ export default function MobileRoot({
   availableLanguages,
   selectedLanguageCode,
   onLanguageChange,
+  datasetId,
   isLoadingDatasets,
   hasDatasets,
 }: MobileRootProps) {
+  const posthog = usePostHog();
+  const analyticsEnabled = isPosthogActive;
+  const selectionSourceRef = useRef<'initial' | 'timeline_map' | 'episode_browser' | 'previous' | 'next'>('initial');
+  const previousViewedRef = useRef<{ open: boolean; revealId: string | null }>({ open: false, revealId: null });
+
   const model = useMemo(
     () => buildMobileTimelineModel(timelines, episodes),
     [timelines, episodes]
@@ -94,18 +102,55 @@ export default function MobileRoot({
   }, [currentTime, hasTimeDeepLink, model, selectedRevealId]);
 
   const selectReveal = useCallback(
-    (reveal: IReveal) => {
+    (
+      reveal: IReveal,
+      source: 'timeline_map' | 'episode_browser' | 'previous' | 'next'
+    ) => {
+      const event = reveal.event;
+      const episode = model.episodeById.get(reveal.episodeId);
+      const timelineId = event.eventGroup.subSegment.segment.timeline.id;
+      selectionSourceRef.current = source;
+      if (analyticsEnabled) {
+        posthog.capture('mobile_reveal_selected', {
+          reveal_id: reveal.id,
+          event_id: event.id,
+          event_group_id: event.eventGroup.id,
+          episode_id: reveal.episodeId,
+          ...(episode ? { episode_number: episode.episodeNumber } : {}),
+          timeline_id: timelineId,
+          selection_source: source,
+          dataset_id: datasetId,
+          selected_language: selectedLanguageCode || undefined,
+          ui_version: 'mobile_v1',
+        });
+        if (source === 'previous' || source === 'next') {
+          posthog.capture('mobile_story_navigated', {
+            direction: source,
+            from_reveal_id: selectedRevealId ?? undefined,
+            to_reveal_id: reveal.id,
+            from_event_id: selectedRevealId ? model.revealById.get(selectedRevealId)?.event.id : undefined,
+            to_event_id: event.id,
+            event_group_id: event.eventGroup.id,
+            episode_id: reveal.episodeId,
+            ...(episode ? { episode_number: episode.episodeNumber } : {}),
+            timeline_id: timelineId,
+            dataset_id: datasetId,
+            selected_language: selectedLanguageCode || undefined,
+            ui_version: 'mobile_v1',
+          });
+        }
+      }
       setSelectedRevealId(reveal.id);
       setDetailOpen(true);
       onTimeChange(reveal.playtimeTimestamp);
     },
-    [onTimeChange]
+    [analyticsEnabled, datasetId, model, onTimeChange, posthog, selectedLanguageCode, selectedRevealId]
   );
 
   const selectEvent = useCallback(
     (event: IEvent) => {
       const reveal = event.reveals.at(-1);
-      if (reveal) selectReveal(reveal);
+      if (reveal) selectReveal(reveal, 'timeline_map');
     },
     [selectReveal]
   );
@@ -113,6 +158,28 @@ export default function MobileRoot({
   const selectedReveal = selectedRevealId
     ? model.revealById.get(selectedRevealId)
     : undefined;
+
+  useEffect(() => {
+    const previous = previousViewedRef.current;
+    if (analyticsEnabled && detailOpen && selectedReveal &&
+      (!previous.open || previous.revealId !== selectedReveal.id)) {
+      const event = selectedReveal.event;
+      const episode = model.episodeById.get(selectedReveal.episodeId);
+      posthog.capture('mobile_reveal_viewed', {
+        reveal_id: selectedReveal.id,
+        event_id: event.id,
+        event_group_id: event.eventGroup.id,
+        episode_id: selectedReveal.episodeId,
+        ...(episode ? { episode_number: episode.episodeNumber } : {}),
+        timeline_id: event.eventGroup.subSegment.segment.timeline.id,
+        selection_source: selectionSourceRef.current,
+        dataset_id: datasetId,
+        selected_language: selectedLanguageCode || undefined,
+        ui_version: 'mobile_v1',
+      });
+    }
+    previousViewedRef.current = { open: detailOpen, revealId: selectedReveal?.id ?? null };
+  }, [analyticsEnabled, datasetId, detailOpen, model, posthog, selectedLanguageCode, selectedReveal]);
 
   if (isLoadingDatasets) {
     return (
@@ -229,7 +296,7 @@ export default function MobileRoot({
           <EpisodeBrowser
             model={model}
             selectedRevealId={selectedRevealId}
-            onRevealSelect={selectReveal}
+            onRevealSelect={reveal => selectReveal(reveal, 'episode_browser')}
           />
         </div>
 
@@ -241,7 +308,7 @@ export default function MobileRoot({
             open={detailOpen}
             onOpenChange={setDetailOpen}
             onLandscapeVisibleWidthChange={updateLandscapeDetailWidth}
-            onRevealSelect={selectReveal}
+            onRevealSelect={(reveal, direction) => selectReveal(reveal, direction ?? 'next')}
           />
         )}
       </div>
