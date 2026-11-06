@@ -37,7 +37,6 @@ describe('hydrate', () => {
             shortDescription: 'Project Start',
             narrativeDate: '2024-01-01T00:00:00Z',
             tags: ['start', 'milestone'],
-            eventType: 'milestone',
             reveals: [
               {
                 id: 'rev1',
@@ -51,7 +50,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        notes: []
+        notes: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(validData)).not.toThrow();
@@ -60,7 +60,8 @@ describe('hydrate', () => {
     it('should reject missing episodes array', () => {
       const invalidData = {
         timelines: [],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Raw data must contain an episodes array');
@@ -69,7 +70,8 @@ describe('hydrate', () => {
     it('should reject missing timelines array', () => {
       const invalidData = {
         episodes: [],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Raw data must contain a timelines array');
@@ -78,10 +80,21 @@ describe('hydrate', () => {
     it('should reject missing events array', () => {
       const invalidData = {
         episodes: [],
-        timelines: []
+        timelines: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Raw data must contain an events array');
+    });
+
+    it('should reject missing soundtracks array', () => {
+      const invalidData = {
+        episodes: [],
+        timelines: [],
+        events: []
+      };
+
+      expect(() => hydrate(invalidData)).toThrow('Raw data must contain a soundtracks array');
     });
 
     it('should reject invalid episode structure', () => {
@@ -92,7 +105,8 @@ describe('hydrate', () => {
           }
         ],
         timelines: [],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Episode at index 0 must have a valid string id');
@@ -103,16 +117,17 @@ describe('hydrate', () => {
         episodes: [
           {
             id: 'ep1',
-            number: 'not-a-number', // Should be integer
+            episodeNumber: 'not-a-number', // Should be integer
             title: 'The Beginning',
             duration: 3600
           }
         ],
         timelines: [],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
-      expect(() => hydrate(invalidData)).toThrow('Episode at index 0 must have a valid integer number');
+      expect(() => hydrate(invalidData)).toThrow('Episode at index 0 must have a valid integer episodeNumber');
     });
 
     it('should reject episode with invalid duration', () => {
@@ -120,13 +135,14 @@ describe('hydrate', () => {
         episodes: [
           {
             id: 'ep1',
-            number: 1,
+            episodeNumber: 1,
             title: 'The Beginning',
             duration: -1 // Should be positive
           }
         ],
         timelines: [],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Episode at index 0 must have a valid positive integer duration');
@@ -140,7 +156,8 @@ describe('hydrate', () => {
             // Missing required fields
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Timeline at index 0 must have a valid string id');
@@ -156,7 +173,8 @@ describe('hydrate', () => {
             // Missing slices array
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Timeline tl1 must have a slices array');
@@ -176,7 +194,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Slice at index 0 in timeline tl1 must have a valid string id');
@@ -200,7 +219,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Slice slice1 timelineId (tl2) must match parent timeline id (tl1)');
@@ -224,7 +244,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Slice slice1 startTimestamp must be a valid date string');
@@ -248,7 +269,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Slice slice1 startTimestamp must be before endTimestamp');
@@ -273,7 +295,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Slice slice1 importance must be \'low\', \'high\', or null');
@@ -314,7 +337,8 @@ describe('hydrate', () => {
             ]
           }
         ],
-        events: []
+        events: [],
+        soundtracks: [];
       };
 
       expect(() => hydrate(validData)).not.toThrow();
@@ -334,7 +358,8 @@ describe('hydrate', () => {
           {
             // Missing required fields
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Event at index 0 must have a valid string id');
@@ -359,7 +384,8 @@ describe('hydrate', () => {
             tags: [],
             reveals: []
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Event ev1 references non-existent timeline tl2');
@@ -384,7 +410,8 @@ describe('hydrate', () => {
             tags: [],
             reveals: []
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Event ev1 narrativeDate must be a valid date string');
@@ -409,7 +436,8 @@ describe('hydrate', () => {
             tags: []
             // Missing reveals array
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Event ev1 must have a reveals array');
@@ -438,7 +466,8 @@ describe('hydrate', () => {
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Reveal at index 0 in event ev1 must have a valid string id');
@@ -472,7 +501,8 @@ describe('hydrate', () => {
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Episode nonexistent not found');
@@ -506,7 +536,8 @@ describe('hydrate', () => {
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(invalidData)).toThrow('Reveal at index 0 in event ev1 must have a valid non-negative integer episodeTime');
@@ -532,7 +563,7 @@ describe('hydrate', () => {
             reveals: [
               {
                 id: 'rev1',
-                apparentTimeline: 'tl2', // Non-existent timeline
+                apparentTimelineId: 'tl2', // Non-existent timeline
                 episodeId: 'ep1',
                 episodeTime: 0,
                 displayedTitle: 'Title',
@@ -541,15 +572,16 @@ describe('hydrate', () => {
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
-      expect(() => hydrate(invalidData)).toThrow('Reveal rev1 apparentTimeline (tl2) references non-existent timeline');
+      expect(() => hydrate(invalidData)).toThrow('Reveal rev1 apparentTimelineId (tl2) references non-existent timeline');
     });
 
     it('should accept reveal with optional display properties', () => {
       const validData = {
-        episodes: [],
+        episodes: [{ id: 'ep1', episodeNumber: 1, title: 'Episode 1', duration: 3600 }],
         timelines: [
           {
             id: 'tl1',
@@ -567,12 +599,15 @@ describe('hydrate', () => {
             reveals: [
               {
                 id: 'rev1',
+                episodeId: 'ep1',
+                episodeTime: 0,
                 absolutePlayTime: 0
                 // No display properties - should be inherited
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(validData)).not.toThrow();
@@ -580,7 +615,7 @@ describe('hydrate', () => {
 
     it('should accept reveal with optional apparentTimeline', () => {
       const validData = {
-        episodes: [],
+        episodes: [{ id: 'ep1', episodeNumber: 1, title: 'Episode 1', duration: 3600 }],
         timelines: [
           {
             id: 'tl1',
@@ -607,7 +642,8 @@ describe('hydrate', () => {
               }
             ]
           }
-        ]
+        ],
+        soundtracks: [];
       };
 
       expect(() => hydrate(validData)).not.toThrow();
