@@ -43,6 +43,7 @@ describe('hydrate', () => {
                 apparentTimelineId: 'tl1',
                 episodeId: 'ep1',
                 episodeTime: 0,
+                absolutePlayTime: 0,
                 displayedDate: '2024-01-01',
                 displayedTitle: 'Project Initiation',
                 displayedDescription: 'The project begins'
@@ -501,6 +502,7 @@ describe('hydrate', () => {
                 id: 'rev1',
                 episodeId: 'nonexistent',
                 episodeTime: 0,
+                absolutePlayTime: 0,
                 displayedTitle: 'Title',
                 displayedDescription: 'Description',
                 displayedDate: '2024-01-01'
@@ -572,6 +574,7 @@ describe('hydrate', () => {
                 apparentTimelineId: 'tl2', // Non-existent timeline
                 episodeId: 'ep1',
                 episodeTime: 0,
+                absolutePlayTime: 0,
                 displayedTitle: 'Title',
                 displayedDescription: 'Description',
                 displayedDate: '2024-01-01'
@@ -613,6 +616,7 @@ describe('hydrate', () => {
                 id: 'rev1',
                 episodeId: 'ep1',
                 episodeTime: 0,
+               absolutePlayTime: 0,
                 absolutePlayTime: 0
                 // No display properties - should be inherited
               }
@@ -653,6 +657,7 @@ describe('hydrate', () => {
                 id: 'rev1',
                 episodeId: 'ep1',
                 episodeTime: 0,
+                absolutePlayTime: 0,
                 displayedTitle: 'Title',
                 displayedDescription: 'Description',
                 displayedDate: '2024-01-01'
