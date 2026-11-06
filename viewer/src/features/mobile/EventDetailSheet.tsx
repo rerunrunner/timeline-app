@@ -25,7 +25,7 @@ interface EventDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLandscapeVisibleWidthChange: (width: number) => void;
-  onRevealSelect: (reveal: IReveal) => void;
+  onRevealSelect: (reveal: IReveal, direction?: 'previous' | 'next') => void;
 }
 
 const COMPACT_LANDSCAPE_QUERY =
@@ -320,8 +320,8 @@ export function EventDetailSheet({
     notifyOpenChange(targetOffset < maximumOffset);
   };
 
-  const selectAdjacent = (reveal: IReveal | null) => {
-    if (reveal) onRevealSelect(reveal);
+  const selectAdjacent = (reveal: IReveal | null, direction: 'previous' | 'next') => {
+    if (reveal) onRevealSelect(reveal, direction);
   };
 
   const handleImagePointerDown = (
@@ -485,7 +485,7 @@ export function EventDetailSheet({
               type="button"
               disabled={!previous}
               aria-label={previous ? `Previous: ${previous.title}` : 'No previous event'}
-              onClick={() => selectAdjacent(previous)}
+              onClick={() => selectAdjacent(previous, 'previous')}
             >
               ‹
             </button>
@@ -493,7 +493,7 @@ export function EventDetailSheet({
               type="button"
               disabled={!next}
               aria-label={next ? `Next: ${next.title}` : 'No next event'}
-              onClick={() => selectAdjacent(next)}
+              onClick={() => selectAdjacent(next, 'next')}
             >
               ›
             </button>

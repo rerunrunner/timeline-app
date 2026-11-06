@@ -363,16 +363,19 @@ describe('createSubSegmentsWithinSegments', () => {
       const segment1 = timelines[0].segments[0];
       const segment2 = timelines[1].segments[0];
       expect(segment1.subSegments).toHaveLength(2);
-      expect(segment2.subSegments).toHaveLength(1);
+      // Timeslip boundaries are shared across timelines, even though each
+      // timeline only receives its own events.
+      expect(segment2.subSegments).toHaveLength(2);
       
       // Timeline 1 subsegments
       const timeline1SubSegments = segment1.subSegments;
       expect(timeline1SubSegments[0].events).toHaveLength(1); // event-1 only (timeslip-1 creates boundary)
       expect(timeline1SubSegments[1].events).toHaveLength(2); // timeslip-1, event-2
       
-      // Timeline 2 subsegments
+      // Timeline 2 uses the same boundary, but only contains its own event.
       const timeline2SubSegments = segment2.subSegments;
-      expect(timeline2SubSegments[0].events).toHaveLength(1); // event-3
+      expect(timeline2SubSegments[0].events).toHaveLength(0);
+      expect(timeline2SubSegments[1].events.map(event => event.id)).toEqual(['event-3']);
     });
 
     it('should handle different timeslip event types correctly', () => {
