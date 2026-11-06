@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { usePostHog } from '@posthog/react';
+import { isPosthogActive } from '../../../utils/posthogEnabled';
 import type { DatasetFile } from '../types';
 
 type UseDatasetFilesResult = {
@@ -23,6 +25,8 @@ export function useDatasetFiles(): UseDatasetFilesResult {
   const [selectedDataFile, setSelectedDataFile] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const posthog = usePostHog();
+  const analyticsEnabled = isPosthogActive;
 
   const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
@@ -33,6 +37,7 @@ export function useDatasetFiles(): UseDatasetFilesResult {
       try {
         setIsLoading(true);
         const discoveredFiles: DatasetFile[] = [];
+      let failureReason = 'no_dataset_found';
 
         if (import.meta.env.DEV) {
           const apiUrl =
@@ -54,11 +59,13 @@ export function useDatasetFiles(): UseDatasetFilesResult {
                 });
               }
             } else {
+              failureReason = `http_${res.status}`;
               console.warn(
                 `[viewer] Editor export failed: HTTP ${res.status} ${res.statusText} (${apiUrl}). Is the backend on port 5001?`
               );
             }
           } catch (err) {
+            failureReason = 'network_error';
             console.warn(
               `[viewer] Could not reach editor export (${apiUrl}). CORS, wrong URL, or backend not running.`,
               err
@@ -84,14 +91,24 @@ export function useDatasetFiles(): UseDatasetFilesResult {
                   data: { ...data, metadata: { ...data.metadata, filename } },
                 });
               }
+            } else {
+              failureReason = `http_${res.status}`;
             }
           } catch {
-            // Ignore; will show empty state
+            failureReason = 'network_error';
           }
         }
 
         if (cancelled) return;
         setDataFiles(discoveredFiles);
+        if (discoveredFiles.length === 0 && analyticsEnabled) {
+          posthog.capture('timeline_load_failed', {
+            stage: 'dataset_discovery',
+            reason: failureReason,
+            environment: import.meta.env.DEV ? 'development' : 'production',
+            path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+          });
+        }
         if (discoveredFiles.length > 0) {
           setSelectedDataFile(discoveredFiles[0].id);
         }
@@ -106,7 +123,7 @@ export function useDatasetFiles(): UseDatasetFilesResult {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [analyticsEnabled, posthog, refreshKey]);
 
   return { dataFiles, selectedDataFile, setSelectedDataFile, isLoading, refresh };
 }
