@@ -81,6 +81,34 @@ export default function MobileRoot({
     };
   }, []);
 
+  const changeActiveView = useCallback((nextView: MobileView) => {
+    if (nextView === activeView) return;
+    if (analyticsEnabled) {
+      posthog.capture('mobile_view_changed', {
+        from_view: activeView,
+        to_view: nextView,
+        dataset_id: datasetId,
+        selected_language: selectedLanguageCode || undefined,
+        ui_version: 'mobile_v1',
+      });
+    }
+    setActiveView(nextView);
+  }, [activeView, analyticsEnabled, datasetId, posthog, selectedLanguageCode]);
+
+  const changeTimelineFilter = useCallback((nextTimelineId: string) => {
+    if (nextTimelineId === selectedTimelineId) return;
+    if (analyticsEnabled) {
+      posthog.capture('mobile_timeline_filter_changed', {
+        previous_timeline_id: selectedTimelineId,
+        timeline_id: nextTimelineId,
+        dataset_id: datasetId,
+        selected_language: selectedLanguageCode || undefined,
+        ui_version: 'mobile_v1',
+      });
+    }
+    setSelectedTimelineId(nextTimelineId);
+  }, [analyticsEnabled, datasetId, posthog, selectedLanguageCode, selectedTimelineId]);
+
   const updateLandscapeDetailWidth = useCallback((width: number) => {
     const roundedWidth = Math.round(width);
     setLandscapeDetailWidth(current =>
@@ -264,7 +292,7 @@ export default function MobileRoot({
             role="tab"
             aria-selected={activeView === 'map'}
             aria-controls="mobile-map-panel"
-            onClick={() => setActiveView('map')}
+            onClick={() => changeActiveView('map')}
           >
             Timeline map
           </button>
@@ -275,7 +303,7 @@ export default function MobileRoot({
             role="tab"
             aria-selected={activeView === 'episodes'}
             aria-controls="mobile-episodes-panel"
-            onClick={() => setActiveView('episodes')}
+            onClick={() => changeActiveView('episodes')}
           >
             By episode
           </button>
@@ -288,7 +316,7 @@ export default function MobileRoot({
             model={model}
             selectedRevealId={selectedRevealId}
             selectedTimelineId={selectedTimelineId}
-            onTimelineChange={setSelectedTimelineId}
+            onTimelineChange={changeTimelineFilter}
             onEventSelect={selectEvent}
           />
         </div>
