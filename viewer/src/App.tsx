@@ -12,6 +12,8 @@ import {
 } from './features/shared'
 import './App.css'
 
+const PAGE_TITLE = 'Lovely Runner Timeline | Runner Unwound'
+
 /**
  * App is intentionally a thin shell. It:
  *   - owns cross-cutting state via shared hooks (datasets, language, timelines,
@@ -81,12 +83,8 @@ function App() {
   })
 
   useEffect(() => {
-    if (currentDataFile?.data.metadata?.name) {
-      document.title = currentDataFile.data.metadata.name
-    } else {
-      document.title = 'Timeline Viewer'
-    }
-  }, [currentDataFile])
+    document.title = PAGE_TITLE
+  }, [])
 
   useEffect(() => {
     document.documentElement.classList.toggle(
