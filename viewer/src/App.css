@@ -1975,3 +1975,9 @@
     font-size: 11px;
   }
 }
+
+/* Desktop UX: anchor event cards below the timeline marker, not around the
+   combined marker + card height. This keeps every card's top edge aligned. */
+.app--computer .i-event-group-container {
+  transform: none !important;
+}
