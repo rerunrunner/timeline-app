@@ -795,3 +795,16 @@
   }
 }
 
+/*
+ * Desktop landscape event-card alignment.
+ *
+ * Keep the marker on the timeline's vertical centerline, but don't vertically
+ * center the entire marker + card group. Doing so makes the card's top edge
+ * depend on the card height (which varies with the number of events).
+ * Anchoring the group at the marker gives every card the same top offset.
+ */
+@media (min-width: 1025px) and (orientation: landscape) {
+  .i-event-group-container {
+    transform: none;
+  }
+}
