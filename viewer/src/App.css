@@ -1420,7 +1420,7 @@
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased {
   /* Erased history remains visible and readable, but visually de-emphasized. */
   opacity: 1;
-  background-color: #40596b;
+  background-color: #354b5a;
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-segment.apparent-timeline {
@@ -1525,33 +1525,33 @@
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container .marker-dot {
-  background: #607789;
+  background: #566b7a;
   border-color: var(--desktop-navy);
-  box-shadow: 0 0 0 2px #607789;
+  box-shadow: 0 0 0 2px #566b7a;
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .event-group-expanded {
-  background: #142a3a;
-  border-color: #40596b;
+  background: #102536;
+  border-color: #354b5a;
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-header {
-  background: #203749;
-  border-bottom-color: #40596b;
+  background: #1b3040;
+  border-bottom-color: #354b5a;
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-header .date,
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-event .event-title {
-  color: #aab9c5;
+  color: #95a6b4;
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-header .event-count {
-  color: #96a9b8;
+  color: #8497a6;
   background: rgba(255, 255, 255, 0.055);
 }
 
 :is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-event {
-  color: #c0ccd5;
+  color: #95a6b4;
   border-bottom-color: rgba(194, 220, 238, 0.09);
 }
 
