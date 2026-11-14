@@ -82,7 +82,10 @@ export default function TimelineControls({
       <button
         type="button"
         className={`jump-to-new-events-button${autoScrollEnabled ? ' is-active' : ''}`}
-        onClick={() => onAutoScrollEnabledChange(!autoScrollEnabled)}
+        onClick={(event) => {
+          onAutoScrollEnabledChange(!autoScrollEnabled);
+          event.currentTarget.blur();
+        }}
         aria-pressed={autoScrollEnabled}
         aria-label="Jump to new events"
         title={autoScrollEnabled ? 'Automatic jumps are on' : 'Automatic jumps are off'}
