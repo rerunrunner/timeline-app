@@ -1555,6 +1555,16 @@
   border-bottom-color: rgba(194, 220, 238, 0.09);
 }
 
+/* Preserve a clear visual anchor for canonical cards inside erased timelines. */
+:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container.canonical .event-group-expanded {
+  border: 2px solid color-mix(in srgb, var(--timeline-color) 72%, #dceaf4);
+}
+
+:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container.canonical .expanded-header {
+  border-bottom-width: 2px;
+  border-bottom-color: color-mix(in srgb, var(--timeline-color) 68%, #dceaf4);
+}
+
 :is(.app--tablet, .app--computer) .resize-handle-between {
   width: 12px;
   border-radius: 8px;
