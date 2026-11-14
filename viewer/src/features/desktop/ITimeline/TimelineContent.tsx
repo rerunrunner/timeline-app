@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import type { ITimeline, IEvent } from '../../../types/interfaces';
-import { NarrativeStatus } from '../../../types/timeline';
 import ITimelineComponent from './Timeline';
 import ITimeRuler from './TimeRuler';
 
@@ -141,40 +140,35 @@ export default function ITimelineContent({
       // If several events become visible in one playback update, scroll once
       // to the one with the latest reveal. Repeated smooth-scroll calls can
       // cancel one another, which is especially noticeable on touch devices.
-      if (!lockedEvent && autoScrollEnabled && currentTime > previousTime) {
-        const newlyVisibleEvents = events
-          .map((event) => {
-            const wasNotReached = event.getNarrativeState(previousTime) === NarrativeStatus.NOT_REACHED;
-            const isNowReached = event.getNarrativeState(currentTime) !== NarrativeStatus.NOT_REACHED;
-            if (!wasNotReached || !isNowReached) return null;
-
-            const revealTime = event.reveals
-              .filter((reveal) =>
-                reveal.playtimeTimestamp > previousTime &&
-                reveal.playtimeTimestamp <= currentTime
-              )
-              .reduce<number | null>(
-                (latest, reveal) => latest === null || reveal.playtimeTimestamp > latest
-                  ? reveal.playtimeTimestamp
-                  : latest,
-                null
-              );
-
-            return revealTime === null ? null : { event, revealTime };
-          })
-          .filter((item): item is { event: IEvent; revealTime: number } => item !== null)
-          .sort((a, b) => b.revealTime - a.revealTime);
+      // Detect first-time reveals from their playback timestamps. An event
+      // only needs one scroll when it first becomes visible.
+      if (currentTime > previousTime && !lockedEvent && autoScrollEnabled) {
+        const newlyVisibleEvents = events.filter((event) => {
+          const wasVisibleBefore = event.reveals.some(
+            (reveal) => reveal.playtimeTimestamp <= previousTime
+          );
+          const isVisibleNow = event.reveals.some(
+            (reveal) => reveal.playtimeTimestamp <= currentTime
+          );
+          return !wasVisibleBefore && isVisibleNow;
+        });
 
         if (newlyVisibleEvents.length > 0) {
-          scrollToEvent(newlyVisibleEvents[0].event);
+          scrollToEvent(newlyVisibleEvents[newlyVisibleEvents.length - 1]);
         }
       }
 
       if (currentTime < previousTime && !lockedEvent && autoScrollEnabled) {
-        const disappearingEvents = events.filter((event) =>
-          event.getNarrativeState(previousTime) !== NarrativeStatus.NOT_REACHED &&
-          event.getNarrativeState(currentTime) === NarrativeStatus.NOT_REACHED
-        );
+        const disappearingEvents = events.filter((event) => {
+          const wasVisibleBefore = event.reveals.some((reveal) =>
+            reveal.playtimeTimestamp <= previousTime
+          );
+          const isVisibleNow = event.reveals.some((reveal) =>
+            reveal.playtimeTimestamp <= currentTime
+          );
+
+          return wasVisibleBefore && !isVisibleNow;
+        });
 
         if (disappearingEvents.length > 0) {
           const mostRecentVisibleEvent = getMostRecentVisibleEvent(currentTime);
