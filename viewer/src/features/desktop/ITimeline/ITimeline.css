@@ -197,8 +197,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 0 1 240px;
-  min-width: 180px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .desktop-zoom-label,
@@ -209,6 +209,8 @@
 }
 
 .desktop-zoom-slider {
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 80px;
 }
 
