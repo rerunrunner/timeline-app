@@ -1555,22 +1555,14 @@
   border-bottom-color: rgba(194, 220, 238, 0.09);
 }
 
-/* Canonical event rows remain individually identifiable inside erased groups. */
-:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .expanded-event.canonical {
-  border: 1px solid color-mix(in srgb, var(--timeline-color) 58%, #b9cad7);
-  border-left: 3px solid color-mix(in srgb, var(--timeline-color) 82%, #dceaf4);
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--timeline-color) 10%, #102536);
+/* Canonical event groups get a stronger outline in the static, at-rest view. */
+:is(.app--tablet, .app--computer) .i-event-group-container.canonical .event-group-expanded {
+  border: 2px solid color-mix(in srgb, var(--timeline-color) 78%, #dceaf4);
 }
 
-/* Preserve a clear visual anchor for canonical cards inside erased timelines. */
-:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container.canonical .event-group-expanded {
-  border: 2px solid color-mix(in srgb, var(--timeline-color) 72%, #dceaf4);
-}
-
-:is(.app--tablet, .app--computer) .i-timeline-subsegment.erased .i-event-group-container.canonical .expanded-header {
+:is(.app--tablet, .app--computer) .i-event-group-container.canonical .expanded-header {
   border-bottom-width: 2px;
-  border-bottom-color: color-mix(in srgb, var(--timeline-color) 68%, #dceaf4);
+  border-bottom-color: color-mix(in srgb, var(--timeline-color) 74%, #dceaf4);
 }
 
 :is(.app--tablet, .app--computer) .resize-handle-between {
