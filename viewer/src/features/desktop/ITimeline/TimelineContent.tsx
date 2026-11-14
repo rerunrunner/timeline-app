@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ITimeline, IEvent } from '../../../types/interfaces';
+import { NarrativeStatus } from '../../../types/timeline';
 import ITimelineComponent from './Timeline';
 import ITimeRuler from './TimeRuler';
 
@@ -143,21 +144,23 @@ export default function ITimelineContent({
       if (!lockedEvent && autoScrollEnabled && currentTime > previousTime) {
         const newlyVisibleEvents = events
           .map((event) => {
-            const wasVisibleBefore = event.reveals.some(
-              (reveal) => reveal.playtimeTimestamp <= previousTime
-            );
-            if (wasVisibleBefore) return null;
+            const wasNotReached = event.getNarrativeState(previousTime) === NarrativeStatus.NOT_REACHED;
+            const isNowReached = event.getNarrativeState(currentTime) !== NarrativeStatus.NOT_REACHED;
+            if (!wasNotReached || !isNowReached) return null;
 
-            const firstVisibleReveal = event.reveals
+            const revealTime = event.reveals
               .filter((reveal) =>
                 reveal.playtimeTimestamp > previousTime &&
                 reveal.playtimeTimestamp <= currentTime
               )
-              .sort((a, b) => b.playtimeTimestamp - a.playtimeTimestamp)[0];
+              .reduce<number | null>(
+                (latest, reveal) => latest === null || reveal.playtimeTimestamp > latest
+                  ? reveal.playtimeTimestamp
+                  : latest,
+                null
+              );
 
-            return firstVisibleReveal
-              ? { event, revealTime: firstVisibleReveal.playtimeTimestamp }
-              : null;
+            return revealTime === null ? null : { event, revealTime };
           })
           .filter((item): item is { event: IEvent; revealTime: number } => item !== null)
           .sort((a, b) => b.revealTime - a.revealTime);
@@ -168,16 +171,10 @@ export default function ITimelineContent({
       }
 
       if (currentTime < previousTime && !lockedEvent && autoScrollEnabled) {
-        const disappearingEvents = events.filter((event) => {
-          const wasVisibleBefore = event.reveals.some((reveal) =>
-            reveal.playtimeTimestamp <= previousTime
-          );
-          const isVisibleNow = event.reveals.some((reveal) =>
-            reveal.playtimeTimestamp <= currentTime
-          );
-
-          return wasVisibleBefore && !isVisibleNow;
-        });
+        const disappearingEvents = events.filter((event) =>
+          event.getNarrativeState(previousTime) !== NarrativeStatus.NOT_REACHED &&
+          event.getNarrativeState(currentTime) === NarrativeStatus.NOT_REACHED
+        );
 
         if (disappearingEvents.length > 0) {
           const mostRecentVisibleEvent = getMostRecentVisibleEvent(currentTime);
