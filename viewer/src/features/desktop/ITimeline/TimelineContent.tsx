@@ -137,20 +137,35 @@ export default function ITimelineContent({
     if (previousTimeRef.current !== currentTime) {
       const previousTime = previousTimeRef.current;
       
-      // Find events that were just revealed
-      events.forEach(event => {
-        const wasVisibleBefore = event.reveals.some(reveal => 
-          reveal.playtimeTimestamp <= previousTime
-        );
-        const isVisibleNow = event.reveals.some(reveal => 
-          reveal.playtimeTimestamp <= currentTime
-        );
-        
-        // If event just became visible, we're not locked on another event, and auto-scroll is enabled
-        if (!wasVisibleBefore && isVisibleNow && !lockedEvent && autoScrollEnabled) {
-          scrollToEvent(event);
+      // If several events become visible in one playback update, scroll once
+      // to the one with the latest reveal. Repeated smooth-scroll calls can
+      // cancel one another, which is especially noticeable on touch devices.
+      if (!lockedEvent && autoScrollEnabled && currentTime > previousTime) {
+        const newlyVisibleEvents = events
+          .map((event) => {
+            const wasVisibleBefore = event.reveals.some(
+              (reveal) => reveal.playtimeTimestamp <= previousTime
+            );
+            if (wasVisibleBefore) return null;
+
+            const firstVisibleReveal = event.reveals
+              .filter((reveal) =>
+                reveal.playtimeTimestamp > previousTime &&
+                reveal.playtimeTimestamp <= currentTime
+              )
+              .sort((a, b) => b.playtimeTimestamp - a.playtimeTimestamp)[0];
+
+            return firstVisibleReveal
+              ? { event, revealTime: firstVisibleReveal.playtimeTimestamp }
+              : null;
+          })
+          .filter((item): item is { event: IEvent; revealTime: number } => item !== null)
+          .sort((a, b) => b.revealTime - a.revealTime);
+
+        if (newlyVisibleEvents.length > 0) {
+          scrollToEvent(newlyVisibleEvents[0].event);
         }
-      });
+      }
 
       if (currentTime < previousTime && !lockedEvent && autoScrollEnabled) {
         const disappearingEvents = events.filter((event) => {
