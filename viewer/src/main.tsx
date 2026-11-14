@@ -8,6 +8,8 @@ import { isPosthogActive } from './utils/posthogEnabled'
 import { posthogHost, posthogToken } from './utils/runtimeConfig'
 
 if (isPosthogActive && posthogToken && posthogHost) {
+  const isInternalHost = window.location.hostname.toLowerCase().startsWith('i.')
+
   posthog.init(posthogToken, {
     api_host: posthogHost,
     defaults: '2026-01-30',
@@ -17,11 +19,21 @@ if (isPosthogActive && posthogToken && posthogHost) {
     autocapture: false,
     capture_pageview: false,
     disable_session_recording: true,
+    // Apply the internal marker at the final capture boundary so every custom
+    // timeline event (including high-frequency interactions) carries it.
+    // Leave PostHog's own internal events unchanged.
+    before_send: (event) => {
+      if (isInternalHost && event?.event?.startsWith('timeline_')) {
+        event.properties = {
+          ...event.properties,
+          is_internal: true,
+        }
+      }
+      return event
+    },
   })
 
-  // The dedicated internal hostname is for owner testing, not public traffic.
-  // Store the marker on the person and register it on events for reliable filtering.
-  if (window.location.hostname.toLowerCase().startsWith('i.')) {
+  if (isInternalHost) {
     posthog.setPersonProperties({ is_internal: true })
     posthog.register({ is_internal: true })
   }
