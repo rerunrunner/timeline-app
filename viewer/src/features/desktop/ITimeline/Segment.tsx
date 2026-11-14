@@ -27,7 +27,6 @@ interface SegmentProps {
   currentTime: number;
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
-  timelineIndex: number;
   allTimelines: ITimeline[];
   timelineSpacing?: number;
 }
