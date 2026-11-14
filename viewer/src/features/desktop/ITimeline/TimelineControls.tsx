@@ -79,21 +79,16 @@ export default function TimelineControls({
           />
         </>
       )}
-      <label
-        className={compact ? 'auto-scroll-label' : 'auto-scroll-control'}
-        htmlFor="jump-to-event-checkbox"
-        title="Follow new reveals"
+      <button
+        type="button"
+        className={`jump-to-new-events-button${autoScrollEnabled ? ' is-active' : ''}`}
+        onClick={() => onAutoScrollEnabledChange(!autoScrollEnabled)}
+        aria-pressed={autoScrollEnabled}
+        aria-label="Jump to new events"
+        title={autoScrollEnabled ? 'Automatic jumps are on' : 'Automatic jumps are off'}
       >
-        <input
-          type="checkbox"
-          id="jump-to-event-checkbox"
-          checked={autoScrollEnabled}
-          onChange={(e) => onAutoScrollEnabledChange(e.target.checked)}
-          className="auto-scroll-checkbox"
-          aria-label="Follow new reveals"
-        />
-        {showAutoScrollText ? 'Follow new reveals' : null}
-      </label>
+        {showAutoScrollText ? 'Jump to new events' : 'Jump'}
+      </button>
     </div>
   );
 }
