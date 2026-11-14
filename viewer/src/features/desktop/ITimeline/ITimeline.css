@@ -314,7 +314,6 @@
 }
 
 .i-timeline-segment.erased {
-  background-color: #e5e7eb;
   z-index: 10;
 }
 
@@ -324,10 +323,6 @@
   z-index: 1;
 }
 
-.i-timeline-segment.empty {
-  opacity: 0;
-  pointer-events: none;
-}
 
 /* Disable transitions for apparent timeline segments */
 .i-timeline-segment.apparent-timeline {
