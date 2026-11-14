@@ -48,7 +48,6 @@ export default function ITimelineComponent(props: ITimelineComponentProps) {
           currentTime={props.currentTime}
           lockedEvent={props.lockedEvent}
           activeEvent={props.activeEvent}
-          timelineIndex={props.timelineIndex}
           allTimelines={props.allTimelines}
           timelineSpacing={props.timelineSpacing}
         />
