@@ -1555,14 +1555,14 @@
   border-bottom-color: rgba(194, 220, 238, 0.09);
 }
 
-/* A restrained canonical outline keeps the group distinct without dominating. */
+/* A restrained canonical outline uses the timeline's own color. */
 :is(.app--tablet, .app--computer) .i-event-group-container.canonical .event-group-expanded {
-  border: 1px solid color-mix(in srgb, var(--timeline-color) 52%, #8fa8ba);
+  border: 1px solid var(--timeline-color);
 }
 
 :is(.app--tablet, .app--computer) .i-event-group-container.canonical .expanded-header {
   border-bottom-width: 1px;
-  border-bottom-color: color-mix(in srgb, var(--timeline-color) 52%, #8fa8ba);
+  border-bottom-color: var(--timeline-color);
 }
 
 :is(.app--tablet, .app--computer) .resize-handle-between {
