@@ -324,11 +324,6 @@
   z-index: 1;
 }
 
-/* Disable transitions for apparent timeline segments */
-.i-timeline-segment.apparent-timeline {
-  transition: none !important;
-}
-
 /* Timeline styling */
 .i-timeline {
   position: relative;
@@ -369,7 +364,7 @@
   z-index: 2;
   top: 50%;
   transform: translateY(-50%);
-  transition: all 0.2s ease;
+  transition: transform 0.4s ease-out, opacity 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
