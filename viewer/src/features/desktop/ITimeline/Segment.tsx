@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ISegment, IEvent, ITimeline } from '../../../types/interfaces';
+import { calculateImmutableApparentTimelineTransform } from '../../../utils/timelineTransforms';
 import SubSegment from './SubSegment';
 
 /**
@@ -15,7 +16,7 @@ import SubSegment from './SubSegment';
  * - Manages segment visibility and interaction states
  * - Coordinates with ISubSegment components for rendering
  * - Handles event positioning calculations
- * - Passes timeline context to event groups for apparent-timeline positioning
+ * - Applies apparent timeline transforms for smooth transitions
  */
 interface SegmentProps {
   segment: ISegment;
@@ -27,6 +28,7 @@ interface SegmentProps {
   currentTime: number;
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
+  timelineIndex: number;
   allTimelines: ITimeline[];
   timelineSpacing?: number;
 }
@@ -41,9 +43,20 @@ const Segment: React.FC<SegmentProps> = ({
   currentTime,
   lockedEvent,
   activeEvent,
+  timelineIndex,
   allTimelines,
   timelineSpacing = 80
 }) => {
+  // Calculate apparent timeline transform
+  const transformY = calculateImmutableApparentTimelineTransform(
+    segment,
+    currentTime,
+    timelineId,
+    timelineIndex,
+    allTimelines,
+    timelineSpacing
+  );
+
   // Get narrative status for this segment
   const narrativeStatus = segment.getNarrativeState(currentTime);
   
@@ -52,9 +65,13 @@ const Segment: React.FC<SegmentProps> = ({
     'i-timeline-segment',
     segment.isFirst ? 'leftmost' : '',
     segment.isLast ? 'rightmost' : '',
+    transformY !== 0 ? 'apparent-timeline' : '',
     Math.floor(segmentIndex / 2) % 2 === 1 ? 'event-card-lower' : '',
     narrativeStatus
   ].filter(Boolean).join(' ');
+
+  // Build transform style - combine scaleX (existing) with translateY (apparent timeline)
+  const transformStyle = `scaleX(1)${transformY !== 0 ? ` translateY(${transformY}px)` : ''}`;
 
   const segmentId = `${timelineId}-seg${segmentIndex}`;
   
@@ -63,7 +80,8 @@ const Segment: React.FC<SegmentProps> = ({
       id={segmentId}
       className={segmentClasses}
       style={{ 
-        width: `${segment.fractionOfTimeline}%`
+        width: `${segment.fractionOfTimeline}%`,
+        transform: transformStyle
       }}
       data-start-date={segment.start.toISOString().split('T')[0]}
       data-end-date={segment.end.toISOString().split('T')[0]}
@@ -78,11 +96,10 @@ const Segment: React.FC<SegmentProps> = ({
           onEventHover={onEventHover}
           onEventHoverEnd={onEventHoverEnd}
           currentTime={currentTime}
+          segment={segment}
           lockedEvent={lockedEvent}
           activeEvent={activeEvent}
           segmentId={segmentId}
-          allTimelines={allTimelines}
-          timelineSpacing={timelineSpacing}
         />
       ))}
     </div>
