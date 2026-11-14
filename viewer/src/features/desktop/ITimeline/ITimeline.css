@@ -324,6 +324,11 @@
   z-index: 1;
 }
 
+.i-timeline-segment.empty {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Disable transitions for apparent timeline segments */
 .i-timeline-segment.apparent-timeline {
   transition: none !important;
