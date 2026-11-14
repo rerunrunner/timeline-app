@@ -1449,9 +1449,9 @@
   width: 270px;
 }
 
-/* Keep the alternating lower-card stagger on tablet, but not desktop. */
-.app--tablet .i-timeline-segment.event-card-lower .event-group-expanded {
-  top: 65px;
+/* Keep tablet event cards aligned with the other desktop layouts. */
+.app--tablet .i-timeline-segment.event-card-lower .i-event-group-container .event-group-expanded {
+  top: 15px;
 }
 
 :is(.app--tablet, .app--computer) .i-event-group-container .expanded-header,
