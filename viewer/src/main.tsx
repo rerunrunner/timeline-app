@@ -21,7 +21,7 @@ if (isPosthogActive && posthogToken && posthogHost) {
 
   // The dedicated internal hostname is for owner testing, not public traffic.
   // Store the marker on the person and register it on events for reliable filtering.
-  if (window.location.hostname.toLowerCase() === 'i.runnerunwound.com') {
+  if (window.location.hostname.toLowerCase().startsWith('i.')) {
     posthog.setPersonProperties({ is_internal: true })
     posthog.register({ is_internal: true })
   }
