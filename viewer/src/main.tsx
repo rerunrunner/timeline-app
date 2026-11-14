@@ -18,6 +18,14 @@ if (isPosthogActive && posthogToken && posthogHost) {
     capture_pageview: false,
     disable_session_recording: true,
   })
+
+  // The dedicated internal hostname is for owner testing, not public traffic.
+  // Store the marker on the person and register it on events for reliable filtering.
+  if (window.location.hostname.toLowerCase().startsWith('i.')) {
+    posthog.setPersonProperties({ is_internal: true })
+    posthog.register({ is_internal: true })
+  }
+
   // In an iframe, `document.referrer` is the embedding page (e.g. the site shell),
   // not Reddit/Tumblr/etc. The parent page passes its own referrer via
   // `?landing_referrer=` so analytics can attribute traffic correctly.
