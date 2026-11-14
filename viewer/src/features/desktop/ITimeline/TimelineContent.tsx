@@ -230,7 +230,7 @@ export default function ITimelineContent({
             activeEvent={activeEvent}
             timelineIndex={timelineIndex}
             allTimelines={timelines}
-            timelineSpacing={122}
+            timelineSpacing={184}
             globalTimeslipInEvents={globalTimeslipInEvents}
           />
         );
