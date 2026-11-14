@@ -42,7 +42,6 @@ const Segment: React.FC<SegmentProps> = ({
   currentTime,
   lockedEvent,
   activeEvent,
-  timelineIndex,
   allTimelines,
   timelineSpacing = 80
 }) => {
