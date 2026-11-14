@@ -1,52 +1,16 @@
-import type { IEventGroup, ISegment, ITimeline } from '../types/interfaces';
+import type { ISegment, ITimeline } from '../types/interfaces';
 
 /**
- * Calculate the apparent-timeline offset for an event group.
- *
- * The most recently reached reveal in this group determines where the group
- * appears. A reveal without an apparentTimeline returns it to its canonical
- * timeline. The offset is relative to the timeline that owns the group.
+ * Calculate the apparent timeline transform for an immutable segment
+ * 
+ * @param segment - The immutable segment with events and methods
+ * @param currentTime - Current playhead position in seconds
+ * @param timelineId - The canonical timeline ID for this segment
+ * @param timelineIndex - The index of the canonical timeline
+ * @param allTimelines - Array of all timelines for index lookup
+ * @param timelineSpacing - Vertical spacing between timeline rows in pixels
+ * @returns The transform value in pixels, or 0 if no transform needed
  */
-export function calculateEventGroupApparentTimelineTransform(
-  eventGroup: IEventGroup,
-  currentTime: number,
-  allTimelines: ITimeline[],
-  timelineSpacing: number = 80
-): number {
-  const canonicalTimelineId = eventGroup.subSegment.segment.timeline.id;
-  let mostRecentApparentTimeline: string | undefined;
-  let mostRecentRevealTime = -1;
-  let hasReachedReveal = false;
-
-  for (const event of eventGroup.events) {
-    for (const reveal of event.reveals) {
-      if (reveal.playtimeTimestamp <= currentTime && reveal.playtimeTimestamp > mostRecentRevealTime) {
-        mostRecentRevealTime = reveal.playtimeTimestamp;
-        mostRecentApparentTimeline = reveal.apparentTimeline;
-        hasReachedReveal = true;
-      }
-    }
-  }
-
-  const targetTimelineId = hasReachedReveal
-    ? mostRecentApparentTimeline ?? canonicalTimelineId
-    : canonicalTimelineId;
-  const canonicalTimelineIndex = allTimelines.findIndex(timeline => timeline.id === canonicalTimelineId);
-  const targetTimelineIndex = allTimelines.findIndex(timeline => timeline.id === targetTimelineId);
-
-  if (canonicalTimelineIndex === -1 || targetTimelineIndex === -1) return 0;
-
-  return (targetTimelineIndex - canonicalTimelineIndex) * timelineSpacing;
-}
-
-/**
- * Get timeline index by ID.
- */
-export function getTimelineIndex(timelineId: string, allTimelines: Array<{ id: string }>): number {
-  return allTimelines.findIndex(timeline => timeline.id === timelineId);
-}
-
-// Retained for callers outside the desktop event-group renderer.
 export function calculateImmutableApparentTimelineTransform(
   segment: ISegment,
   currentTime: number,
@@ -56,7 +20,21 @@ export function calculateImmutableApparentTimelineTransform(
   timelineSpacing: number = 80
 ): number {
   const apparentTimelineId = segment.getApparentTimeline(currentTime, timelineId);
-  const apparentTimelineIndex = allTimelines.findIndex(timeline => timeline.id === apparentTimelineId);
+  const apparentTimelineIndex = allTimelines.findIndex(t => t.id === apparentTimelineId);
+  
   if (apparentTimelineIndex === -1) return 0;
-  return (apparentTimelineIndex - timelineIndex) * timelineSpacing;
+  
+  const delta = apparentTimelineIndex - timelineIndex;
+  return delta * timelineSpacing;
 }
+
+/**
+ * Get timeline index by ID
+ * 
+ * @param timelineId - The timeline ID to find
+ * @param allTimelines - Array of all timelines
+ * @returns The index of the timeline, or -1 if not found
+ */
+export function getTimelineIndex(timelineId: string, allTimelines: Array<{ id: string }>): number {
+  return allTimelines.findIndex(t => t.id === timelineId);
+} 
