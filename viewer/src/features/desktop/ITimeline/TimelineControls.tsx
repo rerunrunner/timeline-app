@@ -44,7 +44,7 @@ export default function TimelineControls({
       {platform === 'computer' ? (
         <div className="desktop-zoom-controls">
           <label htmlFor="desktop-timeline-zoom" className="desktop-zoom-label">
-            Zoom
+            Timeline Width
           </label>
           <input
             id="desktop-timeline-zoom"
@@ -54,7 +54,7 @@ export default function TimelineControls({
             step="25"
             value={timelineWidth}
             onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
-            aria-label="Timeline zoom"
+            aria-label="Timeline width"
             className="width-control-slider desktop-zoom-slider"
           />
           <span aria-live="polite">{timelineWidth}%</span>
