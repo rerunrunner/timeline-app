@@ -51,7 +51,6 @@ export default function TimelineControls({
             type="range"
             min="100"
             max="800"
-            step="25"
             value={timelineWidth}
             onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
             aria-label="Timeline width"
