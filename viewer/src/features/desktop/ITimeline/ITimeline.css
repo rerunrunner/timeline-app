@@ -193,6 +193,25 @@
   font-size: 0.75rem;
 }
 
+.desktop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 1 240px;
+  min-width: 180px;
+}
+
+.desktop-zoom-label,
+.desktop-zoom-controls > span {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.desktop-zoom-slider {
+  min-width: 80px;
+}
+
 .width-control-slider {
   flex: 1;
   height: 6px;
