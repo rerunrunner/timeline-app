@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ISubSegment, IEvent, ITimeline } from '../../../types/interfaces';
+import type { ISubSegment, IEvent, ISegment } from '../../../types/interfaces';
 import EventGroup from './EventGroup';
 
 interface SubSegmentProps {
@@ -9,11 +9,10 @@ interface SubSegmentProps {
   onEventHover: (event: IEvent) => void;
   onEventHoverEnd: () => void;
   currentTime: number;
+  segment: ISegment;
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
   segmentId: string;
-  allTimelines: ITimeline[];
-  timelineSpacing: number;
 }
 
 const SubSegment: React.FC<SubSegmentProps> = ({
@@ -23,11 +22,10 @@ const SubSegment: React.FC<SubSegmentProps> = ({
   onEventHover,
   onEventHoverEnd,
   currentTime,
+  segment,
   lockedEvent,
   activeEvent,
-  segmentId,
-  allTimelines,
-  timelineSpacing
+  segmentId
 }) => {
   const subSegmentId = `${segmentId}-subseg${subSegmentIndex}`;
   
@@ -75,8 +73,6 @@ const SubSegment: React.FC<SubSegmentProps> = ({
           lockedEvent={lockedEvent}
           activeEvent={activeEvent}
           position={getEventGroupPosition(eventGroup)}
-          allTimelines={allTimelines}
-          timelineSpacing={timelineSpacing}
         />
       ))}
     </div>
