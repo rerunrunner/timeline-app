@@ -836,12 +836,11 @@
 }
 
 /*
- * Desktop landscape event-card alignment.
- * Keep the marker centered on the timeline while aligning all cards to the
- * same top offset. Some segments use event-card-lower to stagger cards;
- * override that stagger for the desktop layout.
+ * Desktop and tablet event-card alignment.
+ * Keep markers centered on the timeline while giving every event card the
+ * same top offset. This includes narrow desktop and small-tablet widths.
  */
-@media (min-width: 1025px) and (orientation: landscape) {
+@media (min-width: 641px) {
   .i-event-group-container {
     transform: none;
   }
