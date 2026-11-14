@@ -137,20 +137,26 @@ export default function ITimelineContent({
     if (previousTimeRef.current !== currentTime) {
       const previousTime = previousTimeRef.current;
       
-      // Find events that were just revealed
-      events.forEach(event => {
-        const wasVisibleBefore = event.reveals.some(reveal => 
-          reveal.playtimeTimestamp <= previousTime
-        );
-        const isVisibleNow = event.reveals.some(reveal => 
-          reveal.playtimeTimestamp <= currentTime
-        );
-        
-        // If event just became visible, we're not locked on another event, and auto-scroll is enabled
-        if (!wasVisibleBefore && isVisibleNow && !lockedEvent && autoScrollEnabled) {
-          scrollToEvent(event);
+      // If several events become visible in one playback update, scroll once
+      // to the one with the latest reveal. Repeated smooth-scroll calls can
+      // cancel one another, which is especially noticeable on touch devices.
+      // Detect first-time reveals from their playback timestamps. An event
+      // only needs one scroll when it first becomes visible.
+      if (currentTime > previousTime && !lockedEvent && autoScrollEnabled) {
+        const newlyVisibleEvents = events.filter((event) => {
+          const wasVisibleBefore = event.reveals.some(
+            (reveal) => reveal.playtimeTimestamp <= previousTime
+          );
+          const isVisibleNow = event.reveals.some(
+            (reveal) => reveal.playtimeTimestamp <= currentTime
+          );
+          return !wasVisibleBefore && isVisibleNow;
+        });
+
+        if (newlyVisibleEvents.length > 0) {
+          scrollToEvent(newlyVisibleEvents[newlyVisibleEvents.length - 1]);
         }
-      });
+      }
 
       if (currentTime < previousTime && !lockedEvent && autoScrollEnabled) {
         const disappearingEvents = events.filter((event) => {
@@ -230,7 +236,7 @@ export default function ITimelineContent({
             activeEvent={activeEvent}
             timelineIndex={timelineIndex}
             allTimelines={timelines}
-            timelineSpacing={122}
+            timelineSpacing={138}
             globalTimeslipInEvents={globalTimeslipInEvents}
           />
         );

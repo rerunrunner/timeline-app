@@ -193,6 +193,27 @@
   font-size: 0.75rem;
 }
 
+.desktop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.desktop-zoom-label,
+.desktop-zoom-controls > span {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.desktop-zoom-slider {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 80px;
+}
+
 .width-control-slider {
   flex: 1;
   height: 6px;
@@ -235,26 +256,45 @@
   transform: scale(1.1);
 }
 
-/* Auto-scroll checkbox styling */
-.auto-scroll-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Jump-to-new-events toggle button */
+.jump-to-new-events-button {
+  flex-shrink: 0;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: #1e293b;
+  color: #cbd5e1;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.18);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.auto-scroll-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: #3b82f6;
-  cursor: pointer;
+.jump-to-new-events-button:hover {
+  background: #27364a;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.jump-to-new-events-button.is-active {
+  background: #1e293b;
+  border-color: #60a5fa;
+  color: #f8fafc;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.45), 0 0 12px rgba(59, 130, 246, 0.42);
+}
+
+.jump-to-new-events-button.is-active:hover {
+  background: #27364a;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.6), 0 0 15px rgba(59, 130, 246, 0.55);
+}
+
+.jump-to-new-events-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
 }
 
 /* Subsegment styling */
@@ -314,7 +354,6 @@
 }
 
 .i-timeline-segment.erased {
-  background-color: #e5e7eb;
   z-index: 10;
 }
 
@@ -323,6 +362,7 @@
   pointer-events: none;
   z-index: 1;
 }
+
 
 /* Disable transitions for apparent timeline segments */
 .i-timeline-segment.apparent-timeline {
@@ -795,3 +835,21 @@
   }
 }
 
+/*
+ * Desktop and tablet event-card alignment.
+ * Keep markers centered on the timeline while giving every event card the
+ * same top offset. This includes narrow desktop and small-tablet widths.
+ */
+@media (min-width: 641px) {
+  .i-event-group-container {
+    transform: none;
+  }
+
+  .i-event-group-container .event-group-marker {
+    transform: translateY(-50%);
+  }
+
+  .i-timeline-segment.event-card-lower .i-event-group-container .event-group-expanded {
+    top: 15px;
+  }
+}

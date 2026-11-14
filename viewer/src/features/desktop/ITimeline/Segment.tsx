@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 import type { ISegment, IEvent, ITimeline } from '../../../types/interfaces';
 import { calculateImmutableApparentTimelineTransform } from '../../../utils/timelineTransforms';
 import SubSegment from './SubSegment';
@@ -47,6 +47,12 @@ const Segment: React.FC<SegmentProps> = ({
   allTimelines,
   timelineSpacing = 80
 }) => {
+  // Resolve the timeline this segment is currently presenting as.
+  const apparentTimelineId = segment.getApparentTimeline(currentTime, timelineId);
+  const apparentTimelineIndex = allTimelines.findIndex(timeline => timeline.id === apparentTimelineId);
+  const timelineColors = ['#62c8ff', '#f0bd64', '#ed7890', '#9a8cff', '#67d2a0'];
+  const apparentTimelineColor = timelineColors[(apparentTimelineIndex >= 0 ? apparentTimelineIndex : timelineIndex) % timelineColors.length];
+
   // Calculate apparent timeline transform
   const transformY = calculateImmutableApparentTimelineTransform(
     segment,
@@ -66,6 +72,7 @@ const Segment: React.FC<SegmentProps> = ({
     segment.isFirst ? 'leftmost' : '',
     segment.isLast ? 'rightmost' : '',
     transformY !== 0 ? 'apparent-timeline' : '',
+    Math.floor(segmentIndex / 2) % 2 === 1 ? 'event-card-lower' : '',
     narrativeStatus
   ].filter(Boolean).join(' ');
 
@@ -78,10 +85,11 @@ const Segment: React.FC<SegmentProps> = ({
     <div
       id={segmentId}
       className={segmentClasses}
-      style={{ 
+      style={{
         width: `${segment.fractionOfTimeline}%`,
-        transform: transformStyle
-      }}
+        transform: transformStyle,
+        '--timeline-color': apparentTimelineColor
+      } as CSSProperties}
       data-start-date={segment.start.toISOString().split('T')[0]}
       data-end-date={segment.end.toISOString().split('T')[0]}
     >

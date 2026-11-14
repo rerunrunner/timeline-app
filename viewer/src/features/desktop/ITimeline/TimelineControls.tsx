@@ -1,7 +1,8 @@
+import type React from 'react';
 import type { Platform } from '../hooks/usePlatform';
 
 interface TimelineControlsProps {
-  dataSelector: JSX.Element;
+  dataSelector: React.JSX.Element;
   platform: Platform;
   compact: boolean;
   timelineWidth: number;
@@ -30,7 +31,7 @@ export default function TimelineControls({
 }: TimelineControlsProps) {
   const isMobile = platform === 'mobile';
   const showAutoScrollText = !isMobile || compact;
-  const maxTimelineWidth = isMobile || compact ? 1000 : 400;
+  const maxTimelineWidth = platform === 'computer' ? 800 : isMobile || compact ? 1000 : 400;
   const widthLabel = compact
     ? `Width ${timelineWidth}%`
     : isMobile
@@ -40,38 +41,57 @@ export default function TimelineControls({
   return (
     <div className="timeline-width-control">
       <div className="timeline-data-selector">{dataSelector}</div>
-      {widthLabel ? (
-        <label
-          htmlFor="timeline-width-slider"
-          className={`width-control-label${compact ? ' width-control-label--compact' : ''}`}
-        >
-          {widthLabel}
-        </label>
-      ) : null}
-      <input
-        id="timeline-width-slider"
-        type="range"
-        min="100"
-        max={String(maxTimelineWidth)}
-        value={timelineWidth}
-        onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
-        className="width-control-slider"
-      />
-      <label
-        className={compact ? 'auto-scroll-label' : 'auto-scroll-control'}
-        htmlFor="jump-to-event-checkbox"
-        title="Jump to event"
+      {platform === 'computer' ? (
+        <div className="desktop-zoom-controls">
+          <label htmlFor="desktop-timeline-zoom" className="desktop-zoom-label">
+            Timeline Width
+          </label>
+          <input
+            id="desktop-timeline-zoom"
+            type="range"
+            min="100"
+            max="800"
+            value={timelineWidth}
+            onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
+            aria-label="Timeline width"
+            className="width-control-slider desktop-zoom-slider"
+          />
+          <span aria-live="polite">{timelineWidth}%</span>
+        </div>
+      ) : (
+        <>
+          {widthLabel ? (
+            <label
+              htmlFor="timeline-width-slider"
+              className={`width-control-label${compact ? ' width-control-label--compact' : ''}`}
+            >
+              {widthLabel}
+            </label>
+          ) : null}
+          <input
+            id="timeline-width-slider"
+            type="range"
+            min="100"
+            max={String(maxTimelineWidth)}
+            value={timelineWidth}
+            onChange={(e) => onTimelineWidthChange(Number(e.target.value))}
+            className="width-control-slider"
+          />
+        </>
+      )}
+      <button
+        type="button"
+        className={`jump-to-new-events-button${autoScrollEnabled ? ' is-active' : ''}`}
+        onClick={(event) => {
+          onAutoScrollEnabledChange(!autoScrollEnabled);
+          event.currentTarget.blur();
+        }}
+        aria-pressed={autoScrollEnabled}
+        aria-label="Jump to new events"
+        title={autoScrollEnabled ? 'Automatic jumps are on' : 'Automatic jumps are off'}
       >
-        <input
-          type="checkbox"
-          id="jump-to-event-checkbox"
-          checked={autoScrollEnabled}
-          onChange={(e) => onAutoScrollEnabledChange(e.target.checked)}
-          className="auto-scroll-checkbox"
-          aria-label="Jump to event"
-        />
-        {showAutoScrollText ? 'Jump to event' : null}
-      </label>
+        {showAutoScrollText ? 'Jump to new events' : 'Jump'}
+      </button>
     </div>
   );
 }

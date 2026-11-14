@@ -1,5 +1,6 @@
-import React from 'react';
-import type { ITimeline, ISegment, IEvent } from '../../../types/interfaces';
+import React, { type CSSProperties } from 'react';
+import type { ITimeline, IEvent } from '../../../types/interfaces';
+import { NarrativeStatus } from '../../../types/timeline';
 import Segment from './Segment';
 
 interface ITimelineComponentProps {
@@ -20,17 +21,30 @@ interface ITimelineComponentProps {
 }
 
 export default function ITimelineComponent(props: ITimelineComponentProps) {
-  
-  
-  // don't mark as erased 
+  const timelineColors = ['#62c8ff', '#f0bd64', '#ed7890', '#9a8cff', '#67d2a0'];
+  const timelineColor =
+    timelineColors[props.timelineIndex % timelineColors.length];
+
+  // Show the timeline label once at least one segment has visible canonical or
+  // erased events that are being presented as this timeline, not as an earlier
+  // apparent timeline.
+  const hasVisibleNativeEvents = props.timeline.segments.some(segment =>
+    segment.getNarrativeState(props.currentTime) !== NarrativeStatus.NOT_REACHED &&
+    segment.getApparentTimeline(props.currentTime, props.timeline.id) === props.timeline.id
+  );
+
+  // don't mark as erased
   const narrativeStatus = props.timeline.getNarrativeState(props.currentTime) == 'not-reached' ? 'not-reached' : 'canonical';
-  
-  
+
   return (
     <div 
       className={`i-timeline ${narrativeStatus}`}
       id={`timeline-${props.timeline.id}`}
+      style={{ '--timeline-color': timelineColor } as CSSProperties}
     >
+      {hasVisibleNativeEvents && (
+        <span className="desktop-timeline-label">{props.timeline.name}</span>
+      )}
       {/* Render segments using Segment component */}
       {props.timeline.segments.map((segment, segmentIndex) => (
         <Segment
