@@ -66,9 +66,13 @@ const Segment: React.FC<SegmentProps> = ({
   // Get narrative status for this segment
   const narrativeStatus = segment.getNarrativeState(currentTime);
   
+  // Empty segments have no event groups to display, so don't draw a status-colored bar.
+  const hasEvents = segment.subSegments.some(subSegment => subSegment.eventGroups.length > 0);
+
   // Determine segment CSS classes based on position and visibility
   const segmentClasses = [
     'i-timeline-segment',
+    !hasEvents ? 'empty' : '',
     segment.isFirst ? 'leftmost' : '',
     segment.isLast ? 'rightmost' : '',
     transformY !== 0 ? 'apparent-timeline' : '',
