@@ -78,7 +78,6 @@ const Segment: React.FC<SegmentProps> = ({
           onEventHover={onEventHover}
           onEventHoverEnd={onEventHoverEnd}
           currentTime={currentTime}
-          segment={segment}
           lockedEvent={lockedEvent}
           activeEvent={activeEvent}
           segmentId={segmentId}
