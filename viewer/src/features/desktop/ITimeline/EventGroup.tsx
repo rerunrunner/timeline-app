@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import type { IEventGroup, IEvent } from '../../../types/interfaces';
+import type { IEventGroup, IEvent, ITimeline } from '../../../types/interfaces';
+import { calculateEventGroupApparentTimelineTransform } from '../../../utils/timelineTransforms';
 import { NarrativeStatus } from '../../../types/timeline';
 import { getNarrativeDateLabel } from '../../shared';
 
@@ -26,6 +27,8 @@ interface EventGroupProps {
   lockedEvent: IEvent | null;
   activeEvent: IEvent | null;
   position: number; // Percentage position within the subsegment
+  allTimelines: ITimeline[];
+  timelineSpacing: number;
 }
 
 
@@ -38,8 +41,17 @@ export default function EventGroup({
   onEventHoverEnd,
   lockedEvent,
   activeEvent,
-  position
+  position,
+  allTimelines,
+  timelineSpacing
 }: EventGroupProps) {
+  const apparentTimelineOffset = calculateEventGroupApparentTimelineTransform(
+    eventGroup,
+    currentTime,
+    allTimelines,
+    timelineSpacing
+  );
+
   const visibleEvents = eventGroup.events.filter(event => 
     event.getNarrativeState(currentTime) !== NarrativeStatus.NOT_REACHED
   );
@@ -124,7 +136,10 @@ export default function EventGroup({
   return (
     <div
       className={`i-event-group-container ${auraClass} ${narrativeClass}`}
-      style={{ left: `${position}%` }}
+      style={{
+        left: `${position}%`,
+        transform: `translateY(calc(-50% + ${apparentTimelineOffset}px))`
+      }}
       data-event-group-id={eventGroup.id}
       onMouseEnter={handleGroupMouseEnter}
       onMouseLeave={handleGroupMouseLeave}
