@@ -25,10 +25,11 @@ export default function ITimelineComponent(props: ITimelineComponentProps) {
   const timelineColor =
     timelineColors[props.timelineIndex % timelineColors.length];
 
-  // Show the timeline label only once at least one segment has reached events
-  // that are being presented as this timeline, not as an earlier apparent timeline.
+  // Show the timeline label once at least one segment has visible canonical or
+  // erased events that are being presented as this timeline, not as an earlier
+  // apparent timeline.
   const hasVisibleNativeEvents = props.timeline.segments.some(segment =>
-    segment.getNarrativeState(props.currentTime) === NarrativeStatus.CANONICAL &&
+    segment.getNarrativeState(props.currentTime) !== NarrativeStatus.NOT_REACHED &&
     segment.getApparentTimeline(props.currentTime, props.timeline.id) === props.timeline.id
   );
 
