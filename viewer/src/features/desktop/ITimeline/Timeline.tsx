@@ -1,5 +1,6 @@
 import React, { type CSSProperties } from 'react';
 import type { ITimeline, IEvent } from '../../../types/interfaces';
+import { NarrativeStatus } from '../../../types/timeline';
 import Segment from './Segment';
 
 interface ITimelineComponentProps {
@@ -24,17 +25,25 @@ export default function ITimelineComponent(props: ITimelineComponentProps) {
   const timelineColor =
     timelineColors[props.timelineIndex % timelineColors.length];
 
-  // don't mark as erased 
+  // Show the timeline label only once at least one segment has reached events
+  // that are being presented as this timeline, not as an earlier apparent timeline.
+  const hasVisibleNativeEvents = props.timeline.segments.some(segment =>
+    segment.getNarrativeState(props.currentTime) === NarrativeStatus.CANONICAL &&
+    segment.getApparentTimeline(props.currentTime, props.timeline.id) === props.timeline.id
+  );
+
+  // don't mark as erased
   const narrativeStatus = props.timeline.getNarrativeState(props.currentTime) == 'not-reached' ? 'not-reached' : 'canonical';
-  
-  
+
   return (
     <div 
       className={`i-timeline ${narrativeStatus}`}
       id={`timeline-${props.timeline.id}`}
       style={{ '--timeline-color': timelineColor } as CSSProperties}
     >
-      <span className="desktop-timeline-label">{props.timeline.name}</span>
+      {hasVisibleNativeEvents && (
+        <span className="desktop-timeline-label">{props.timeline.name}</span>
+      )}
       {/* Render segments using Segment component */}
       {props.timeline.segments.map((segment, segmentIndex) => (
         <Segment
