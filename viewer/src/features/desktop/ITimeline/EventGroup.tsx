@@ -119,7 +119,10 @@ export default function EventGroup({
   const handleEventHover = useCallback((event: IEvent) => {
     onEventHover(event);
   }, [onEventHover]);
-  
+
+  // Don't leave an empty marker/card behind when none of the group's events
+  // have been reached in the current narrative state.
+  if (visibleEvents.length === 0) return null;
   
   return (
     <div
