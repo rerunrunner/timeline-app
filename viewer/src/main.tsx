@@ -38,6 +38,35 @@ if (isPosthogActive && posthogToken && posthogHost) {
     posthog.register({ is_internal: true })
   }
 
+  // The root page deliberately disables PostHog's automatic pageviews and
+  // autocapture. Its shell passes the original landing context to this viewer,
+  // so record exactly one homepage pageview and the resulting viewer transition
+  // through this already-initialized PostHog client.
+  const homepageParams = new URLSearchParams(window.location.search)
+  if (homepageParams.get('homepage_entry') === '1') {
+    const homepageUrl = homepageParams.get('homepage_url') || ''
+    const homepageReferrer = homepageParams.get('homepage_referrer') || ''
+    const landingProperties: Record<string, string> = {
+      landing_url: homepageUrl,
+    }
+    if (homepageReferrer) {
+      landingProperties.landing_referrer = homepageReferrer
+    }
+
+    posthog.capture('$pageview', {
+      ...landingProperties,
+      $current_url: homepageUrl,
+      ...(homepageReferrer ? { $referrer: homepageReferrer } : {}),
+      page_type: 'homepage',
+    })
+    posthog.capture('homepage_timeline_opened', {
+      ...landingProperties,
+      destination_path: window.location.pathname,
+      entry_point: 'homepage_timeline_embed',
+      source_control: 'homepage',
+    })
+  }
+
   // In an iframe, `document.referrer` is the embedding page (e.g. the site shell),
   // not Reddit/Tumblr/etc. The parent page passes its own referrer via
   // `?landing_referrer=` so analytics can attribute traffic correctly.
