@@ -76,6 +76,16 @@ if (isPosthogActive && posthogToken && posthogHost) {
       source_control: 'homepage',
       surface: 'viewer',
     })
+  } else {
+    // Direct links to the viewer should still be measurable as viewer landings.
+    // Homepage-to-viewer transitions are already represented by the site's
+    // homepage pageview and the transition event above.
+    analyticsClient.capture('$pageview', {
+      $current_url: window.location.href,
+      ...(document.referrer ? { $referrer: document.referrer } : {}),
+      page_type: 'viewer',
+      surface: 'viewer',
+    })
   }
 
   // In an iframe, document.referrer is the embedding page, not the original
