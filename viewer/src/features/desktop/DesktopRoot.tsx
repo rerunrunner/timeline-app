@@ -4,7 +4,6 @@ import type { ITimeline } from '../../types/interfaces';
 import type { RawLanguage } from '../../utils/hydrate/types';
 import { isPosthogActive } from '../../utils/posthogEnabled';
 import type { Platform, Orientation } from './hooks/usePlatform';
-import { useFirstVisitOverture } from './hooks/useFirstVisitOverture';
 import { ITimelineContainer } from './ITimeline/Container';
 import Controller from './Controller';
 import DataSelector from './DataSelector';
@@ -112,22 +111,6 @@ const DesktopRoot: React.FC<DesktopRootProps> = ({
     [analyticsEnabled, posthog, datasetId]
   );
 
-  // First-visit reverse overture (desktop-only). Skips when the user
-  // arrived via a deep link so we honor the linked time, and when the
-  // overture has already played in this browser session.
-  const hasDeepLink = useMemo(
-    () =>
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).has('t'),
-    []
-  );
-  const { autoStart } = useFirstVisitOverture({
-    totalDuration,
-    timelinesReady: timelines.length > 0,
-    hasDeepLink,
-    onTimeChange,
-  });
-
   const storyPosition = useMemo(() => {
     let episodeStart = 0;
     for (const episode of episodes ?? []) {
@@ -213,7 +196,6 @@ const DesktopRoot: React.FC<DesktopRootProps> = ({
         onPlaybackToggle={onPlaybackToggle}
         onEpisodeMarkerClick={onEpisodeMarkerClick}
         onScrubInteraction={onScrubInteraction}
-        autoStart={autoStart}
       />
     </div>
   );
