@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import type { Platform } from './hooks/usePlatform'
-import type { OvertureHandoff } from './hooks/useFirstVisitOverture'
 import EpisodeTimeSelector from './controller/EpisodeTimeSelector'
 import Playbar from './controller/Playbar'
 
@@ -20,14 +19,7 @@ interface ControllerProps {
     start_time_seconds: number;
   }) => void;
   onScrubInteraction?: (payload: { phase: 'start' | 'end'; time_seconds: number }) => void;
-  /**
-   * One-shot command to imperatively start/stop playback at a given speed
-   * with an optional autoplay range. Each new dispatch (new object
-   * reference) is applied exactly once. Used by the first-visit overture
-   * to reverse-scrub from the end back to a hero moment, then hand off to
-   * forward playback at an elevated speed.
-   */
-  autoStart?: OvertureHandoff;
+
 }
 
 const SPEEDS_DESKTOP = [1, 60, 120, 600];
@@ -44,7 +36,6 @@ const Controller: React.FC<ControllerProps> = ({
   onPlaybackToggle,
   onEpisodeMarkerClick,
   onScrubInteraction,
-  autoStart,
 }) => {
   const isCompactUi = platform === 'mobile' || compactLandscape;
   const useNativeSelects = platform !== 'computer';
@@ -59,17 +50,6 @@ const Controller: React.FC<ControllerProps> = ({
   const startPositionRef = useRef<number>(0);
   const onTimeChangeRef = useRef(onTimeChange);
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Active autoplay range. `null` = use the legacy default of [0, totalDuration].
-  // Written by the autoStart effect; read by the playback interval each tick.
-  const rangeRef = useRef<[number, number] | null>(null);
-  // Tracks the last `autoStart` reference we've already applied so the
-  // one-shot effect fires exactly once per dispatch.
-  const lastAppliedAutoStartRef = useRef<OvertureHandoff>(null);
-  const onPlaybackToggleRef = useRef(onPlaybackToggle);
-  useEffect(() => {
-    onPlaybackToggleRef.current = onPlaybackToggle;
-  }, [onPlaybackToggle]);
-
   // Update the ref when onTimeChange changes
   useEffect(() => {
     onTimeChangeRef.current = onTimeChange;
@@ -131,12 +111,7 @@ const Controller: React.FC<ControllerProps> = ({
     };
   }, [handlePlayPause]);
 
-  // Effect for play/pause. The interval ticks at a rate derived from the
-  // absolute speed (so reverse playback ticks at the same cadence as
-  // forward) and clamps the playhead to the active autoplay range, stopping
-  // at whichever edge is in the direction of motion. When no `autoStart`
-  // has set a range, the bounds default to [0, totalDuration] and forward
-  // playback behaves exactly as before.
+  // Effect for play/pause. Playback advances within the timeline bounds.
   useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = Date.now();
@@ -146,13 +121,11 @@ const Controller: React.FC<ControllerProps> = ({
 
       intervalRef.current = setInterval(() => {
         const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
-        const [lower, upper] = rangeRef.current ?? [0, totalDuration];
         const raw = startPositionRef.current + elapsedSeconds * playbackSpeed;
-        const newTime = Math.max(lower, Math.min(upper, raw));
+        const newTime = Math.max(0, Math.min(totalDuration, raw));
         onTimeChangeRef.current(newTime);
 
-        const reachedEdge = playbackSpeed < 0 ? newTime <= lower : newTime >= upper;
-        if (reachedEdge) {
+        if (newTime >= totalDuration) {
           setIsPlaying(false);
         }
       }, intervalMs);
@@ -172,25 +145,6 @@ const Controller: React.FC<ControllerProps> = ({
     // restart the interval on every playback tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, totalDuration, playbackSpeed]);
-
-  // One-shot autoStart application: when a new autoStart reference comes in,
-  // mirror it into local playback state exactly once. Manual play/pause and
-  // speed-select interactions are unaffected.
-  useEffect(() => {
-    if (!autoStart) return;
-    if (autoStart === lastAppliedAutoStartRef.current) return;
-    lastAppliedAutoStartRef.current = autoStart;
-
-    if (autoStart.playing) {
-      rangeRef.current = autoStart.range ?? null;
-      setPlaybackSpeed(autoStart.speed);
-      setIsPlaying(true);
-      onPlaybackToggleRef.current?.(true);
-    } else {
-      setIsPlaying(false);
-      onPlaybackToggleRef.current?.(false);
-    }
-  }, [autoStart]);
 
   // Update the start time and position when scrubbing
   useEffect(() => {
